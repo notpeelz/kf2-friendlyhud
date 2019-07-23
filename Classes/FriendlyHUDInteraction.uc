@@ -1,21 +1,11 @@
-class FriendlyHUDInterface extends KFGFxHudWrapper
-    transient
-    config(FriendlyHUD)
-    hidecategories(Navigation);
+class FriendlyHUDInteraction extends Interaction
+    dependson(FriendlyHUDConfig);
 
-var config int CVersion;
-var config float CFHUDScale;
-var config float CFHUDItemMarginX;
-var config float CFHUDItemMarginY;
-var config bool CFHUDCustomArmorColor;
-var config Color CFHUDArmorColor;
-var config bool CFHUDCustomHealthColor;
-var config Color CFHUDHealthColor;
-var config bool CFHUDDrawDebugLines;
-var config bool CFHUDReverse;
-var config bool CFHUDIgnoreDeadTeammates;
-var config float CFHUDMinHealthThreshold;
+var KFGFxHudWrapper HUD;
+var KFPlayerController KFPlayerOwner;
+var FriendlyHUDConfig HUDConfig;
 
+var Texture2d BarBGTexture;
 var Color AxisXLineColor;
 var Color AxisYLineColor;
 
@@ -23,6 +13,7 @@ var float BarHeight, BarWidth, TextHeight, TotalItemWidth, TotalItemHeight;
 var float NameMarginY;
 var float ScreenPosX, ScreenPosY;
 
+const PrestigeIconScale = 0.75f;
 const FHUD_ItemsPerColumn = 3;
 const FHUD_PlayerStatusIconSize = 32.f;
 const FHUD_BarWidth = 200.f; // 200 pixels wide at 1080p
@@ -30,108 +21,41 @@ const FHUD_BarHeight = 10.f; // 10 pixels high at 1080p
 const FHUD_FontSize = 36.f;
 const FHUD_NameMarginY = 6.f;
 
-simulated function PostBeginPlay()
+simulated function Initialized()
 {
-    super(KFHUDBase).PostBeginPlay();
-    if (CVersion == 0)
-    {
-        LoadDefaultFHUDConfig();
-    }
-}
-
-function LoadDefaultFHUDConfig()
-{
-    CVersion = 1;
-    CFHUDScale = 1.f;
-    CFHUDItemMarginX = 10.f;
-    CFHUDItemMarginY = 5.f;
-    CFHUDCustomArmorColor = false;
-    CFHUDCustomHealthColor = false;
-    CFHUDDrawDebugLines = false;
-    CFHUDReverse = false;
-    CFHUDIgnoreDeadTeammates = false;
-    CFHUDMinHealthThreshold = 1.f;
-    SaveConfig();
-}
-
-exec function SetFHUDScale(float Value)
-{
-    CFHUDScale = Value;
-    SaveConfig();
-}
-
-exec function SetFHUDReverse(bool Value)
-{
-    CFHUDReverse = Value;
-    SaveConfig();
-}
-
-exec function SetFHUDArmorColor(Color Value)
-{
-    CFHUDCustomArmorColor = true;
-    CFHUDArmorColor = Value;
-    SaveConfig();
-}
-
-exec function SetFHUDHealthColor(Color Value)
-{
-    CFHUDCustomHealthColor = true;
-    CFHUDHealthColor = Value;
-    SaveConfig();
-}
-
-exec function SetFHUDItemMarginX(float Value)
-{
-    CFHUDItemMarginX = Value;
-    SaveConfig();
-}
-
-exec function SetFHUDItemMarginY(float Value)
-{
-    CFHUDItemMarginY = Value;
-    SaveConfig();
-}
-
-exec function SetFHUDDrawDebugLines(bool Value)
-{
-    CFHUDDrawDebugLines = Value;
-    SaveConfig();
-}
-
-exec function SetFHUDIgnoreDeadTeammates(bool Value)
-{
-    CFHUDIgnoreDeadTeammates = Value;
-    SaveConfig();
-}
-
-exec function SetFHUDMinHealthThreshold(float Value)
-{
-    CFHUDMinHealthThreshold = Value;
-    SaveConfig();
-}
-
-exec function ResetFHUDConfig()
-{
-    LoadDefaultFHUDConfig();
-}
-
-event DrawHUD()
-{
-    super.DrawHUD();
-
-    // Don't draw canvas HUD in cinematic mode
-    if (KFPlayerOwner != None && KFPlayerOwner.bCinematicMode)
+    if (KFPlayerOwner == None)
     {
         return;
     }
 
-    if (PlayerOwner.GetTeamNum() == 0)
+    HUD = KFGFxHudWrapper(KFPlayerOwner.myHUD);
+    if (HUD == None)
     {
-        DrawTeamHealthBars();
+        `Log("[FriendlyHUD] Incompatible HUD detected; aborting.");
+        return;
     }
 }
 
-simulated function float GetResolutionScale()
+event PostRender(Canvas Canvas)
+{
+    if (KFPlayerOwner == None || HUD == None || HUDConfig == None)
+    {
+        return;
+    }
+
+    // Don't draw HUD in cinematic mode
+    if (KFPlayerOwner.bCinematicMode)
+    {
+        return;
+    }
+
+    if (KFPlayerOwner.GetTeamNum() == 0)
+    {
+        DrawTeamHealthBars(Canvas);
+    }
+}
+
+simulated function float GetResolutionScale(Canvas Canvas)
 {
     local float SW, SH, SX, SY, ResScale;
     SW = Canvas.ClipX;
@@ -156,7 +80,7 @@ simulated function float GetResolutionScale()
     return ResScale;
 }
 
-simulated function DrawTeamHealthBars()
+simulated function DrawTeamHealthBars(Canvas Canvas)
 {
     local KFPawn_Human KFPH;
     local PlayerController PC;
@@ -166,11 +90,16 @@ simulated function DrawTeamHealthBars()
     local float PerkIconSize;
     local int I, Column, Row;
 
-    DI = HudMovie.PlayerStatusContainer.GetDisplayInfo();
+    if (HUD.HUDMovie == None || HUD.HUDMovie.PlayerStatusContainer == None)
+    {
+        return;
+    }
+
+    DI = HUD.HUDMovie.PlayerStatusContainer.GetDisplayInfo();
 
     Canvas.Font = class'KFGameEngine'.Static.GetKFCanvasFont();
-    BaseResScale = GetResolutionScale();
-    ResScale = BaseResScale * CFHUDScale;
+    BaseResScale = GetResolutionScale(Canvas);
+    ResScale = BaseResScale * HUDConfig.Scale;
     FontScale = class'KFGameEngine'.Static.GetKFFontScale() * ResScale;
 
     PerkIconSize = FHUD_PlayerStatusIconSize * ResScale;
@@ -178,25 +107,29 @@ simulated function DrawTeamHealthBars()
     BarWidth = FHUD_BarWidth * ResScale;
     BarHeight = FHUD_BarHeight * ResScale;
     TextHeight = FHUD_FontSize * FontScale;
-    TotalItemWidth = PerkIconSize + BarWidth + CFHUDItemMarginX * ResScale;
-    TotalItemHeight = BarHeight * 2.f + TextHeight + CFHUDItemMarginY * ResScale;
+    TotalItemWidth = PerkIconSize + BarWidth + HUDConfig.ItemMarginX * ResScale;
+    TotalItemHeight = BarHeight * 2.f + TextHeight + HUDConfig.ItemMarginY * ResScale;
 
-    NameMarginY = ResScale < 1.f ? 0.f : FHUD_NameMarginY;
+    NameMarginY = ResScale < 0.9f ? 0.f : FHUD_NameMarginY;
 
-    ScreenPosX = DI.x + HudMovie.PlayerStatusContainer.GetFloat("width");
+    ScreenPosX = DI.x + HUD.HUDMovie.PlayerStatusContainer.GetFloat("width");
     ScreenPosY = Canvas.ClipY + DI.y;
     // Move down by 30% of the height of the bottom portion of the screen
     ScreenPosY += (Canvas.ClipY - ScreenPosY) * 0.3f * BaseResScale;
 
-    if (CFHUDDrawDebugLines)
+    if (HUDConfig.DrawDebugLines)
     {
         Canvas.Draw2DLine(ScreenPosX, 0.f, ScreenPosX, Canvas.ClipY, AxisYLineColor);
         Canvas.Draw2DLine(0.f, ScreenPosY, Canvas.ClipX, ScreenPosY, AxisXLineColor);
-        Canvas.Draw2DLine(0.f, ScreenPosY + HudMovie.PlayerStatusContainer.GetFloat("height"), Canvas.ClipX, ScreenPosY + HudMovie.PlayerStatusContainer.GetFloat("height"), AxisYLineColor);
+        Canvas.Draw2DLine(
+            0.f, ScreenPosY + HUD.HUDMovie.PlayerStatusContainer.GetFloat("height"),
+            Canvas.ClipX, ScreenPosY + HUD.HUDMovie.PlayerStatusContainer.GetFloat("height"),
+            AxisYLineColor
+        );
     }
 
     I = 0;
-    foreach WorldInfo.AllPawns(class'KFPawn_Human', KFPH)
+    foreach KFPlayerOwner.WorldInfo.AllPawns(class'KFPawn_Human', KFPH)
     {
         `if(`isdefined(debug))
         if (true)
@@ -207,9 +140,9 @@ simulated function DrawTeamHealthBars()
             Column = I / FHUD_ItemsPerColumn;
             Row = I % FHUD_ItemsPerColumn;
             CurrentItemPosX = ScreenPosX + TotalItemWidth * Column;
-            CurrentItemPosY = ScreenPosY + TotalItemHeight * (CFHUDReverse ? (FHUD_ItemsPerColumn - 1 - Row) : Row);
+            CurrentItemPosY = ScreenPosY + TotalItemHeight * (HUDConfig.Reverse ? (FHUD_ItemsPerColumn - 1 - Row) : Row);
 
-            if (DrawHealthBarItem(KFPH, CurrentItemPosX, CurrentItemPosY, PerkIconSize, FontScale))
+            if (DrawHealthBarItem(Canvas, KFPH, CurrentItemPosX, CurrentItemPosY, PerkIconSize, FontScale))
             {
                 I++;
             }
@@ -217,12 +150,11 @@ simulated function DrawTeamHealthBars()
     }
 }
 
-simulated function bool DrawHealthBarItem(KFPawn_Human KFPH, float PosX, float PosY, float PerkIconSize, float FontScale)
+simulated function bool DrawHealthBarItem(Canvas Canvas, KFPawn_Human KFPH, float PosX, float PosY, float PerkIconSize, float FontScale)
 {
     local KFPlayerReplicationInfo KFPRI;
     local float PerkIconPosX, PerkIconPosY;
     local FontRenderInfo TextFontRenderInfo;
-    local color BarColor;
     local float ArmorRatio, HealthRatio;
 
     KFPRI = KFPlayerReplicationInfo(KFPH.PlayerReplicationInfo);
@@ -233,7 +165,7 @@ simulated function bool DrawHealthBarItem(KFPawn_Human KFPH, float PosX, float P
     }
 
     // If enabled, don't render dead teammates
-    if (CFHUDIgnoreDeadTeammates && !KFPH.IsAliveAndWell())
+    if (HUDConfig.IgnoreDeadTeammates && !KFPH.IsAliveAndWell())
     {
         return false;
     }
@@ -244,13 +176,13 @@ simulated function bool DrawHealthBarItem(KFPawn_Human KFPH, float PosX, float P
     HealthRatio = float(KFPH.Health) / float(KFPH.HealthMax);
 
     // If enabled, don't render teammates above a certain health threshold
-    if (HealthRatio > CFHUDMinHealthThreshold)
+    if (HealthRatio > HUDConfig.MinHealthThreshold)
     {
         return false;
     }
 
     // Draw drop shadow behind the player name
-    Canvas.DrawColor = PlayerBarShadowColor;
+    Canvas.DrawColor = HUDConfig.ShadowColor;
     Canvas.SetPos(
         PosX + PerkIconSize + 4,
         PosY + 1
@@ -258,7 +190,7 @@ simulated function bool DrawHealthBarItem(KFPawn_Human KFPH, float PosX, float P
     Canvas.DrawText(KFPRI.PlayerName, , FontScale, FontScale, TextFontRenderInfo);
 
     // Draw player name
-    Canvas.DrawColor = PlayerBarTextColor;
+    Canvas.DrawColor = HUDConfig.TextColor;
     Canvas.SetPos(
         PosX + PerkIconSize + 4,
         PosY
@@ -266,36 +198,49 @@ simulated function bool DrawHealthBarItem(KFPawn_Human KFPH, float PosX, float P
     Canvas.DrawText(KFPRI.PlayerName, , FontScale, FontScale, TextFontRenderInfo);
 
     // Draw armor bar
-    BarColor = CFHUDCustomArmorColor ? CFHUDArmorColor : (ClassicPlayerInfo ? ClassicArmorColor : ArmorColor);
-    DrawKFBar(ArmorRatio, BarWidth, BarHeight,
+    DrawBar(Canvas,
+        ArmorRatio,
         PosX + PerkIconSize,
         PosY + TextHeight + NameMarginY,
-        BarColor
+        HUDConfig.ArmorColor
     );
 
     // Draw health bar
-    BarColor = CFHUDCustomHealthColor ? CFHUDHealthColor : (ClassicPlayerInfo ? ClassicHealthColor : HealthColor);
-    DrawKFBar(HealthRatio, BarWidth, BarHeight,
+    DrawBar(Canvas,
+        HealthRatio,
         PosX + PerkIconSize,
         PosY + BarHeight + TextHeight + NameMarginY,
-        BarColor
+        HUDConfig.HealthColor
     );
 
     // Draw drop shadow behind the perk icon
-    Canvas.DrawColor = PlayerBarShadowColor;
+    Canvas.DrawColor = HUDConfig.ShadowColor;
     PerkIconPosX = PosX + 1;
     PerkIconPosY = PosY + (TextHeight + NameMarginY) / 2.f;
-    DrawPerkIcon(KFPH, PerkIconSize, PerkIconPosX, PerkIconPosY);
+    DrawPerkIcon(Canvas, KFPH, PerkIconSize, PerkIconPosX, PerkIconPosY);
 
     // Draw perk icon
-    Canvas.DrawColor = PlayerBarIconColor;
+    Canvas.DrawColor = HUDConfig.IconColor;
     PerkIconPosX -= 1;
-    DrawPerkIcon(KFPH, PerkIconSize, PerkIconPosX, PerkIconPosY);
+    DrawPerkIcon(Canvas, KFPH, PerkIconSize, PerkIconPosX, PerkIconPosY);
 
     return true;
 }
 
-simulated function DrawPerkIcon(KFPawn_Human KFPH, float PerkIconSize, float PerkIconPosX, float PerkIconPosY)
+simulated function DrawBar(Canvas Canvas, float BarPercentage, float XPos, float YPos, Color BarColor)
+{
+    // Draw background
+    Canvas.SetDrawColorStruct(HUDConfig.BGColor);
+    Canvas.SetPos(XPos, YPos);
+    Canvas.DrawTile(BarBGTexture, BarWidth, BarHeight, 0, 0, 32, 32);
+
+    // Draw foreground
+    Canvas.SetDrawColorStruct(BarColor);
+    Canvas.SetPos(XPos, YPos + 1); // Adjust pos for border
+    Canvas.DrawTile(BarBGTexture, (BarWidth - 2.0) * BarPercentage, BarHeight - 2.0, 0, 0, 32, 32);
+}
+
+simulated function DrawPerkIcon(Canvas Canvas, KFPawn_Human KFPH, float PerkIconSize, float PerkIconPosX, float PerkIconPosY)
 {
     local byte PrestigeLevel;
     local KFPlayerReplicationInfo KFPRI;
@@ -331,4 +276,5 @@ defaultproperties
 {
     AxisXLineColor = (R=0, G=192, B=0, A=192);
     AxisYLineColor = (R=0, G=100, B=210, A=192);
+    BarBGTexture=Texture2D'EngineResources.WhiteSquareTexture'
 }
