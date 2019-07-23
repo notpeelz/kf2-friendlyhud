@@ -45,6 +45,11 @@ event PostRender(Canvas Canvas)
         return;
     }
 
+    if (HUDConfig.DisableHUD)
+    {
+        return;
+    }
+
     // Don't draw HUD in cinematic mode
     if (KFPlayerOwner.bCinematicMode)
     {

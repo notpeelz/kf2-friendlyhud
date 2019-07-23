@@ -11,6 +11,7 @@ var config Color IconColor;
 var config Color BGColor;
 var config Color ArmorColor;
 var config Color HealthColor;
+var config bool DisableHUD;
 var config bool DrawDebugLines;
 var config bool Reverse;
 var config bool IgnoreDeadTeammates;
@@ -37,6 +38,7 @@ simulated function LoadDefaultFHUDConfig()
     BGColor = MakeColor(16, 16, 16, 192);
     ArmorColor = MakeColor(0, 100, 210, 192);
     HealthColor = MakeColor(0, 192, 0, 192);
+    DisableHUD = false;
     DrawDebugLines = false;
     Reverse = false;
     IgnoreDeadTeammates = false;
@@ -95,6 +97,12 @@ exec function SetFHUDItemMarginY(float Value)
 exec function SetFHUDDrawDebugLines(bool Value)
 {
     DrawDebugLines = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDEnabled(bool Value)
+{
+    DisableHUD = !Value;
     SaveConfig();
 }
 
