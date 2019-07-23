@@ -22,6 +22,7 @@ simulated function Initialized()
     {
         LoadDefaultFHUDConfig();
     }
+    `Log("[FriendlyHUD] Initialized config");
 }
 
 simulated function LoadDefaultFHUDConfig()

@@ -34,6 +34,8 @@ simulated function Initialized()
         `Log("[FriendlyHUD] Incompatible HUD detected; aborting.");
         return;
     }
+
+    `Log("[FriendlyHUD] Initialized interaction");
 }
 
 event PostRender(Canvas Canvas)
@@ -83,7 +85,6 @@ simulated function float GetResolutionScale(Canvas Canvas)
 simulated function DrawTeamHealthBars(Canvas Canvas)
 {
     local KFPawn_Human KFPH;
-    local PlayerController PC;
     local float BaseResScale, ResScale, FontScale;
     local ASDisplayInfo DI;
     local float CurrentItemPosX, CurrentItemPosY;

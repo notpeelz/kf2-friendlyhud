@@ -3,21 +3,21 @@ class FriendlyHUDMutator extends KFMutator
 
 var FriendlyHUDConfig HUDConfig;
 
-function PostBeginPlay()
+simulated function PostBeginPlay()
 {
-    super(Actor).PostBeginPlay();
-    if(bDeleteMe)
-    {
-        return;
-    }
+    super.PostBeginPlay();
+
+    `Log("[FriendlyHUD] Loaded mutator");
 
     InitializeHUD();
 }
 
-function InitializeHUD()
+simulated function InitializeHUD()
 {
     local KFPlayerController KFPC;
     local FriendlyHUDInteraction FHUDInteraction;
+
+    `Log("[FriendlyHUD] Initializing");
 
     if (WorldInfo.NetMode == NM_DedicatedServer)
     {
@@ -48,4 +48,11 @@ function InitializeHUD()
     FHUDInteraction.Initialized();
 
     `Log("[FriendlyHUD] Initialized");
+}
+
+defaultproperties
+{
+    Role = ROLE_Authority
+    RemoteRole = ROLE_SimulatedProxy
+    bAlwaysRelevant = true
 }
