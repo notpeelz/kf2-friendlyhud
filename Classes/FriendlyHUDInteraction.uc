@@ -169,6 +169,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, KFPawn_Human KFPH, KFPl
     local float PerkIconPosX, PerkIconPosY;
     local FontRenderInfo TextFontRenderInfo;
     local float ArmorRatio, HealthRatio;
+    local float HealthToRegen;
 
     ArmorRatio = KFPH != None ? float(KFPH.Armor) / float(KFPH.MaxArmor) : 0.f;
     HealthRatio = KFPH != None ? float(KFPH.Health) / float(KFPH.HealthMax) : 0.f;
@@ -212,6 +213,23 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, KFPawn_Human KFPH, KFPl
         PosY + BarHeight + TextHeight + NameMarginY,
         HUDConfig.HealthColor
     );
+
+    // Draw the regen health buffer over the health bar
+    HealthToRegen = KFPH != None ? FHUDMutator.RepInfo.GetRegenHealth(KFPH) : 0;
+    if (HealthToRegen > 0)
+    {
+        Canvas.DrawColor = HUDConfig.HealthRegenColor;
+        Canvas.SetPos(
+            PosX + PerkIconSize + ((BarWidth - 2.0) * HealthRatio) + 1,
+            PosY + BarHeight + TextHeight + NameMarginY + 1
+        );
+        Canvas.DrawTile(
+            BarBGTexture,
+            (BarWidth - 2.0) * (HealthToRegen / float(KFPH.HealthMax)),
+            BarHeight - 2.0,
+            0, 0, 32, 32
+        );
+    }
 
     // Draw drop shadow behind the perk icon
     Canvas.DrawColor = HUDConfig.ShadowColor;

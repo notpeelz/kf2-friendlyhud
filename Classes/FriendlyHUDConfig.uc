@@ -11,6 +11,7 @@ var config Color IconColor;
 var config Color BGColor;
 var config Color ArmorColor;
 var config Color HealthColor;
+var config Color HealthRegenColor;
 var config bool DisableHUD;
 var config bool DrawDebugLines;
 var config bool Reverse;
@@ -38,6 +39,7 @@ simulated function LoadDefaultFHUDConfig()
     BGColor = MakeColor(16, 16, 16, 192);
     ArmorColor = MakeColor(0, 100, 210, 192);
     HealthColor = MakeColor(0, 192, 0, 192);
+    HealthRegenColor = MakeColor(0, 70, 0, 192);
     DisableHUD = false;
     DrawDebugLines = false;
     Reverse = false;
@@ -79,6 +81,12 @@ exec function SetFHUDArmorColor(Color Value)
 exec function SetFHUDHealthColor(Color Value)
 {
     HealthColor = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDHealthRegenColor(Color Value)
+{
+    HealthRegenColor = Value;
     SaveConfig();
 }
 
