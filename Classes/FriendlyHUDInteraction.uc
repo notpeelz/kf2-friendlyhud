@@ -112,7 +112,9 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
 
     NameMarginY = ResScale < 0.9f ? 0.f : FHUD_NameMarginY;
 
-    ScreenPosX = DI.x + HUD.HUDMovie.PlayerStatusContainer.GetFloat("width");
+    ScreenPosX = HUD.HUDMovie.bIsSpectating
+        ? (DI.x + HUD.HUDMovie.PlayerStatusContainer.GetFloat("width") * 0.1f)
+        : (DI.x + HUD.HUDMovie.PlayerStatusContainer.GetFloat("width"));
     ScreenPosY = Canvas.ClipY + DI.y;
     // Move down by 30% of the height of the bottom portion of the screen
     ScreenPosY += (Canvas.ClipY - ScreenPosY) * 0.3f * BaseResScale;
