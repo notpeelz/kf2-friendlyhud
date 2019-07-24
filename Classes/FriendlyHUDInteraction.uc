@@ -38,21 +38,16 @@ simulated function Initialized()
 
 event PostRender(Canvas Canvas)
 {
-    if (KFPlayerOwner == None || HUD == None || HUDConfig == None)
-    {
-        return;
-    }
+    if (KFPlayerOwner == None || HUD == None || HUDConfig == None) return;
 
-    if (HUDConfig.DisableHUD)
-    {
-        return;
-    }
+    // Don't render if the user disabled the custom HUD
+    if (HUDConfig.DisableHUD) return;
 
-    // Don't draw HUD in cinematic mode
-    if (KFPlayerOwner.bCinematicMode)
-    {
-        return;
-    }
+    // Don't render in cinematic mode
+    if (KFPlayerOwner.bCinematicMode) return;
+
+    // Don't render when HUD is hidden
+    if (!HUD.bShowHUD) return;
 
     if (KFPlayerOwner.GetTeamNum() == 0)
     {
