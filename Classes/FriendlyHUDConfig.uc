@@ -41,7 +41,7 @@ simulated function LoadDefaultFHUDConfig()
     DisableHUD = false;
     DrawDebugLines = false;
     Reverse = false;
-    IgnoreDeadTeammates = false;
+    IgnoreDeadTeammates = true;
     MinHealthThreshold = 1.f;
     SaveConfig();
 }

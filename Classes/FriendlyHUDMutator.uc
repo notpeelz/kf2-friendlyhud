@@ -2,6 +2,13 @@ class FriendlyHUDMutator extends KFMutator
     hidecategories(Navigation,Movement,Collision);
 
 var FriendlyHUDConfig HUDConfig;
+var FriendlyHUDReplicationInfo RepInfo;
+
+replication
+{
+    if (bNetDirty)
+        RepInfo;
+}
 
 simulated function PostBeginPlay()
 {
@@ -9,7 +16,44 @@ simulated function PostBeginPlay()
 
     `Log("[FriendlyHUD] Loaded mutator");
 
+    if (Role == ROLE_Authority)
+    {
+        RepInfo = Spawn(class'FriendlyHUD.FriendlyHUDReplicationInfo', Self);
+        RepInfo.HUDConfig = HUDConfig;
+        `if(`isdefined(debug))
+        SetTimer(2.0, true, nameof(CheckBots));
+        `endif
+    }
+
     InitializeHUD();
+}
+
+// Used for HUD testing
+function CheckBots()
+{
+    local KFPawn_Human KFPH;
+
+    foreach WorldInfo.AllPawns(class'KFGame.KFPawn_Human', KFPH)
+    {
+        if (KFAIController(KFPH.Controller) != None && !RepInfo.IsPlayerRegistered(KFPH.Controller))
+        {
+            RepInfo.NotifyLogin(KFPH.Controller);
+        }
+    }
+}
+
+function NotifyLogin(Controller NewPlayer)
+{
+    RepInfo.NotifyLogin(NewPlayer);
+
+    super.NotifyLogin(NewPlayer);
+}
+
+function NotifyLogout(Controller Exiting)
+{
+    RepInfo.NotifyLogout(Exiting);
+
+    super.NotifyLogout(Exiting);
 }
 
 simulated function InitializeHUD()
@@ -39,12 +83,10 @@ simulated function InitializeHUD()
     HUDConfig.Initialized();
 
     FHUDInteraction = new (KFPC) class'FriendlyHUD.FriendlyHUDInteraction';
+    FHUDInteraction.FHUDMutator = Self;
     FHUDInteraction.KFPlayerOwner = KFPC;
     FHUDInteraction.HUDConfig = HUDConfig;
     KFPC.Interactions.AddItem(FHUDInteraction);
-
-    // This isn't called if the Interaction
-    // is added to a PlayerController
     FHUDInteraction.Initialized();
 
     `Log("[FriendlyHUD] Initialized");
