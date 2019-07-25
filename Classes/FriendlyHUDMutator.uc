@@ -1,6 +1,9 @@
 class FriendlyHUDMutator extends KFMutator
     hidecategories(Navigation,Movement,Collision);
 
+
+var KFPlayerController KFPC;
+var KFGFxHudWrapper HUD;
 var FriendlyHUDConfig HUDConfig;
 var FriendlyHUDReplicationInfo RepInfo;
 
@@ -58,15 +61,9 @@ function NotifyLogout(Controller Exiting)
 
 simulated function InitializeHUD()
 {
-    local KFPlayerController KFPC;
-    local FriendlyHUDInteraction FHUDInteraction;
-
     `Log("[FriendlyHUD] Initializing");
 
-    if (WorldInfo.NetMode == NM_DedicatedServer)
-    {
-        return;
-    }
+    if (WorldInfo.NetMode == NM_DedicatedServer) return;
 
     KFPC = KFPlayerController(GetALocalPlayerController());
 
@@ -78,16 +75,53 @@ simulated function InitializeHUD()
 
     `Log("[FriendlyHUD] Found KFPC");
 
+    // Give a chance for other mutators to initialize
+    SetTimer(4.0, false, nameof(InitializeCompat));
+}
+
+simulated function InitializeCompat()
+{
+    local FriendlyHUDInteraction FHUDInteraction;
+    local UMCompatInteraction UMInteraction;
+    local UMClientConfig UMConfig;
+
+    HUD = KFGFxHudWrapper(KFPC.myHUD);
+    if (HUD == None)
+    {
+        `Log("[FriendlyHUD] Incompatible HUD detected; aborting.");
+        return;
+    }
+
+    // Initialize the HUD configuration
     HUDConfig = new (KFPC) class'FriendlyHUD.FriendlyHUDConfig';
     KFPC.Interactions.AddItem(HUDConfig);
     HUDConfig.Initialized();
 
+    // Initialize the HUD interaction
     FHUDInteraction = new (KFPC) class'FriendlyHUD.FriendlyHUDInteraction';
     FHUDInteraction.FHUDMutator = Self;
     FHUDInteraction.KFPlayerOwner = KFPC;
+    FHUDInteraction.HUD = HUD;
     FHUDInteraction.HUDConfig = HUDConfig;
     KFPC.Interactions.AddItem(FHUDInteraction);
     FHUDInteraction.Initialized();
+
+    if (class'UnofficialMod.UMClientConfig' != None)
+    {
+        UMConfig = class'UnofficialMod.UMClientConfig'.static.GetInstance();
+        if (UMConfig != None)
+        {
+            `Log("[FriendlyHUD] UnofficialMod detected");
+
+            UMInteraction = new (KFPC) class'FriendlyHUD.UMCompatInteraction';
+            UMInteraction.KFPlayerOwner = KFPC;
+            UMInteraction.HUD = HUD;
+            UMInteraction.HUDConfig = HUDConfig;
+            UMInteraction.UMConfig = UMConfig;
+            KFPC.Interactions.AddItem(UMInteraction);
+            UMInteraction.Initialized();
+        }
+    }
 
     `Log("[FriendlyHUD] Initialized");
 }

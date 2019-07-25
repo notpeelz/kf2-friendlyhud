@@ -21,6 +21,8 @@ simulated event PostBeginPlay()
 {
     super.PostBeginPlay();
 
+    if (bDeleteMe) return;
+
     if (WorldInfo.NetMode != NM_Client)
     {
         SetTimer(0.1, true, nameof(UpdateInfo));

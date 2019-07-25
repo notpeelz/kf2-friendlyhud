@@ -17,6 +17,8 @@ var config bool DrawDebugLines;
 var config bool Reverse;
 var config bool IgnoreDeadTeammates;
 var config float MinHealthThreshold;
+var config bool UMCompatEnabled;
+var config int UMDisableHMTechChargeHUD;
 
 simulated function Initialized()
 {
@@ -45,6 +47,7 @@ simulated function LoadDefaultFHUDConfig()
     Reverse = false;
     IgnoreDeadTeammates = true;
     MinHealthThreshold = 1.f;
+    UMCompatEnabled = true;
     SaveConfig();
 }
 
@@ -123,6 +126,12 @@ exec function SetFHUDIgnoreDeadTeammates(bool Value)
 exec function SetFHUDMinHealthThreshold(float Value)
 {
     MinHealthThreshold = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDUMCompatEnabled(bool Value)
+{
+    UMCompatEnabled = Value;
     SaveConfig();
 }
 

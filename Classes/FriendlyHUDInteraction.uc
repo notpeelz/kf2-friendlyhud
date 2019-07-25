@@ -24,15 +24,6 @@ const FHUD_NameMarginY = 6.f;
 
 simulated function Initialized()
 {
-    if (KFPlayerOwner == None) return;
-
-    HUD = KFGFxHudWrapper(KFPlayerOwner.myHUD);
-    if (HUD == None)
-    {
-        `Log("[FriendlyHUD] Incompatible HUD detected; aborting.");
-        return;
-    }
-
     `Log("[FriendlyHUD] Initialized interaction");
 }
 
@@ -55,31 +46,6 @@ event PostRender(Canvas Canvas)
     }
 }
 
-simulated function float GetResolutionScale(Canvas Canvas)
-{
-    local float SW, SH, SX, SY, ResScale;
-    SW = Canvas.ClipX;
-    SH = Canvas.ClipY;
-    SX = SW / 1920.f;
-    SY = SH / 1080.f;
-
-    if(SX > SY)
-    {
-        ResScale = SY;
-    }
-    else
-    {
-        ResScale = SX;
-    }
-
-    if (ResScale > 1.f)
-    {
-        return 1.f;
-    }
-
-    return ResScale;
-}
-
 simulated function DrawTeamHealthBars(Canvas Canvas)
 {
     local FriendlyHUDReplicationInfo FHUDRepInfo;
@@ -96,11 +62,11 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     }
 
     DI = HUD.HUDMovie.PlayerStatusContainer.GetDisplayInfo();
-
-    Canvas.Font = class'KFGameEngine'.Static.GetKFCanvasFont();
-    BaseResScale = GetResolutionScale(Canvas);
+    BaseResScale = class'FriendlyHUD.FriendlyHUDHelper'.static.GetResolutionScale(Canvas);
     ResScale = BaseResScale * HUDConfig.Scale;
-    FontScale = class'KFGameEngine'.Static.GetKFFontScale() * ResScale;
+
+    Canvas.Font = class'KFGameEngine'.static.GetKFCanvasFont();
+    FontScale = class'KFGameEngine'.static.GetKFFontScale() * ResScale;
 
     PerkIconSize = FHUD_PlayerStatusIconSize * ResScale;
 
@@ -116,7 +82,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
         ? (DI.x + HUD.HUDMovie.PlayerStatusContainer.GetFloat("width") * 0.1f)
         : (DI.x + HUD.HUDMovie.PlayerStatusContainer.GetFloat("width"));
     ScreenPosY = Canvas.ClipY + DI.y;
-    // Move down by 30% of the height of the bottom portion of the screen
+    // Move down by 30% of the height of the playerstats UI component
     ScreenPosY += (Canvas.ClipY - ScreenPosY) * 0.3f * BaseResScale;
 
     if (HUDConfig.DrawDebugLines)
