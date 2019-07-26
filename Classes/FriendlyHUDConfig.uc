@@ -3,7 +3,9 @@ class FriendlyHUDConfig extends Interaction
 
 var config int INIVersion;
 var config float Scale;
+var config int Layout;
 var config int ItemsPerColumn;
+var config int ItemsPerRow;
 var config float ItemMarginX;
 var config float ItemMarginY;
 var config float OffsetX;
@@ -17,7 +19,8 @@ var config Color HealthColor;
 var config Color HealthRegenColor;
 var config bool DisableHUD;
 var config bool DrawDebugLines;
-var config bool Reverse;
+var config bool ReverseX;
+var config bool ReverseY;
 var config bool IgnoreDeadTeammates;
 var config float MinHealthThreshold;
 var config bool UMCompatEnabled;
@@ -36,7 +39,9 @@ simulated function LoadDefaultFHUDConfig()
 {
     INIVersion = 1;
     Scale = 1.f;
+    Layout = 0;
     ItemsPerColumn = 3;
+    ItemsPerRow = 5;
     ItemMarginX = 10.f;
     ItemMarginY = 5.f;
     OffsetX = 0.f;
@@ -50,7 +55,8 @@ simulated function LoadDefaultFHUDConfig()
     HealthRegenColor = MakeColor(0, 70, 0, 192);
     DisableHUD = false;
     DrawDebugLines = false;
-    Reverse = false;
+    ReverseX = false;
+    ReverseY = false;
     IgnoreDeadTeammates = true;
     MinHealthThreshold = 1.f;
     UMCompatEnabled = true;
@@ -63,15 +69,46 @@ exec function SetFHUDScale(float Value)
     SaveConfig();
 }
 
+exec function SetFHUDLayout(string Value)
+{
+    local int IntValue;
+
+    switch (Locs(Value))
+    {
+        case "row":
+            Layout = 1;
+            break;
+        case "column":
+        default:
+            // Non-int values get parsed as 0
+            Layout = Clamp(int(Value), 0, 1);
+            break;
+    }
+
+    SaveConfig();
+}
+
 exec function SetFHUDItemsPerColumn(int Value)
 {
     ItemsPerColumn = Max(Value, 1);
     SaveConfig();
 }
 
-exec function SetFHUDReverse(bool Value)
+exec function SetFHUDItemsPerRow(int Value)
 {
-    Reverse = Value;
+    ItemsPerRow = Max(Value, 1);
+    SaveConfig();
+}
+
+exec function SetFHUDReverseX(bool Value)
+{
+    ReverseX = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDReverseY(bool Value)
+{
+    ReverseY = Value;
     SaveConfig();
 }
 

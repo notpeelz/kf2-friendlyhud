@@ -114,10 +114,21 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
             if (KFPRI != KFPlayerOwner.PlayerReplicationInfo && KFPRI.HasHadInitialSpawn())
             `endif
             {
-                Column = ItemCount / HudConfig.ItemsPerColumn;
-                Row = ItemCount % HudConfig.ItemsPerColumn;
-                CurrentItemPosX = ScreenPosX + TotalItemWidth * Column;
-                CurrentItemPosY = ScreenPosY + TotalItemHeight * (HUDConfig.Reverse ? (HudConfig.ItemsPerColumn - 1 - Row) : Row);
+                // Layout: row first
+                if (HUDConfig.Layout == 1)
+                {
+                    Column = ItemCount % HUDConfig.ItemsPerRow;
+                    Row = ItemCount / HUDConfig.ItemsPerRow;
+                }
+                // Layout: column first
+                else
+                {
+                    Column = ItemCount / HudConfig.ItemsPerColumn;
+                    Row = ItemCount % HudConfig.ItemsPerColumn;
+                }
+
+                CurrentItemPosX = ScreenPosX + TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column);
+                CurrentItemPosY = ScreenPosY + TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row);
 
                 if (DrawHealthBarItem(Canvas, FHUDRepInfo.KFPHArray[I], KFPRI, CurrentItemPosX, CurrentItemPosY, PerkIconSize, FontScale))
                 {
