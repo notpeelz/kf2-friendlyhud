@@ -91,7 +91,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
         : (DI.x + HUD.HUDMovie.PlayerStatusContainer.GetFloat("width"));
     ScreenPosY = Canvas.ClipY + DI.y;
     // Move down by 30% of the height of the playerstats UI component
-    ScreenPosY += (Canvas.ClipY - ScreenPosY) * 0.3f * BaseResScale;
+    ScreenPosY += (Canvas.ClipY - ScreenPosY) * 0.3f;
 
     ScreenPosX += HUDConfig.OffsetX * BaseResScale;
     ScreenPosY += HUDConfig.OffsetY * BaseResScale;

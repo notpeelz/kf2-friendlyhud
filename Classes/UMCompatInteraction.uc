@@ -65,7 +65,7 @@ function DrawMedicWeaponRecharge(Canvas Canvas)
     IconBaseX = Canvas.ClipX + DI.x - IconWidth;
     IconBaseY = Canvas.ClipY + DI.y;
     // Move down by 50% of the height of the playerbackpack UI component
-    IconBaseY += (Canvas.ClipY - IconBaseY) * 0.5f * ResScale;
+    IconBaseY += (Canvas.ClipY - IconBaseY) * 0.5f;
 
     foreach KFPlayerOwner.Pawn.InvManager.InventoryActors(class'KFGameContent.KFWeap_MedicBase', KFWMB)
     {
