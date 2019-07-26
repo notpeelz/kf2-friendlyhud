@@ -71,8 +71,6 @@ exec function SetFHUDScale(float Value)
 
 exec function SetFHUDLayout(string Value)
 {
-    local int IntValue;
-
     switch (Locs(Value))
     {
         case "row":

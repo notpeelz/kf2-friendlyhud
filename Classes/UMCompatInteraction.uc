@@ -46,7 +46,7 @@ function DrawMedicWeaponRecharge(Canvas Canvas)
     local KFWeap_MedicBase KFWMB;
     local int MedicWeaponCount;
     local float IconBaseX, IconBaseY, IconHeight, IconWidth;
-    local float ScreenRatioX, ScreenRatioY, ChargePct, ChargeBaseY, WeaponBaseX;
+    local float ScreenRatioY, ChargePct, ChargeBaseY, WeaponBaseX;
     local Color ChargeColor;
 
     if (HUD.HUDMovie.bIsSpectating) return;
@@ -58,7 +58,6 @@ function DrawMedicWeaponRecharge(Canvas Canvas)
     DI = HUD.HUDMovie.PlayerBackpackContainer.GetDisplayInfo();
     ResScale = class'FriendlyHUD.FriendlyHUDHelper'.static.GetResolutionScale(Canvas);
 
-    ScreenRatioX = Canvas.ClipX / 1920.0;
     ScreenRatioY = Canvas.ClipY / 1080.0;
     IconHeight = class'UnofficialMod.KFGFxHudWrapper_UM'.default.MedicWeaponHeight * ScreenRatioY;
     IconWidth = IconHeight / 2.f;

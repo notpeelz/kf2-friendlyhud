@@ -2,9 +2,20 @@ class FriendlyHUDReplicationInfo extends ReplicationInfo;
 
 const REP_INFO_COUNT = 8;
 
+struct BarInfo
+{
+    var int Value;
+    var int MaxValue;
+};
+
+var BarInfo EMPTY_BAR_INFO;
+
 var Controller PCArray[REP_INFO_COUNT];
 var KFPawn_Human KFPHArray[REP_INFO_COUNT];
 var KFPlayerReplicationInfo KFPRIArray[REP_INFO_COUNT];
+
+var BarInfo HealthInfoArray[REP_INFO_COUNT];
+var BarInfo ArmorInfoArray[REP_INFO_COUNT];
 var int RegenHealthArray[REP_INFO_COUNT];
 
 var FriendlyHUDConfig HUDConfig;
@@ -14,7 +25,7 @@ replication
 {
     // We don't need to replicate PCArray
     if (bNetDirty)
-        KFPHArray, KFPRIArray, RegenHealthArray, NextRepInfo;
+        KFPHArray, KFPRIArray, HealthInfoArray, ArmorInfoArray, RegenHealthArray, NextRepInfo;
 }
 
 simulated event PostBeginPlay()
@@ -76,6 +87,8 @@ simulated function NotifyLogout(Controller C)
             PCArray[I] = None;
             KFPHArray[I] = None;
             KFPRIArray[I] = None;
+            HealthInfoArray[I] = EMPTY_BAR_INFO;
+            ArmorInfoArray[I] = EMPTY_BAR_INFO;
             RegenHealthArray[I] = 0;
             return;
         }
@@ -90,27 +103,37 @@ simulated function NotifyLogout(Controller C)
 
 function UpdateInfo()
 {
+    local KFPawn_Human KFPH;
+    local KFPlayerReplicationInfo KFPRI;
     local int I;
 
     for (I = 0; I < REP_INFO_COUNT; I++)
     {
         if (PCArray[I] == None) continue;
 
-        KFPHArray[I] = KFPawn_Human(PCArray[I].Pawn);
-        if (KFPHArray[I] != None)
+        KFPH = KFPawn_Human(PCArray[I].Pawn);
+        KFPRI = KFPlayerReplicationInfo(PCArray[I].PlayerReplicationInfo);
+
+        KFPHArray[I] = KFPH;
+        KFPRIArray[I] = KFPRI;
+
+        if (KFPH != None)
         {
-            KFPHArray[I].bAlwaysRelevant = true;
+            HealthInfoArray[I].Value = KFPH.Health;
+            HealthInfoArray[I].MaxValue = KFPH.HealthMax;
+
+            ArmorInfoArray[I].Value = KFPH.Armor;
+            ArmorInfoArray[I].MaxValue = KFPH.MaxArmor;
+        }
+        else
+        {
+            HealthInfoArray[I] = EMPTY_BAR_INFO;
+            ArmorInfoArray[I] = EMPTY_BAR_INFO;
         }
 
-        KFPRIArray[I] = KFPlayerReplicationInfo(PCArray[I].PlayerReplicationInfo);
-        if (KFPRIArray[I] != None)
+        if (KFPH != None && KFPH.Health > 0 && KFPH.HealthToRegen > 0)
         {
-            KFPRIArray[I].bAlwaysRelevant = true;
-        }
-
-        if (KFPHArray[I] != None && KFPHArray[I].Health > 0 && KFPHArray[I].HealthToRegen > 0)
-        {
-            RegenHealthArray[I] = KFPHArray[I].Health + KFPHArray[I].HealthToRegen;
+            RegenHealthArray[I] = KFPH.Health + KFPH.HealthToRegen;
         }
         else
         {
@@ -119,19 +142,11 @@ function UpdateInfo()
     }
 }
 
-simulated function int GetRegenHealth(KFPawn_Human KFPH)
+simulated function GetPlayerInfo(int Index, out BarInfo ArmorInfo, out BarInfo HealthInfo, out int RegenHealth)
 {
-    local int I;
-
-    for (I = 0; I < REP_INFO_COUNT; I++)
-    {
-        if (KFPHArray[I] == KFPH)
-        {
-            return (RegenHealthArray[I] > 0 ? RegenHealthArray[I] - KFPH.Health : 0);
-        }
-    }
-
-    return (NextRepInfo != None ? NextRepInfo.GetRegenHealth(KFPH) : 0);
+    ArmorInfo = ArmorInfoArray[Index];
+    HealthInfo = HealthInfoArray[Index];
+    RegenHealth = RegenHealthArray[Index];
 }
 
 function bool IsPlayerRegistered(Controller C)

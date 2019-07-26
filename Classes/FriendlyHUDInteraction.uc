@@ -1,5 +1,13 @@
 class FriendlyHUDInteraction extends Interaction
-    dependson(FriendlyHUDMutator, FriendlyHUDConfig);
+    dependson(FriendlyHUDMutator, FriendlyHUDConfig, FriendlyHUDReplicationInfo);
+
+struct PlayerItemInfo
+{
+    var KFPawn_Human KFPH;
+    var KFPlayerReplicationInfo KFPRI;
+    var FriendlyHUDReplicationInfo RepInfo;
+    var int RepIndex;
+};
 
 var KFGFxHudWrapper HUD;
 var KFPlayerController KFPlayerOwner;
@@ -54,6 +62,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     local float CurrentItemPosX, CurrentItemPosY;
     local float PerkIconSize;
     local int I, ItemCount, Column, Row;
+    local PlayerItemInfo ItemInfo;
 
     if (HUD.HUDMovie == None || HUD.HUDMovie.PlayerStatusContainer == None)
     {
@@ -130,7 +139,12 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
                 CurrentItemPosX = ScreenPosX + TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column);
                 CurrentItemPosY = ScreenPosY + TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row);
 
-                if (DrawHealthBarItem(Canvas, FHUDRepInfo.KFPHArray[I], KFPRI, CurrentItemPosX, CurrentItemPosY, PerkIconSize, FontScale))
+                ItemInfo.KFPH = FHUDRepInfo.KFPHArray[I];
+                ItemInfo.KFPRI = KFPRI;
+                ItemInfo.RepInfo = FHUDRepInfo;
+                ItemInfo.RepIndex = I;
+
+                if (DrawHealthBarItem(Canvas, ItemInfo, CurrentItemPosX, CurrentItemPosY, PerkIconSize, FontScale))
                 {
                     ItemCount++;
                 }
@@ -140,15 +154,27 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     }
 }
 
-simulated function bool DrawHealthBarItem(Canvas Canvas, KFPawn_Human KFPH, KFPlayerReplicationInfo KFPRI, float PosX, float PosY, float PerkIconSize, float FontScale)
+simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo, float PosX, float PosY, float PerkIconSize, float FontScale)
 {
     local float PerkIconPosX, PerkIconPosY;
     local FontRenderInfo TextFontRenderInfo;
+    local KFPlayerReplicationInfo KFPRI;
+    local KFPawn_Human KFPH;
+    local Texture2D PlayerIcon;
+    local bool DrawPrestigeBorder;
     local float ArmorRatio, HealthRatio;
-    local float HealthToRegen;
+    local BarInfo ArmorInfo, HealthInfo;
+    local EVoiceCommsType VoiceReq;
+    local int HealthToRegen;
 
-    ArmorRatio = KFPH != None ? float(KFPH.Armor) / float(KFPH.MaxArmor) : 0.f;
-    HealthRatio = KFPH != None ? float(KFPH.Health) / float(KFPH.HealthMax) : 0.f;
+    KFPRI = ItemInfo.KFPRI;
+    KFPH = ItemInfo.KFPH;
+    ItemInfo.RepInfo.GetPlayerInfo(ItemInfo.RepIndex, ArmorInfo, HealthInfo, HealthToRegen);
+    VoiceReq = KFPRI.CurrentVoiceCommsRequest;
+    HealthToRegen = HealthToRegen > 0 ? HealthToRegen - HealthInfo.Value : 0;
+
+    ArmorRatio = ArmorInfo.MaxValue > 0 ? (float(ArmorInfo.Value) / float(ArmorInfo.MaxValue)) : 0.f;
+    HealthRatio = HealthInfo.MaxValue > 0 ? (float(HealthInfo.Value) / float(HealthInfo.MaxValue)) : 0.f;
 
     // If enabled, don't render dead teammates
     if (HUDConfig.IgnoreDeadTeammates && HealthRatio <= 0.f) return false;
@@ -191,7 +217,6 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, KFPawn_Human KFPH, KFPl
     );
 
     // Draw the regen health buffer over the health bar
-    HealthToRegen = KFPH != None ? FHUDMutator.RepInfo.GetRegenHealth(KFPH) : 0;
     if (HealthToRegen > 0)
     {
         Canvas.DrawColor = HUDConfig.HealthRegenColor;
@@ -207,16 +232,19 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, KFPawn_Human KFPH, KFPl
         );
     }
 
+    PlayerIcon = GetPlayerIcon(KFPRI, VoiceReq);
+    DrawPrestigeBorder = VoiceReq == VCT_NONE;
+
     // Draw drop shadow behind the perk icon
     Canvas.DrawColor = HUDConfig.ShadowColor;
     PerkIconPosX = PosX + 1;
     PerkIconPosY = PosY + (TextHeight + NameMarginY) / 2.f;
-    DrawPerkIcon(Canvas, KFPRI, PerkIconSize, PerkIconPosX, PerkIconPosY);
+    DrawPerkIcon(Canvas, KFPRI, PlayerIcon, DrawPrestigeBorder, PerkIconSize, PerkIconPosX, PerkIconPosY);
 
     // Draw perk icon
     Canvas.DrawColor = HUDConfig.IconColor;
     PerkIconPosX -= 1;
-    DrawPerkIcon(Canvas, KFPRI, PerkIconSize, PerkIconPosX, PerkIconPosY);
+    DrawPerkIcon(Canvas, KFPRI, PlayerIcon, DrawPrestigeBorder, PerkIconSize, PerkIconPosX, PerkIconPosY);
 
     return true;
 }
@@ -233,13 +261,13 @@ simulated function DrawBar(Canvas Canvas, float BarPercentage, float PosX, float
     Canvas.DrawTile(BarBGTexture, (BarWidth - 2.0) * BarPercentage, BarHeight - 2.0, 0, 0, 32, 32);
 }
 
-simulated function DrawPerkIcon(Canvas Canvas, KFPlayerReplicationInfo KFPRI, float PerkIconSize, float PerkIconPosX, float PerkIconPosY)
+simulated function DrawPerkIcon(Canvas Canvas, KFPlayerReplicationInfo KFPRI, Texture2D PlayerIcon, bool DrawPrestigeBorder, float PerkIconSize, float PerkIconPosX, float PerkIconPosY)
 {
     local byte PrestigeLevel;
 
     PrestigeLevel = KFPRI.GetActivePerkPrestigeLevel();
 
-    if (KFPRI.CurrentVoiceCommsRequest == VCT_NONE && KFPRI.CurrentPerkClass != None && PrestigeLevel > 0)
+    if (DrawPrestigeBorder && KFPRI.CurrentPerkClass != None && PrestigeLevel > 0)
     {
         Canvas.SetPos(PerkIconPosX, PerkIconPosY);
         Canvas.DrawTile(KFPRI.CurrentPerkClass.default.PrestigeIcons[PrestigeLevel - 1], PerkIconSize, PerkIconSize, 0, 0, 256, 256);
@@ -248,13 +276,23 @@ simulated function DrawPerkIcon(Canvas Canvas, KFPlayerReplicationInfo KFPRI, fl
     if (PrestigeLevel > 0)
     {
         Canvas.SetPos(PerkIconPosX + (PerkIconSize * (1 - PrestigeIconScale)) / 2, PerkIconPosY + PerkIconSize * 0.05f);
-        Canvas.DrawTile(KFPRI.GetCurrentIconToDisplay(), PerkIconSize * PrestigeIconScale, PerkIconSize * PrestigeIconScale, 0, 0, 256, 256);
+        Canvas.DrawTile(PlayerIcon, PerkIconSize * PrestigeIconScale, PerkIconSize * PrestigeIconScale, 0, 0, 256, 256);
     }
     else
     {
         Canvas.SetPos(PerkIconPosX, PerkIconPosY);
-        Canvas.DrawTile(KFPRI.GetCurrentIconToDisplay(), PerkIconSize, PerkIconSize, 0, 0, 256, 256);
+        Canvas.DrawTile(PlayerIcon, PerkIconSize, PerkIconSize, 0, 0, 256, 256);
     }
+}
+
+simulated function Texture2D GetPlayerIcon(KFPlayerReplicationInfo KFPRI, EVoiceCommsType VoiceReq)
+{
+    if (VoiceReq == VCT_NONE && KFPRI.CurrentPerkClass != none)
+    {
+        return KFPRI.CurrentPerkClass.default.PerkIcon;
+    }
+
+    return class'KFLocalMessage_VoiceComms'.default.VoiceCommsIcons[VoiceReq];
 }
 
 defaultproperties
