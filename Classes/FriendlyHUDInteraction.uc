@@ -15,7 +15,6 @@ var float NameMarginY;
 var float ScreenPosX, ScreenPosY;
 
 const PrestigeIconScale = 0.75f;
-const FHUD_ItemsPerColumn = 3;
 const FHUD_PlayerStatusIconSize = 32.f;
 const FHUD_BarWidth = 200.f; // 200 pixels wide at 1080p
 const FHUD_BarHeight = 10.f; // 10 pixels high at 1080p
@@ -112,10 +111,10 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
             if (KFPRI != KFPlayerOwner.PlayerReplicationInfo && KFPRI.HasHadInitialSpawn())
             `endif
             {
-                Column = ItemCount / FHUD_ItemsPerColumn;
-                Row = ItemCount % FHUD_ItemsPerColumn;
+                Column = ItemCount / HudConfig.ItemsPerColumn;
+                Row = ItemCount % HudConfig.ItemsPerColumn;
                 CurrentItemPosX = ScreenPosX + TotalItemWidth * Column;
-                CurrentItemPosY = ScreenPosY + TotalItemHeight * (HUDConfig.Reverse ? (FHUD_ItemsPerColumn - 1 - Row) : Row);
+                CurrentItemPosY = ScreenPosY + TotalItemHeight * (HUDConfig.Reverse ? (HudConfig.ItemsPerColumn - 1 - Row) : Row);
 
                 if (DrawHealthBarItem(Canvas, FHUDRepInfo.KFPHArray[I], KFPRI, CurrentItemPosX, CurrentItemPosY, PerkIconSize, FontScale))
                 {
@@ -248,5 +247,5 @@ defaultproperties
 {
     AxisXLineColor = (R=0, G=192, B=0, A=192);
     AxisYLineColor = (R=0, G=100, B=210, A=192);
-    BarBGTexture=Texture2D'EngineResources.WhiteSquareTexture'
+    BarBGTexture = Texture2D'EngineResources.WhiteSquareTexture'
 }

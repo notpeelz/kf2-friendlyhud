@@ -3,6 +3,7 @@ class FriendlyHUDConfig extends Interaction
 
 var config int INIVersion;
 var config float Scale;
+var config int ItemsPerColumn;
 var config float ItemMarginX;
 var config float ItemMarginY;
 var config Color ShadowColor;
@@ -33,6 +34,7 @@ simulated function LoadDefaultFHUDConfig()
 {
     INIVersion = 1;
     Scale = 1.f;
+    ItemsPerColumn = 3;
     ItemMarginX = 10.f;
     ItemMarginY = 5.f;
     ShadowColor = MakeColor(0, 0, 0, 255);
@@ -54,6 +56,12 @@ simulated function LoadDefaultFHUDConfig()
 exec function SetFHUDScale(float Value)
 {
     Scale = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDItemsPerColumn(int Value)
+{
+    ItemsPerColumn = Max(Value, 1);
     SaveConfig();
 }
 
