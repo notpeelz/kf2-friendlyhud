@@ -6,6 +6,8 @@ var config float Scale;
 var config int ItemsPerColumn;
 var config float ItemMarginX;
 var config float ItemMarginY;
+var config float OffsetX;
+var config float OffsetY;
 var config Color ShadowColor;
 var config Color TextColor;
 var config Color IconColor;
@@ -37,6 +39,8 @@ simulated function LoadDefaultFHUDConfig()
     ItemsPerColumn = 3;
     ItemMarginX = 10.f;
     ItemMarginY = 5.f;
+    OffsetX = 0.f;
+    OffsetY = 0.f;
     ShadowColor = MakeColor(0, 0, 0, 255);
     TextColor = MakeColor(255, 255, 255, 192);
     IconColor = MakeColor(255, 255, 255, 192);
@@ -110,6 +114,18 @@ exec function SetFHUDItemMarginX(float Value)
 exec function SetFHUDItemMarginY(float Value)
 {
     ItemMarginY = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDOffsetX(float Value)
+{
+    OffsetX = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDOffsetY(float Value)
+{
+    OffsetY = Value;
     SaveConfig();
 }
 

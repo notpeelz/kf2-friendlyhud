@@ -84,6 +84,9 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     // Move down by 30% of the height of the playerstats UI component
     ScreenPosY += (Canvas.ClipY - ScreenPosY) * 0.3f * BaseResScale;
 
+    ScreenPosX += HUDConfig.OffsetX * BaseResScale;
+    ScreenPosY += HUDConfig.OffsetY * BaseResScale;
+
     if (HUDConfig.DrawDebugLines)
     {
         Canvas.Draw2DLine(ScreenPosX, 0.f, ScreenPosX, Canvas.ClipY, AxisYLineColor);
