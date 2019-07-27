@@ -42,7 +42,6 @@ event PostRender(Canvas Canvas)
 function DrawMedicWeaponRecharge(Canvas Canvas)
 {
     local ASDisplayInfo DI;
-    local float ResScale;
     local KFWeap_MedicBase KFWMB;
     local int MedicWeaponCount;
     local float IconBaseX, IconBaseY, IconHeight, IconWidth;
@@ -56,16 +55,14 @@ function DrawMedicWeaponRecharge(Canvas Canvas)
     MedicWeaponCount = 0;
 
     DI = HUD.HUDMovie.PlayerBackpackContainer.GetDisplayInfo();
-    ResScale = class'FriendlyHUD.FriendlyHUDHelper'.static.GetResolutionScale(Canvas);
 
     ScreenRatioY = Canvas.ClipY / 1080.0;
     IconHeight = class'UnofficialMod.KFGFxHudWrapper_UM'.default.MedicWeaponHeight * ScreenRatioY;
     IconWidth = IconHeight / 2.f;
 
     IconBaseX = Canvas.ClipX + DI.x - IconWidth;
-    IconBaseY = Canvas.ClipY + DI.y;
-    // Move down by 50% of the height of the playerbackpack UI component
-    IconBaseY += (Canvas.ClipY - IconBaseY) * 0.5f;
+    IconBaseY = Canvas.ClipY + DI.y + HUD.HUDMovie.PlayerBackpackContainer.GetFloat("height");
+    IconBaseY -= HUD.HUDMovie.PlayerBackpackContainer.GetFloat("height") * 0.15f + IconHeight;
 
     foreach KFPlayerOwner.Pawn.InvManager.InventoryActors(class'KFGameContent.KFWeap_MedicBase', KFWMB)
     {
