@@ -25,6 +25,7 @@ var config bool DisableHUD;
 var config bool DrawDebugLines;
 var config bool ReverseX;
 var config bool ReverseY;
+var config bool IgnoreSelf;
 var config bool IgnoreDeadTeammates;
 var config float MinHealthThreshold;
 var config bool UMCompatEnabled;
@@ -65,6 +66,7 @@ simulated function LoadDefaultFHUDConfig()
     DrawDebugLines = false;
     ReverseX = false;
     ReverseY = false;
+    IgnoreSelf = true;
     IgnoreDeadTeammates = true;
     MinHealthThreshold = 1.f;
     UMCompatEnabled = true;
@@ -205,6 +207,12 @@ exec function SetFHUDDrawDebugLines(bool Value)
 exec function SetFHUDEnabled(bool Value)
 {
     DisableHUD = !Value;
+    SaveConfig();
+}
+
+exec function SetFHUDIgnoreSelf(bool Value)
+{
+    IgnoreSelf = Value;
     SaveConfig();
 }
 

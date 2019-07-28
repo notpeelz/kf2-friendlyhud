@@ -124,9 +124,9 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
 
             `if(`isdefined(debug))
             // HasHadInitialSpawn() doesn't work on bots
-            if (KFPRI != KFPlayerOwner.PlayerReplicationInfo)
+            if (KFPRI != KFPlayerOwner.PlayerReplicationInfo || !HUDConfig.IgnoreSelf)
             `else
-            if (KFPRI != KFPlayerOwner.PlayerReplicationInfo && KFPRI.HasHadInitialSpawn())
+            if ((KFPRI != KFPlayerOwner.PlayerReplicationInfo || !HUDConfig.IgnoreSelf) && KFPRI.HasHadInitialSpawn())
             `endif
             {
                 // Layout: row first
