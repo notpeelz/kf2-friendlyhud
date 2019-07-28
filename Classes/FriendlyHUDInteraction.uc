@@ -98,8 +98,8 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     if (HUDConfig.Layout == 0)
     {
         ScreenPosX = HUD.HUDMovie.bIsSpectating
-            ? (StatsDI.x + HUD.HUDMovie.PlayerStatusContainer.GetFloat("width") * 0.1f + BuffIconMarginX)
-            : (StatsDI.x + HUD.HUDMovie.PlayerStatusContainer.GetFloat("width") + BuffIconMarginX);
+            ? (StatsDI.x + HUD.HUDMovie.PlayerStatusContainer.GetFloat("width") * 0.1f + BuffIconMarginX + BuffIconSize)
+            : (StatsDI.x + HUD.HUDMovie.PlayerStatusContainer.GetFloat("width") + BuffIconMarginX+ BuffIconSize);
         ScreenPosY = Canvas.ClipY + StatsDI.y;
         // Move down by 30% of the height of the playerstats UI component
         ScreenPosY += (Canvas.ClipY - ScreenPosY) * 0.3f;
@@ -107,7 +107,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     // Layout: Left
     else if (HUDConfig.Layout == 1)
     {
-        ScreenPosX = StatsDI.x + BuffIconMarginX;
+        ScreenPosX = StatsDI.x + BuffIconMarginX + BuffIconSize;
         ScreenPosY = HUD.HUDMovie.bIsSpectating
             ? (Canvas.ClipY + StatsDI.y + HUD.HUDMovie.PlayerStatusContainer.GetFloat("height") * 0.1f)
             : (Canvas.ClipY + StatsDI.y);
@@ -115,9 +115,9 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     // Layout: Right
     else if (HUDConfig.Layout == 2)
     {
-        ScreenPosX = Canvas.ClipX + GearDI.x + HUD.HUDMovie.PlayerBackpackContainer.GetFloat("width") - BuffIconMarginX - TotalItemWidth;
+        ScreenPosX = Canvas.ClipX + GearDI.x + HUD.HUDMovie.PlayerBackpackContainer.GetFloat("width") - BuffIconMarginX - BuffIconSize - TotalItemWidth;
         ScreenPosY = HUD.HUDMovie.bIsSpectating
-            ? (Canvas.ClipY + GearDI.y + HUD.HUDMovie.PlayerBackpackContainer.GetFloat("height") * 0.1f)
+            ? (Canvas.ClipY + GearDI.y + HUD.HUDMovie.PlayerBackpackContainer.GetFloat("height") * 0.9f)
             : (Canvas.ClipY + GearDI.y);
     }
 
