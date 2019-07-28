@@ -1,11 +1,13 @@
 class FriendlyHUDMutator extends KFMutator
     hidecategories(Navigation,Movement,Collision);
 
-
 var KFPlayerController KFPC;
 var KFGFxHudWrapper HUD;
 var FriendlyHUDConfig HUDConfig;
 var FriendlyHUDReplicationInfo RepInfo;
+
+var int LocalSpeedBoost;
+var float LocalSpeedBoostTimer;
 
 replication
 {
@@ -22,6 +24,7 @@ simulated function PostBeginPlay()
     if (Role == ROLE_Authority)
     {
         RepInfo = Spawn(class'FriendlyHUD.FriendlyHUDReplicationInfo', Self);
+        RepInfo.LocalPC = KFPC;
         RepInfo.HUDConfig = HUDConfig;
         `if(`isdefined(debug))
         SetTimer(2.0, true, nameof(CheckBots));

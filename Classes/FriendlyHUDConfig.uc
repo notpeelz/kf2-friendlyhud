@@ -8,6 +8,9 @@ var config int ItemsPerColumn;
 var config int ItemsPerRow;
 var config float ItemMarginX;
 var config float ItemMarginY;
+var config float BuffSize;
+var config float BuffMarginX;
+var config float BuffMarginY;
 var config float OffsetX;
 var config float OffsetY;
 var config Color ShadowColor;
@@ -17,6 +20,7 @@ var config Color BGColor;
 var config Color ArmorColor;
 var config Color HealthColor;
 var config Color HealthRegenColor;
+var config Color BuffColor;
 var config bool DisableHUD;
 var config bool DrawDebugLines;
 var config bool ReverseX;
@@ -42,8 +46,11 @@ simulated function LoadDefaultFHUDConfig()
     Layout = 0;
     ItemsPerColumn = 3;
     ItemsPerRow = 5;
-    ItemMarginX = 10.f;
+    ItemMarginX = 14.f;
     ItemMarginY = 5.f;
+    BuffSize = 8.f;
+    BuffMarginX = 2.f;
+    BuffMarginY = 3.f;
     OffsetX = 0.f;
     OffsetY = 0.f;
     ShadowColor = MakeColor(0, 0, 0, 255);
@@ -53,6 +60,7 @@ simulated function LoadDefaultFHUDConfig()
     ArmorColor = MakeColor(0, 100, 210, 192);
     HealthColor = MakeColor(0, 192, 0, 192);
     HealthRegenColor = MakeColor(0, 70, 0, 192);
+    BuffColor = MakeColor(255, 255, 255, 192);
     DisableHUD = false;
     DrawDebugLines = false;
     ReverseX = false;
@@ -140,6 +148,12 @@ exec function SetFHUDHealthRegenColor(Color Value)
     SaveConfig();
 }
 
+exec function SetFHUDBuffColor(Color Value)
+{
+    BuffColor = Value;
+    SaveConfig();
+}
+
 exec function SetFHUDItemMarginX(float Value)
 {
     ItemMarginX = Value;
@@ -149,6 +163,24 @@ exec function SetFHUDItemMarginX(float Value)
 exec function SetFHUDItemMarginY(float Value)
 {
     ItemMarginY = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDBuffSize(float Value)
+{
+    BuffSize = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDBuffMarginX(float Value)
+{
+    BuffMarginX = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDBuffMarginY(float Value)
+{
+    BuffMarginY = Value;
     SaveConfig();
 }
 

@@ -19,6 +19,8 @@ struct MedBuffInfo
 var BarInfo EMPTY_BAR_INFO;
 var MedBuffInfo EMPTY_BUFF_INFO;
 
+var KFPlayerController LocalPC;
+
 var Controller PCArray[REP_INFO_COUNT];
 var KFPawn_Human KFPHArray[REP_INFO_COUNT];
 var KFPlayerReplicationInfo KFPRIArray[REP_INFO_COUNT];
@@ -27,10 +29,12 @@ var BarInfo HealthInfoArray[REP_INFO_COUNT];
 var BarInfo ArmorInfoArray[REP_INFO_COUNT];
 var int RegenHealthArray[REP_INFO_COUNT];
 var MedBuffInfo MedBuffArray[REP_INFO_COUNT];
-var float SpeedBuffTimerArray[REP_INFO_COUNT];
+var float SpeedBoostTimerArray[REP_INFO_COUNT];
 
 var FriendlyHUDConfig HUDConfig;
 var FriendlyHUDReplicationInfo NextRepInfo;
+
+const TIMER_RESET_VALUE = 1337.f;
 
 replication
 {
@@ -67,6 +71,7 @@ simulated function NotifyLogin(Controller C)
         if (PCArray[I] == None)
         {
             PCArray[I] = C;
+            SpeedBoostTimerArray[I] = TIMER_RESET_VALUE;
             return;
         }
     }
@@ -75,6 +80,7 @@ simulated function NotifyLogin(Controller C)
     if (NextRepInfo == None)
     {
         NextRepInfo = Spawn(class'FriendlyHUD.FriendlyHUDReplicationInfo', Owner);
+        NextRepInfo.LocalPC = LocalPC;
         NextRepInfo.HUDConfig = HUDConfig;
     }
 
@@ -102,7 +108,7 @@ simulated function NotifyLogout(Controller C)
             ArmorInfoArray[I] = EMPTY_BAR_INFO;
             RegenHealthArray[I] = 0;
             MedBuffArray[I] = EMPTY_BUFF_INFO;
-            SpeedBuffTimerArray[I] = 0.f;
+            SpeedBoostTimerArray[I] = TIMER_RESET_VALUE;
             return;
         }
     }
@@ -118,7 +124,6 @@ function UpdateInfo()
 {
     local KFPawn_Human KFPH;
     local KFPlayerReplicationInfo KFPRI;
-    local float TimerCount;
     local float DmgBoostModifier, DmgResistanceModifier;
     local int I;
 
@@ -148,20 +153,11 @@ function UpdateInfo()
 
             MedBuffArray[I].DamageBoost = Min(Round(DmgBoostModifier / class'KFPerk_FieldMedic'.static.GetHealingDamageBoost()), MAX_BUFF_COUNT);
             MedBuffArray[I].DamageResistance = Min(Round(DmgResistanceModifier / class'KFPerk_FieldMedic'.static.GetHealingShield()), MAX_BUFF_COUNT);
+            UpdateSpeedBoost(I);
 
-            if (!IsTimerActive('ResetHealingSpeedBoost', KFPH))
+            if (KFPH.Health > 0)
             {
-                MedBuffArray[I].SpeedBoost = 0;
-                SpeedBuffTimerArray[I] = 0.f;
-            }
-            else
-            {
-                TimerCount = GetTimerCount('ResetHealingSpeedBoost', KFPH);
-                if (TimerCount <= SpeedBuffTimerArray[I])
-                {
-                    MedBuffArray[I].SpeedBoost = Min(MedBuffArray[I].SpeedBoost + 1, MAX_BUFF_COUNT);
-                }
-                SpeedBuffTimerArray[I] = TimerCount;
+                RegenHealthArray[I] = KFPH.Health + KFPH.HealthToRegen;
             }
         }
         else
@@ -169,25 +165,42 @@ function UpdateInfo()
             HealthInfoArray[I] = EMPTY_BAR_INFO;
             ArmorInfoArray[I] = EMPTY_BAR_INFO;
             MedBuffArray[I] = EMPTY_BUFF_INFO;
-            SpeedBuffTimerArray[I] = 0.f;
-        }
-
-        if (KFPH != None && KFPH.Health > 0 && KFPH.HealthToRegen > 0)
-        {
-            RegenHealthArray[I] = KFPH.Health + KFPH.HealthToRegen;
-        }
-        else
-        {
             RegenHealthArray[I] = 0;
+            SpeedBoostTimerArray[I] = TIMER_RESET_VALUE;
         }
     }
 }
 
-simulated function GetPlayerInfo(int Index, out BarInfo ArmorInfo, out BarInfo HealthInfo, out int RegenHealth)
+function UpdateSpeedBoost(int Index)
+{
+    local KFPawn_Human KFPH;
+    local float TimerCount;
+
+    KFPH = KFPHArray[Index];
+
+    if (KFPH == None || !KFPH.IsTimerActive(nameof(KFPH.ResetHealingSpeedBoost)))
+    {
+        MedBuffArray[Index].SpeedBoost = 0;
+        SpeedBoostTimerArray[Index] = TIMER_RESET_VALUE;
+    }
+    else
+    {
+        TimerCount = KFPH.GetTimerCount(nameof(KFPH.ResetHealingSpeedBoost));
+        if (TimerCount <= SpeedBoostTimerArray[Index])
+        {
+            MedBuffArray[Index].SpeedBoost = Min(MedBuffArray[Index].SpeedBoost + 1, class'FriendlyHUDReplicationInfo'.const.MAX_BUFF_COUNT);
+        }
+
+        SpeedBoostTimerArray[Index] = TimerCount;
+    }
+}
+
+simulated function GetPlayerInfo(int Index, out BarInfo ArmorInfo, out BarInfo HealthInfo, out int RegenHealth, out MedBuffInfo BuffInfo)
 {
     ArmorInfo = ArmorInfoArray[Index];
     HealthInfo = HealthInfoArray[Index];
     RegenHealth = RegenHealthArray[Index];
+    BuffInfo = MedBuffArray[Index];
 }
 
 function bool IsPlayerRegistered(Controller C)
