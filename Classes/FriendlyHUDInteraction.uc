@@ -71,6 +71,9 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
         return;
     }
 
+    // If only enabled for medic and we're not a medic, don't render
+    if (KFPerk_FieldMedic(KFPlayerOwner.GetPerk()) == None && HUDConfig.OnlyForMedic) return;
+
     StatsDI = HUD.HUDMovie.PlayerStatusContainer.GetDisplayInfo();
     GearDI = HUD.HUDMovie.PlayerBackpackContainer.GetDisplayInfo();
 

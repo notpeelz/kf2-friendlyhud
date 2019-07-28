@@ -23,6 +23,7 @@ var config Color HealthColor;
 var config Color HealthRegenColor;
 var config Color BuffColor;
 var config bool DisableHUD;
+var config bool OnlyForMedic;
 var config bool DrawDebugLines;
 var config bool ReverseX;
 var config bool ReverseY;
@@ -63,6 +64,7 @@ simulated function LoadDefaultFHUDConfig(optional bool ResetColors = true)
     }
 
     DisableHUD = false;
+    OnlyForMedic = false;
     DrawDebugLines = false;
     ReverseX = false;
     ReverseY = false;
@@ -348,6 +350,12 @@ exec function SetFHUDDrawDebugLines(bool Value)
 exec function SetFHUDEnabled(bool Value)
 {
     DisableHUD = !Value;
+    SaveConfig();
+}
+
+exec function SetFHUDOnlyForMedic(bool Value)
+{
+    OnlyForMedic = Value;
     SaveConfig();
 }
 
