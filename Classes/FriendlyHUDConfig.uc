@@ -41,7 +41,7 @@ simulated function Initialized()
     `Log("[FriendlyHUD] Initialized config");
 }
 
-simulated function LoadDefaultFHUDConfig()
+simulated function LoadDefaultFHUDConfig(optional bool ResetColors = true)
 {
     INIVersion = 1;
     Scale = 1.f;
@@ -56,14 +56,12 @@ simulated function LoadDefaultFHUDConfig()
     BuffMarginY = 3.f;
     OffsetX = 0.f;
     OffsetY = 0.f;
-    ShadowColor = MakeColor(0, 0, 0, 255);
-    TextColor = MakeColor(255, 255, 255, 192);
-    IconColor = MakeColor(255, 255, 255, 192);
-    BGColor = MakeColor(16, 16, 16, 192);
-    ArmorColor = MakeColor(0, 100, 210, 192);
-    HealthColor = MakeColor(0, 192, 0, 192);
-    HealthRegenColor = MakeColor(0, 70, 0, 192);
-    BuffColor = MakeColor(255, 255, 255, 192);
+
+    if (ResetColors)
+    {
+        LoadDefaultFHUDColors();
+    }
+
     DisableHUD = false;
     DrawDebugLines = false;
     ReverseX = false;
@@ -72,6 +70,124 @@ simulated function LoadDefaultFHUDConfig()
     IgnoreDeadTeammates = true;
     MinHealthThreshold = 1.f;
     UMCompatEnabled = true;
+    SaveConfig();
+}
+
+simulated function LoadDefaultFHUDColors()
+{
+    ShadowColor = MakeColor(0, 0, 0, 255);
+    TextColor = MakeColor(255, 255, 255, 192);
+    IconColor = MakeColor(255, 255, 255, 192);
+    BGColor = MakeColor(16, 16, 16, 192);
+    ArmorColor = MakeColor(0, 100, 210, 192);
+    HealthColor = MakeColor(0, 192, 0, 192);
+    HealthRegenColor = MakeColor(0, 70, 0, 192);
+    BuffColor = MakeColor(255, 255, 255, 192);
+}
+
+exec function LoadFHUDColorPreset(string Value)
+{
+    LoadDefaultFHUDColors();
+
+    switch (Locs(Value))
+    {
+        case "default":
+            break;
+        case "classic":
+            ArmorColor = MakeColor(0, 0, 255, 192);
+            HealthColor = MakeColor(95, 210, 255, 192);
+            HealthRegenColor = MakeColor(255, 255, 255, 192);
+            break;
+        case "redregen":
+            HealthRegenColor = MakeColor(255, 40, 40, 220);
+            break;
+        case "red":
+            ArmorColor = MakeColor(20, 20, 190, 192);
+            HealthColor = MakeColor(255, 0, 20, 192);
+            HealthRegenColor = MakeColor(80, 80, 180, 192);
+            break;
+        case "purple":
+            ArmorColor = MakeColor(186, 220, 255, 192);
+            HealthColor = MakeColor(85, 26, 139, 192);
+            HealthRegenColor = MakeColor(204, 186, 220, 192);
+            break;
+    }
+}
+
+exec function LoadFHUDPreset(string Value)
+{
+    LoadDefaultFHUDConfig(false);
+
+    switch (Locs(Value))
+    {
+        case "default":
+            return;
+        case "1080_l4d":
+            Layout = 0;
+            Flow = 1;
+            ItemsPerColumn = 2;
+            ItemsPerRow = 5;
+            // HACK: this is a workaround for "centering" the first row on 1920x1080
+            OffsetY = 30;
+            break;
+        case "1440_l4d":
+            Layout = 0;
+            Flow = 1;
+            Scale = 1.2f;
+            ItemsPerColumn = 2;
+            ItemsPerRow = 5;
+            // HACK: this is a workaround for "centering" the first row on 2560x1440
+            OffsetY = 40;
+            break;
+        case "1080_column2":
+            Layout = 0;
+            Flow = 0;
+            Scale = 1.2f;
+            ItemsPerColumn = 2;
+            break;
+        case "1440_column2":
+            Layout = 0;
+            Flow = 0;
+            Scale = 1.4f;
+            ItemsPerColumn = 2;
+            break;
+        case "1080_left":
+            Layout = 1;
+            Flow = 0;
+            ItemsPerColumn = 5;
+            OffsetX = 35;
+            OffsetY = -280;
+            break;
+        case "1440_left":
+            Layout = 1;
+            Flow = 0;
+            ItemsPerColumn = 6;
+            OffsetX = 50;
+            OffsetY = -280;
+            break;
+        case "1080_topright":
+            ReverseY = true;
+        case "1080_right":
+            Layout = 2;
+            Flow = 0;
+            ItemsPerColumn = 12;
+            ReverseX = true;
+            ItemsPerRow = 1;
+            OffsetY = -60;
+            break;
+        case "1440_topright":
+            ReverseY = true;
+        case "1440_right":
+            Layout = 2;
+            Flow = 0;
+            Scale = 1.1f;
+            ItemsPerColumn = 14;
+            ReverseX = true;
+            ItemsPerRow = 1;
+            OffsetY = -60;
+            break;
+    }
+
     SaveConfig();
 }
 
