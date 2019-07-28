@@ -261,39 +261,39 @@ exec function SetFHUDReverseY(bool Value)
     SaveConfig();
 }
 
-exec function SetFHUDShadowColor(Color Value)
+exec function SetFHUDShadowColor(byte R, byte G, byte B, optional byte A = 192)
 {
-    ShadowColor = Value;
+    ShadowColor = MakeColor(R, G, B, A);
     SaveConfig();
 }
 
-exec function SetFHUDIconColor(Color Value)
+exec function SetFHUDIconColor(byte R, byte G, byte B, optional byte A = 192)
 {
-    IconColor = Value;
+    IconColor = MakeColor(R, G, B, A);
     SaveConfig();
 }
 
-exec function SetFHUDArmorColor(Color Value)
+exec function SetFHUDArmorColor(byte R, byte G, byte B, optional byte A = 192)
 {
-    ArmorColor = Value;
+    ArmorColor = MakeColor(R, G, B, A);
     SaveConfig();
 }
 
-exec function SetFHUDHealthColor(Color Value)
+exec function SetFHUDHealthColor(byte R, byte G, byte B, optional byte A = 192)
 {
-    HealthColor = Value;
+    HealthColor = MakeColor(R, G, B, A);
     SaveConfig();
 }
 
-exec function SetFHUDHealthRegenColor(Color Value)
+exec function SetFHUDHealthRegenColor(byte R, byte G, byte B, optional byte A = 192)
 {
-    HealthRegenColor = Value;
+    HealthRegenColor = MakeColor(R, G, B, A);
     SaveConfig();
 }
 
-exec function SetFHUDBuffColor(Color Value)
+exec function SetFHUDBuffColor(byte R, byte G, byte B, optional byte A = 192)
 {
-    BuffColor = Value;
+    BuffColor = MakeColor(R, G, B, A);
     SaveConfig();
 }
 
