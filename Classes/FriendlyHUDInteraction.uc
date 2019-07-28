@@ -60,18 +60,20 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     local FriendlyHUDReplicationInfo FHUDRepInfo;
     local KFPlayerReplicationInfo KFPRI;
     local float BaseResScale, ResScale, FontScale;
-    local ASDisplayInfo DI;
+    local ASDisplayInfo StatsDI, GearDI;
     local float CurrentItemPosX, CurrentItemPosY;
     local float PerkIconSize;
     local int I, ItemCount, Column, Row;
     local PlayerItemInfo ItemInfo;
 
-    if (HUD.HUDMovie == None || HUD.HUDMovie.PlayerStatusContainer == None)
+    if (HUD.HUDMovie == None || HUD.HUDMovie.PlayerStatusContainer == None || HUD.HUDMovie.PlayerBackpackContainer == None)
     {
         return;
     }
 
-    DI = HUD.HUDMovie.PlayerStatusContainer.GetDisplayInfo();
+    StatsDI = HUD.HUDMovie.PlayerStatusContainer.GetDisplayInfo();
+    GearDI = HUD.HUDMovie.PlayerBackpackContainer.GetDisplayInfo();
+
     BaseResScale = class'FriendlyHUD.FriendlyHUDHelper'.static.GetResolutionScale(Canvas);
     ResScale = BaseResScale * HUDConfig.Scale;
 
@@ -92,12 +94,32 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
 
     NameMarginY = ResScale < 0.9f ? 0.f : FHUD_NameMarginY;
 
-    ScreenPosX = HUD.HUDMovie.bIsSpectating
-        ? (DI.x + HUD.HUDMovie.PlayerStatusContainer.GetFloat("width") * 0.1f)
-        : (DI.x + HUD.HUDMovie.PlayerStatusContainer.GetFloat("width"));
-    ScreenPosY = Canvas.ClipY + DI.y;
-    // Move down by 30% of the height of the playerstats UI component
-    ScreenPosY += (Canvas.ClipY - ScreenPosY) * 0.3f;
+    // Layout: Bottom
+    if (HUDConfig.Layout == 0)
+    {
+        ScreenPosX = HUD.HUDMovie.bIsSpectating
+            ? (StatsDI.x + HUD.HUDMovie.PlayerStatusContainer.GetFloat("width") * 0.1f + BuffIconMarginX)
+            : (StatsDI.x + HUD.HUDMovie.PlayerStatusContainer.GetFloat("width") + BuffIconMarginX);
+        ScreenPosY = Canvas.ClipY + StatsDI.y;
+        // Move down by 30% of the height of the playerstats UI component
+        ScreenPosY += (Canvas.ClipY - ScreenPosY) * 0.3f;
+    }
+    // Layout: Left
+    else if (HUDConfig.Layout == 1)
+    {
+        ScreenPosX = StatsDI.x + BuffIconMarginX;
+        ScreenPosY = HUD.HUDMovie.bIsSpectating
+            ? (Canvas.ClipY + StatsDI.y + HUD.HUDMovie.PlayerStatusContainer.GetFloat("height") * 0.1f)
+            : (Canvas.ClipY + StatsDI.y);
+    }
+    // Layout: Right
+    else if (HUDConfig.Layout == 2)
+    {
+        ScreenPosX = Canvas.ClipX + GearDI.x + HUD.HUDMovie.PlayerBackpackContainer.GetFloat("width") - BuffIconMarginX - TotalItemWidth;
+        ScreenPosY = HUD.HUDMovie.bIsSpectating
+            ? (Canvas.ClipY + GearDI.y + HUD.HUDMovie.PlayerBackpackContainer.GetFloat("height") * 0.1f)
+            : (Canvas.ClipY + GearDI.y);
+    }
 
     ScreenPosX += HUDConfig.OffsetX * BaseResScale;
     ScreenPosY += HUDConfig.OffsetY * BaseResScale;
@@ -130,7 +152,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
             `endif
             {
                 // Layout: row first
-                if (HUDConfig.Layout == 1)
+                if (HUDConfig.Flow == 1)
                 {
                     Column = ItemCount % HUDConfig.ItemsPerRow;
                     Row = ItemCount / HUDConfig.ItemsPerRow;
@@ -142,8 +164,16 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
                     Row = ItemCount % HudConfig.ItemsPerColumn;
                 }
 
-                CurrentItemPosX = ScreenPosX + TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column);
-                CurrentItemPosY = ScreenPosY + TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row);
+                CurrentItemPosX = (HUDConfig.Layout == 3)
+                    // Right layout flows right-to-left
+                    ? (ScreenPosX - TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column))
+                    // Everything else flows left-to-right
+                    : (ScreenPosX + TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column));
+                CurrentItemPosY = (HUDConfig.Layout == 0)
+                    // Bottom layout flows down
+                    ? (ScreenPosY + TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row))
+                    // Left/right layouts flow up
+                    : (ScreenPosY - TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row));
 
                 ItemInfo.KFPH = FHUDRepInfo.KFPHArray[I];
                 ItemInfo.KFPRI = KFPRI;

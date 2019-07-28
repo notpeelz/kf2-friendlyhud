@@ -3,6 +3,7 @@ class FriendlyHUDConfig extends Interaction
 
 var config int INIVersion;
 var config float Scale;
+var config int Flow;
 var config int Layout;
 var config int ItemsPerColumn;
 var config int ItemsPerRow;
@@ -44,6 +45,7 @@ simulated function LoadDefaultFHUDConfig()
 {
     INIVersion = 1;
     Scale = 1.f;
+    Flow = 0;
     Layout = 0;
     ItemsPerColumn = 3;
     ItemsPerRow = 5;
@@ -79,17 +81,40 @@ exec function SetFHUDScale(float Value)
     SaveConfig();
 }
 
+exec function SetFHUDFlow(string Value)
+{
+    switch (Locs(Value))
+    {
+        case "column":
+            Flow = 0;
+            break;
+        case "row":
+            Flow = 1;
+            break;
+        default:
+            // Non-int values get parsed as 0
+            Flow = Clamp(int(Value), 0, 1);
+            break;
+    }
+
+    SaveConfig();
+}
+
 exec function SetFHUDLayout(string Value)
 {
     switch (Locs(Value))
     {
-        case "row":
+        case "bottom":
+            Layout = 0;
+        case "left":
             Layout = 1;
             break;
-        case "column":
+        case "right":
+            Layout = 2;
+            break;
         default:
             // Non-int values get parsed as 0
-            Layout = Clamp(int(Value), 0, 1);
+            Layout = Clamp(int(Value), 0, 2);
             break;
     }
 
