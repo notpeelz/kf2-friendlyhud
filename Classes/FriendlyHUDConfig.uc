@@ -44,9 +44,25 @@ simulated function Initialized()
     `Log("[FriendlyHUD] Initialized config");
 }
 
-simulated function LoadDefaultFHUDConfig(optional bool ResetColors = true)
+simulated function LoadDefaultFHUDConfig()
 {
     INIVersion = 1;
+
+    DisableHUD = false;
+    OnlyForMedic = false;
+    IgnoreSelf = true;
+    IgnoreDeadTeammates = true;
+    MinHealthThreshold = 1.f;
+    UMCompatEnabled = true;
+
+    LoadDefaultFHUDLayout();
+    LoadDefaultFHUDColors();
+
+    SaveConfig();
+}
+
+simulated function LoadDefaultFHUDLayout()
+{
     Scale = 1.f;
     Flow = 0;
     Layout = 0;
@@ -59,21 +75,8 @@ simulated function LoadDefaultFHUDConfig(optional bool ResetColors = true)
     BuffMarginY = 3.f;
     OffsetX = 0.f;
     OffsetY = 0.f;
-
-    if (ResetColors)
-    {
-        LoadDefaultFHUDColors();
-    }
-
-    DisableHUD = false;
-    OnlyForMedic = false;
     ReverseX = false;
     ReverseY = false;
-    IgnoreSelf = true;
-    IgnoreDeadTeammates = true;
-    MinHealthThreshold = 1.f;
-    UMCompatEnabled = true;
-    SaveConfig();
 }
 
 simulated function LoadDefaultFHUDColors()
@@ -119,7 +122,7 @@ exec function LoadFHUDColorPreset(string Value)
 
 exec function LoadFHUDPreset(string Value)
 {
-    LoadDefaultFHUDConfig(false);
+    LoadDefaultFHUDLayout();
 
     switch (Locs(Value))
     {
