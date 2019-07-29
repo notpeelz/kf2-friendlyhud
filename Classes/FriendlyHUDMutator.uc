@@ -9,6 +9,8 @@ var FriendlyHUDReplicationInfo RepInfo;
 var int LocalSpeedBoost;
 var float LocalSpeedBoostTimer;
 
+const MAX_BUFF_COUNT = 3;
+
 replication
 {
     if (bNetDirty)

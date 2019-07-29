@@ -1,7 +1,6 @@
 class FriendlyHUDReplicationInfo extends ReplicationInfo;
 
 const REP_INFO_COUNT = 8;
-const MAX_BUFF_COUNT = 3;
 
 struct BarInfo
 {
@@ -151,8 +150,8 @@ function UpdateInfo()
             DmgBoostModifier = (KFPH.GetHealingDamageBoostModifier() - 1) * 100;
             DmgResistanceModifier = (1 - KFPH.GetHealingShieldModifier()) * 100;
 
-            MedBuffArray[I].DamageBoost = Min(Round(DmgBoostModifier / class'KFPerk_FieldMedic'.static.GetHealingDamageBoost()), MAX_BUFF_COUNT);
-            MedBuffArray[I].DamageResistance = Min(Round(DmgResistanceModifier / class'KFPerk_FieldMedic'.static.GetHealingShield()), MAX_BUFF_COUNT);
+            MedBuffArray[I].DamageBoost = Round(DmgBoostModifier / class'KFPerk_FieldMedic'.static.GetHealingDamageBoost());
+            MedBuffArray[I].DamageResistance = Round(DmgResistanceModifier / class'KFPerk_FieldMedic'.static.GetHealingShield());
             UpdateSpeedBoost(I);
 
             if (KFPH.Health > 0)
@@ -188,7 +187,7 @@ function UpdateSpeedBoost(int Index)
         TimerCount = KFPH.GetTimerCount(nameof(KFPH.ResetHealingSpeedBoost));
         if (TimerCount <= SpeedBoostTimerArray[Index])
         {
-            MedBuffArray[Index].SpeedBoost = Min(MedBuffArray[Index].SpeedBoost + 1, class'FriendlyHUDReplicationInfo'.const.MAX_BUFF_COUNT);
+            MedBuffArray[Index].SpeedBoost = Min(MedBuffArray[Index].SpeedBoost + 1, class'FriendlyHUDMutator'.const.MAX_BUFF_COUNT);
         }
 
         SpeedBoostTimerArray[Index] = TimerCount;
