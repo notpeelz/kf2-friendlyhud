@@ -97,6 +97,7 @@ simulated function InitializeCompat()
 
     // Initialize the HUD configuration
     HUDConfig = new (KFPC) class'FriendlyHUD.FriendlyHUDConfig';
+    HUDConfig.KFPlayerOwner = KFPC;
     KFPC.Interactions.AddItem(HUDConfig);
     HUDConfig.Initialized();
 

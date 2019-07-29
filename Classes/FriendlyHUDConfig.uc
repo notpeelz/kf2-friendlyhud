@@ -32,6 +32,8 @@ var config float MinHealthThreshold;
 var config bool UMCompatEnabled;
 var config int UMDisableHMTechChargeHUD;
 
+var KFPlayerController KFPlayerOwner;
+
 var bool Debug;
 var bool DrawDebugLines;
 
@@ -91,6 +93,80 @@ simulated function LoadDefaultFHUDColors()
     BuffColor = MakeColor(255, 255, 255, 192);
 }
 
+exec function FHUDHelp(optional bool ShowAdvancedCommands = false) { PrintFHUDHelp(ShowAdvancedCommands); }
+
+exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
+{
+    local Console C;
+
+    C = LocalPlayer(KFPlayerOwner.Player).ViewportClient.ViewportConsole;
+
+    C.OutputText("FHUD Commands");
+    C.OutputText("--------------------------");
+
+    C.OutputText("PrintFHUDHelp: prints this help message; 'PrintFHUDHelp true' will display advanced commands");
+    C.OutputText("ResetFHUDConfig: resets the config to the default settings");
+    C.OutputText("LoadFHUDColorPreset <string>: loads a color preset scheme");
+    C.OutputText("LoadFHUDPreset <string>: loads predefined HUD layout/position settings");
+    C.OutputText("SetFHUDEnabled <bool>: :(");
+    C.OutputText("SetFHUDOnlyForMedic <bool>: controls whether the HUD should only be visible when playing as medic");
+    C.OutputText("SetFHUDIgnoreSelf <bool>: controls the visibility of your own health bar (default is true)");
+    C.OutputText("SetFHUDIgnoreDeadTeammates <bool>: controls whether dead teammates should be hidden from the list (default is true)");
+    C.OutputText("SetFHUDMinHealthThreshold <float>: hides players below a certain health ratio (default is 1.0, i.e. never hidden)");
+
+    C.OutputText(" ");
+    if (ShowAdvancedCommands)
+    {
+        C.OutputText("Advanced Commands");
+        C.OutputText("--------------------------");
+
+        C.OutputText("SetFHUDScale <float>: controls the scale of the HUD (1.0 by default); use values between 0.6 and 1.4 for best results");
+        C.OutputText("SetFHUDFlow <string>: controls the rendering direction of the health bars; possible values: row, column");
+        C.OutputText("SetFHUDLayout <string>: controls the HUD anchor point to render from (default is bottom); possible values: bottom, left, right");
+        C.OutputText("SetFHUDItemsPerColumn <int>: controls the number of health bars to render per column");
+        C.OutputText("SetFHUDItemsPerRow <int>: controls the number of health bars to render per row");
+        C.OutputText("SetFHUDReverseX <bool>: renders health bars starting from the last column");
+        C.OutputText("SetFHUDReverseY <bool>: renders health bars starting from the last row");
+        C.OutputText("SetFHUDShadowColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the HUD shadows (1-pixel outline below; default is 0,0,0,192)");
+        C.OutputText("SetFHUDIconColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the perk icon (default is 255,255,255,192)");
+        C.OutputText("SetFHUDTextColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the player names (default is 255,255,255,192)");
+        C.OutputText("SetFHUDArmorColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the armor bar (default is 0,100,210,192)");
+        C.OutputText("SetFHUDHealthColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the health bar (default is 0,192,0,192)");
+        C.OutputText("SetFHUDHealthRegenColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the regen health buffer (default is 0,70,0,192)");
+        C.OutputText("SetFHUDBuffColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the medic buff icons (default is 255,255,255,192)");
+        C.OutputText("SetFHUDItemMarginX <float>: controls the horizontal margin between health bars (default is 14.0; WARNING: doesn't account for medic buff icons!)");
+        C.OutputText("SetFHUDItemMarginY <float>: controls the vertical margin between health bars (default is 5.0)");
+        C.OutputText("SetFHUDBuffSize <float>: controls the size of the medic buff icons (default is 8.0)");
+        C.OutputText("SetFHUDBuffMarginX <float>: controls the horizontal margin between the buff icons and the health bar");
+        C.OutputText("SetFHUDBuffMarginY <float>: controls the vertical margin between the buff icons");
+        C.OutputText("SetFHUDOffsetX <float>: controls the horizontal offset of the HUD, relative to the position of the anchor point (default is 0.0)");
+        C.OutputText("SetFHUDOffsetY <float>: controls the vertical offset of the HUD, relative to the position of the anchor point (default is 0.0)");
+        C.OutputText("SetFHUDDebug <bool>: allows bots to show up on the HUD -- useful for testing and configuring settings");
+        C.OutputText("SetFHUDDrawDebugLines <bool>: displays debug lines -- useful for debugging layout issues");
+        C.OutputText("SetFHUDUMCompatEnabled <bool>: controls whether FHUD should override UnofficialMod's HMTech cooldowns HUD to prevent layout conflicts");
+    }
+    else
+    {
+        C.OutputText("Layout presets (1080_ for 1080p, 1440_ for 1440p, etc.)");
+        C.OutputText("--------------------------");
+        C.OutputText("default: default settings");
+        C.OutputText("1080_l4d, 1440_l4d: Left 4 Dead-style health bars");
+        C.OutputText("1080_column2, 1440_column2: similar to default default, but slightly bigger and renders in 2 columns instead of 3");
+        C.OutputText("1080_left, 1440_left: left-side layout (above chat)");
+        C.OutputText("1080_topright, 1440_topright: right-side layout (starting from the top)");
+        C.OutputText("1080_right, 1440_right: right-side layout (starting from the bottom)");
+
+        C.OutputText(" ");
+        C.OutputText("Color presets");
+        C.OutputText("--------------------------");
+        C.OutputText("default: default colors (green health, navy blue armor)");
+        C.OutputText("classic: classic colors (light blue health, saturated blue armor)");
+        C.OutputText("red: beta-style colors (red health, saturated blue armor)");
+        C.OutputText("purple: well, it's purple...");
+        C.OutputText("redregen: default colors with red regen color");
+    }
+}
+
 exec function LoadFHUDColorPreset(string Value)
 {
     LoadDefaultFHUDColors();
@@ -134,7 +210,7 @@ exec function LoadFHUDPreset(string Value)
             ItemsPerColumn = 2;
             ItemsPerRow = 5;
             // HACK: this is a workaround for "centering" the first row on 1920x1080
-            OffsetY = 30;
+            OffsetY = 30.f;
             break;
         case "1440_l4d":
             Layout = 0;
@@ -143,7 +219,7 @@ exec function LoadFHUDPreset(string Value)
             ItemsPerColumn = 2;
             ItemsPerRow = 5;
             // HACK: this is a workaround for "centering" the first row on 2560x1440
-            OffsetY = 40;
+            OffsetY = 40.f;
             break;
         case "1080_column2":
             Layout = 0;
@@ -161,15 +237,15 @@ exec function LoadFHUDPreset(string Value)
             Layout = 1;
             Flow = 0;
             ItemsPerColumn = 5;
-            OffsetX = 35;
-            OffsetY = -280;
+            OffsetX = 35.f;
+            OffsetY = -280.f;
             break;
         case "1440_left":
             Layout = 1;
             Flow = 0;
             ItemsPerColumn = 6;
-            OffsetX = 50;
-            OffsetY = -280;
+            OffsetX = 50.f;
+            OffsetY = -280.f;
             break;
         case "1080_topright":
             ReverseY = true;
@@ -179,7 +255,7 @@ exec function LoadFHUDPreset(string Value)
             ItemsPerColumn = 12;
             ReverseX = true;
             ItemsPerRow = 1;
-            OffsetY = -60;
+            OffsetY = -60.f;
             break;
         case "1440_topright":
             ReverseY = true;
@@ -190,7 +266,7 @@ exec function LoadFHUDPreset(string Value)
             ItemsPerColumn = 14;
             ReverseX = true;
             ItemsPerRow = 1;
-            OffsetY = -60;
+            OffsetY = -60.f;
             break;
     }
 
@@ -274,6 +350,12 @@ exec function SetFHUDShadowColor(byte R, byte G, byte B, optional byte A = 192)
 }
 
 exec function SetFHUDIconColor(byte R, byte G, byte B, optional byte A = 192)
+{
+    IconColor = MakeColor(R, G, B, A);
+    SaveConfig();
+}
+
+exec function SetFHUDTextColor(byte R, byte G, byte B, optional byte A = 192)
 {
     IconColor = MakeColor(R, G, B, A);
     SaveConfig();
