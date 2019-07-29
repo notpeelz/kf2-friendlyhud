@@ -26,9 +26,7 @@ simulated function PostBeginPlay()
         RepInfo = Spawn(class'FriendlyHUD.FriendlyHUDReplicationInfo', Self);
         RepInfo.LocalPC = KFPC;
         RepInfo.HUDConfig = HUDConfig;
-        `if(`isdefined(debug))
         SetTimer(2.0, true, nameof(CheckBots));
-        `endif
     }
 
     InitializeHUD();

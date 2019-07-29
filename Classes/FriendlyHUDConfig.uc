@@ -24,7 +24,6 @@ var config Color HealthRegenColor;
 var config Color BuffColor;
 var config bool DisableHUD;
 var config bool OnlyForMedic;
-var config bool DrawDebugLines;
 var config bool ReverseX;
 var config bool ReverseY;
 var config bool IgnoreSelf;
@@ -32,6 +31,9 @@ var config bool IgnoreDeadTeammates;
 var config float MinHealthThreshold;
 var config bool UMCompatEnabled;
 var config int UMDisableHMTechChargeHUD;
+
+var bool Debug;
+var bool DrawDebugLines;
 
 simulated function Initialized()
 {
@@ -65,7 +67,6 @@ simulated function LoadDefaultFHUDConfig(optional bool ResetColors = true)
 
     DisableHUD = false;
     OnlyForMedic = false;
-    DrawDebugLines = false;
     ReverseX = false;
     ReverseY = false;
     IgnoreSelf = true;
@@ -341,10 +342,14 @@ exec function SetFHUDOffsetY(float Value)
     SaveConfig();
 }
 
+exec function SetFHUDDebug(bool Value)
+{
+    Debug = Value;
+}
+
 exec function SetFHUDDrawDebugLines(bool Value)
 {
     DrawDebugLines = Value;
-    SaveConfig();
 }
 
 exec function SetFHUDEnabled(bool Value)

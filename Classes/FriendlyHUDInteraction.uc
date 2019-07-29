@@ -147,12 +147,8 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
             KFPRI = FHUDRepInfo.KFPRIArray[I];
             if (KFPRI == None) continue;
 
-            `if(`isdefined(debug))
-            // HasHadInitialSpawn() doesn't work on bots
-            if (KFPRI != KFPlayerOwner.PlayerReplicationInfo || !HUDConfig.IgnoreSelf)
-            `else
-            if ((KFPRI != KFPlayerOwner.PlayerReplicationInfo || !HUDConfig.IgnoreSelf) && KFPRI.HasHadInitialSpawn())
-            `endif
+            // HasHadInitialSpawn() doesn't work on bots, so we use HUDConfig.Debug for testing
+            if ((KFPRI != KFPlayerOwner.PlayerReplicationInfo || !HUDConfig.IgnoreSelf) && (KFPRI.HasHadInitialSpawn() || HUDConfig.Debug))
             {
                 // Layout: row first
                 if (HUDConfig.Flow == 1)
