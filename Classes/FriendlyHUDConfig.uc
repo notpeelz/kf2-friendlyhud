@@ -277,7 +277,7 @@ exec function LoadFHUDPreset(string Value)
         case "1080_right":
             Layout = 2;
             Flow = 0;
-            ItemsPerColumn = 12;
+            ItemsPerColumn = 11;
             ReverseX = true;
             ItemsPerRow = 1;
             OffsetY = -60.f;
