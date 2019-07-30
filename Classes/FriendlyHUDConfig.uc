@@ -12,7 +12,7 @@ var config float ItemMarginY;
 var config int BuffLayout;
 var config float BuffSize;
 var config float BuffMargin;
-var config float BuffPadding;
+var config float BuffGap;
 var config float IconMarginX;
 var config float OffsetX;
 var config float OffsetY;
@@ -74,8 +74,8 @@ simulated function Initialized()
             BuffMargin = float(BuffMarginX);
             BuffMarginX = DEPRECATED_ENTRY;
 
-            // Rename BuffMarginY to BuffPadding
-            BuffPadding = float(BuffMarginY);
+            // Rename BuffMarginY to BuffGap
+            BuffGap = float(BuffMarginY);
             BuffMarginY = DEPRECATED_ENTRY;
         }
 
@@ -119,7 +119,7 @@ simulated function LoadDefaultFHUDLayout()
     BuffLayout = 0;
     BuffSize = 8.f;
     BuffMargin = 2.f;
-    BuffPadding = 3.f;
+    BuffGap = 3.f;
     IconMarginX = 0.f;
     OffsetX = 0.f;
     OffsetY = 0.f;
@@ -479,9 +479,9 @@ exec function SetFHUDBuffMargin(float Value)
     SaveConfig();
 }
 
-exec function SetFHUDBuffPadding(float Value)
+exec function SetFHUDBuffGap(float Value)
 {
-    BuffPadding = Value;
+    BuffGap = Value;
     SaveConfig();
 }
 

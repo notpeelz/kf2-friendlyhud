@@ -21,7 +21,7 @@ var Color AxisYLineColor;
 var FriendlyHUDMutator FHUDMutator;
 var float BarHeight, BarWidth, TextHeight, TotalItemWidth, TotalItemHeight;
 var float PerkIconSize;
-var float BuffIconSize, BuffIconMargin, BuffIconPadding;
+var float BuffIconSize, BuffIconMargin, BuffIconGap;
 var float NameMarginX, NameMarginY;
 var float IconMarginX;
 var float ScreenPosX, ScreenPosY;
@@ -100,7 +100,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     TotalItemHeight = BarHeight * 2.f + TextHeight + HUDConfig.ItemMarginY * ResScale;
     BuffIconSize = HUDConfig.BuffSize * ResScale;
     BuffIconMargin = HUDConfig.BuffMargin * ResScale;
-    BuffIconPadding = HUDConfig.BuffPadding * ResScale;
+    BuffIconGap = HUDConfig.BuffGap * ResScale;
 
     IconMarginX = HUDConfig.IconMarginX * ResScale;
 
@@ -347,24 +347,24 @@ simulated function DrawBuffs(Canvas Canvas, MedBuffInfo BuffInfo, float PosX, fl
         if (HUDConfig.BuffLayout == 0)
         {
             CurrentPosX = PosX - BuffIconMargin - BuffIconSize;
-            CurrentPosY = PosY + (BuffIconPadding + BuffIconSize) * I;
+            CurrentPosY = PosY + (BuffIconGap + BuffIconSize) * I;
         }
         // BuffLayout: Right
         else if (HUDConfig.BuffLayout == 1)
         {
             CurrentPosX = PosX + PerkIconSize + BuffIconMargin;
-            CurrentPosY = PosY + (BuffIconPadding + BuffIconSize) * I;
+            CurrentPosY = PosY + (BuffIconGap + BuffIconSize) * I;
         }
         // BuffLayout: Top
         else if (HUDConfig.BuffLayout == 2)
         {
-            CurrentPosX = PosX + (BuffIconPadding + BuffIconSize) * I;
+            CurrentPosX = PosX + (BuffIconGap + BuffIconSize) * I;
             CurrentPosY = PosY - BuffIconMargin - BuffIconSize;
         }
         // BuffLayout: Bottom
         else if (HUDConfig.BuffLayout == 3)
         {
-            CurrentPosX = PosX + (BuffIconPadding + BuffIconSize) * I;
+            CurrentPosX = PosX + (BuffIconGap + BuffIconSize) * I;
             CurrentPosY = PosY + PerkIconSize + BuffIconMargin;
         }
 
