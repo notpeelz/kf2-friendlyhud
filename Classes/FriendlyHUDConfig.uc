@@ -12,6 +12,7 @@ var config float ItemMarginY;
 var config float BuffSize;
 var config float BuffMarginX;
 var config float BuffMarginY;
+var config float IconMarginX;
 var config float OffsetX;
 var config float OffsetY;
 var config Color ShadowColor;
@@ -58,6 +59,7 @@ simulated function Initialized()
             DO_T0 = 4.f;
             DO_T1 = 0.f;
             Opacity = 1.f;
+            IconMarginX = 0.f;
         }
 
         SaveConfig();
@@ -100,6 +102,7 @@ simulated function LoadDefaultFHUDLayout()
     BuffSize = 8.f;
     BuffMarginX = 2.f;
     BuffMarginY = 3.f;
+    IconMarginX = 0.f;
     OffsetX = 0.f;
     OffsetY = 0.f;
     ReverseX = false;
@@ -437,6 +440,12 @@ exec function SetFHUDBuffMarginX(float Value)
 exec function SetFHUDBuffMarginY(float Value)
 {
     BuffMarginY = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDIconMarginX(float Value)
+{
+    IconMarginX = Value;
     SaveConfig();
 }
 
