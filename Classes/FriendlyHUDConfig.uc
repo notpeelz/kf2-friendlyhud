@@ -9,9 +9,10 @@ var config int ItemsPerColumn;
 var config int ItemsPerRow;
 var config float ItemMarginX;
 var config float ItemMarginY;
+var config int BuffLayout;
 var config float BuffSize;
-var config float BuffMarginX;
-var config float BuffMarginY;
+var config float BuffMargin;
+var config float BuffPadding;
 var config float IconMarginX;
 var config float OffsetX;
 var config float OffsetY;
@@ -38,10 +39,16 @@ var config float Opacity;
 var config bool UMCompatEnabled;
 var config int UMDisableHMTechChargeHUD;
 
+// Removed/renamed/deprecated settings
+var config string BuffMarginX;
+var config string BuffMarginY;
+
 var KFPlayerController KFPlayerOwner;
 
 var bool Debug;
 var bool DrawDebugLines;
+
+const DEPRECATED_ENTRY = "DELETE_ME";
 
 simulated function Initialized()
 {
@@ -54,12 +61,22 @@ simulated function Initialized()
         if (INIVersion < 2)
         {
             INIVersion = 2;
+
             DO_MinOpacity = 1.f;
             DO_MaxOpacity = 1.f;
             DO_T0 = 4.f;
             DO_T1 = 0.f;
             Opacity = 1.f;
             IconMarginX = 0.f;
+            BuffLayout = 0;
+
+            // Rename BuffMarginX to BuffMargin
+            BuffMargin = float(BuffMarginX);
+            BuffMarginX = DEPRECATED_ENTRY;
+
+            // Rename BuffMarginY to BuffPadding
+            BuffPadding = float(BuffMarginY);
+            BuffMarginY = DEPRECATED_ENTRY;
         }
 
         SaveConfig();
@@ -99,9 +116,10 @@ simulated function LoadDefaultFHUDLayout()
     ItemsPerRow = 5;
     ItemMarginX = 14.f;
     ItemMarginY = 5.f;
+    BuffLayout = 0;
     BuffSize = 8.f;
-    BuffMarginX = 2.f;
-    BuffMarginY = 3.f;
+    BuffMargin = 2.f;
+    BuffPadding = 3.f;
     IconMarginX = 0.f;
     OffsetX = 0.f;
     OffsetY = 0.f;
@@ -425,21 +443,45 @@ exec function SetFHUDItemMarginY(float Value)
     SaveConfig();
 }
 
+exec function SetFHUDBuffLayout(string Value)
+{
+    switch (Locs(Value))
+    {
+        case "left":
+            BuffLayout = 0;
+        case "right":
+            BuffLayout = 1;
+            break;
+        case "top":
+            BuffLayout = 2;
+            break;
+        case "bottom":
+            BuffLayout = 3;
+            break;
+        default:
+            // Non-int values get parsed as 0
+            BuffLayout = Clamp(int(Value), 0, 3);
+            break;
+    }
+
+    SaveConfig();
+}
+
 exec function SetFHUDBuffSize(float Value)
 {
     BuffSize = Value;
     SaveConfig();
 }
 
-exec function SetFHUDBuffMarginX(float Value)
+exec function SetFHUDBuffMargin(float Value)
 {
-    BuffMarginX = Value;
+    BuffMargin = Value;
     SaveConfig();
 }
 
-exec function SetFHUDBuffMarginY(float Value)
+exec function SetFHUDBuffPadding(float Value)
 {
-    BuffMarginY = Value;
+    BuffPadding = Value;
     SaveConfig();
 }
 
