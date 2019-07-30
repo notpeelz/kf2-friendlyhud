@@ -29,6 +29,11 @@ var config bool ReverseY;
 var config bool IgnoreSelf;
 var config bool IgnoreDeadTeammates;
 var config float MinHealthThreshold;
+var config float DO_MinOpacity;
+var config float DO_MaxOpacity;
+var config float DO_T0;
+var config float DO_T1;
+var config float Opacity;
 var config bool UMCompatEnabled;
 var config int UMDisableHMTechChargeHUD;
 
@@ -43,18 +48,38 @@ simulated function Initialized()
     {
         LoadDefaultFHUDConfig();
     }
+    else
+    {
+        if (INIVersion < 2)
+        {
+            INIVersion = 2;
+            DO_MinOpacity = 1.f;
+            DO_MaxOpacity = 1.f;
+            DO_T0 = 4.f;
+            DO_T1 = 0.f;
+            Opacity = 1.f;
+        }
+
+        SaveConfig();
+    }
+
     `Log("[FriendlyHUD] Initialized config");
 }
 
 simulated function LoadDefaultFHUDConfig()
 {
-    INIVersion = 1;
+    INIVersion = 2;
 
     DisableHUD = false;
     OnlyForMedic = false;
     IgnoreSelf = true;
     IgnoreDeadTeammates = true;
     MinHealthThreshold = 1.f;
+    DO_MinOpacity = 1.f;
+    DO_MaxOpacity = 1.f;
+    DO_T0 = 4.f;
+    DO_T1 = 0.f;
+    Opacity = 1.f;
     UMCompatEnabled = true;
 
     LoadDefaultFHUDLayout();
@@ -464,6 +489,21 @@ exec function SetFHUDIgnoreDeadTeammates(bool Value)
 exec function SetFHUDMinHealthThreshold(float Value)
 {
     MinHealthThreshold = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDDynamicOpacity(float Min, optional float Max = 1.f, optional float T0 = 4.f, float T1 = 0.f)
+{
+    DO_MinOpacity = Min;
+    DO_MaxOpacity = Max;
+    DO_T0 = T0;
+    DO_T1 = T1;
+    SaveConfig();
+}
+
+exec function SetFHUDOpacity(float Value)
+{
+    Opacity = Value;
     SaveConfig();
 }
 

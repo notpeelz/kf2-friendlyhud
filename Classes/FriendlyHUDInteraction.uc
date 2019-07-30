@@ -23,6 +23,7 @@ var float BarHeight, BarWidth, TextHeight, TotalItemWidth, TotalItemHeight;
 var float PlayerNameMarginX, BuffIconSize, BuffIconMarginX, BuffIconMarginY;
 var float NameMarginY;
 var float ScreenPosX, ScreenPosY;
+var float ObjectOpacity;
 
 const PrestigeIconScale = 0.75f;
 const FHUD_PlayerStatusIconSize = 32.f;
@@ -53,6 +54,12 @@ event PostRender(Canvas Canvas)
     {
         DrawTeamHealthBars(Canvas);
     }
+}
+
+simulated function SetCanvasColor(Canvas Canvas, Color C)
+{
+    C.A = Min(C.A * ObjectOpacity, 255);
+    Canvas.DrawColor = C;
 }
 
 simulated function DrawTeamHealthBars(Canvas Canvas)
@@ -223,17 +230,19 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
 
     TextFontRenderInfo = Canvas.CreateFontRenderInfo(true);
 
+    ObjectOpacity = FMin(FCubicInterp(HUDConfig.DO_MaxOpacity, HUDConfig.DO_T0, HUDConfig.DO_MinOpacity, HUDConfig.DO_T1, HealthRatio), 1.f) * HUDConfig.Opacity;
+
     PlayerIcon = GetPlayerIcon(KFPRI, VoiceReq);
     DrawPrestigeBorder = VoiceReq == VCT_NONE;
 
     // Draw drop shadow behind the perk icon
-    Canvas.DrawColor = HUDConfig.ShadowColor;
+    SetCanvasColor(Canvas, HUDConfig.ShadowColor);
     PerkIconPosX = PosX;
     PerkIconPosY = PosY + (TextHeight + NameMarginY) / 2.f;
     DrawPerkIcon(Canvas, KFPRI, PlayerIcon, DrawPrestigeBorder, PerkIconSize, PerkIconPosX + 1, PerkIconPosY);
 
     // Draw perk icon
-    Canvas.DrawColor = HUDConfig.IconColor;
+    SetCanvasColor(Canvas, HUDConfig.IconColor);
     DrawPerkIcon(Canvas, KFPRI, PlayerIcon, DrawPrestigeBorder, PerkIconSize, PerkIconPosX, PerkIconPosY);
 
     // Draw buffs
@@ -244,17 +253,17 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     {
         BuffIconPosY = PerkIconPosY + (BuffIconMarginY + BuffIconSize) * I;
 
-        Canvas.DrawColor = HUDConfig.ShadowColor;
+        SetCanvasColor(Canvas, HUDConfig.ShadowColor);
         Canvas.SetPos(BuffIconPosX + 1, BuffIconPosY);
         Canvas.DrawTile(BuffIconTexture, BuffIconSize, BuffIconSize, 0, 0, 256, 256);
 
-        Canvas.DrawColor = HUDConfig.BuffColor;
+        SetCanvasColor(Canvas, HUDConfig.BuffColor);
         Canvas.SetPos(BuffIconPosX, BuffIconPosY);
         Canvas.DrawTile(BuffIconTexture, BuffIconSize, BuffIconSize, 0, 0, 256, 256);
     }
 
     // Draw drop shadow behind the player name
-    Canvas.DrawColor = HUDConfig.ShadowColor;
+    SetCanvasColor(Canvas, HUDConfig.ShadowColor);
     Canvas.SetPos(
         PosX + PerkIconSize + PlayerNameMarginX,
         PosY + 1
@@ -262,7 +271,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     Canvas.DrawText(KFPRI.PlayerName, , FontScale, FontScale, TextFontRenderInfo);
 
     // Draw player name
-    Canvas.DrawColor = HUDConfig.TextColor;
+    SetCanvasColor(Canvas, HUDConfig.TextColor);
     Canvas.SetPos(
         PosX + PerkIconSize + PlayerNameMarginX,
         PosY
@@ -288,7 +297,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     // Draw the regen health buffer over the health bar
     if (HealthToRegen > 0)
     {
-        Canvas.DrawColor = HUDConfig.HealthRegenColor;
+        SetCanvasColor(Canvas, HUDConfig.HealthRegenColor);
         Canvas.SetPos(
             PosX + PerkIconSize + ((BarWidth - 2.0) * HealthRatio) + 1,
             PosY + BarHeight + TextHeight + NameMarginY + 1
@@ -306,12 +315,12 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
 
 simulated function DrawBar(Canvas Canvas, float BarPercentage, float PosX, float PosY, Color BarColor)
 {
-    Canvas.DrawColor = HUDConfig.BGColor;
+    SetCanvasColor(Canvas, HUDConfig.BGColor);
     Canvas.SetPos(PosX, PosY);
     Canvas.DrawTile(BarBGTexture, BarWidth, BarHeight, 0, 0, 32, 32);
 
     // Draw foreground
-    Canvas.DrawColor = BarColor;
+    SetCanvasColor(Canvas, BarColor);
     Canvas.SetPos(PosX + 1, PosY + 1); // Adjust pos for border
     Canvas.DrawTile(BarBGTexture, (BarWidth - 2.0) * BarPercentage, BarHeight - 2.0, 0, 0, 32, 32);
 }
