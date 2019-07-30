@@ -151,7 +151,7 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         C.OutputText("--------------------------");
         C.OutputText("default: default settings");
         C.OutputText("1080_l4d, 1440_l4d: Left 4 Dead-style health bars");
-        C.OutputText("1080_column2, 1440_column2: similar to default default, but slightly bigger and renders in 2 columns instead of 3");
+        C.OutputText("1080_column2, 1440_column2: similar to default, but slightly bigger and renders in 2 columns instead of 3");
         C.OutputText("1080_left, 1440_left: left-side layout (above chat)");
         C.OutputText("1080_topright, 1440_topright: right-side layout (starting from the top)");
         C.OutputText("1080_right, 1440_right: right-side layout (starting from the bottom)");
