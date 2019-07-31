@@ -21,6 +21,7 @@ var Color AxisYLineColor;
 var FriendlyHUDMutator FHUDMutator;
 var float BarHeight, BarWidth, TextHeight, TotalItemWidth, TotalItemHeight;
 var float PerkIconSize;
+var float BlockWidth, BlockGap, TotalBlockWidth;
 var float BuffIconSize, BuffIconMargin, BuffIconGap;
 var float NameMarginX, NameMarginY;
 var float IconMarginX;
@@ -29,7 +30,6 @@ var float ObjectOpacity;
 
 const PrestigeIconScale = 0.75f;
 const FHUD_PlayerStatusIconSize = 32.f;
-const FHUD_BarWidth = 200.f; // 200 pixels wide at 1080p
 const FHUD_BarHeight = 10.f; // 10 pixels high at 1080p
 const FHUD_FontSize = 36.f;
 const FHUD_NameMarginY = 6.f;
@@ -93,10 +93,12 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
 
     PerkIconSize = FHUD_PlayerStatusIconSize * ResScale;
 
-    BarWidth = FHUD_BarWidth * ResScale;
+    BlockWidth = HUDConfig.BlockWidth * ResScale;
+    BlockGap = HUDConfig.BlockGap * ResScale;
+    TotalBlockWidth = BlockWidth + BlockGap + 2.f;
     BarHeight = FHUD_BarHeight * ResScale;
     TextHeight = FHUD_FontSize * FontScale;
-    TotalItemWidth = PerkIconSize + IconMarginX + BarWidth + HUDConfig.ItemMarginX * ResScale;
+    TotalItemWidth = PerkIconSize + IconMarginX + (TotalBlockWidth * HUDConfig.BlockCount) + HUDConfig.ItemMarginX * ResScale;
     TotalItemHeight = BarHeight * 2.f + TextHeight + HUDConfig.ItemMarginY * ResScale;
     BuffIconSize = HUDConfig.BuffSize * ResScale;
     BuffIconMargin = HUDConfig.BuffMargin * ResScale;
@@ -234,7 +236,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     local KFPawn_Human KFPH;
     local Texture2D PlayerIcon;
     local bool DrawPrestigeBorder;
-    local float ArmorRatio, HealthRatio;
+    local float ArmorRatio, HealthRatio, RegenRatio;
     local BarInfo ArmorInfo, HealthInfo;
     local EVoiceCommsType VoiceReq;
     local int HealthToRegen;
@@ -244,10 +246,11 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     KFPH = ItemInfo.KFPH;
     ItemInfo.RepInfo.GetPlayerInfo(ItemInfo.RepIndex, ArmorInfo, HealthInfo, HealthToRegen, BuffInfo);
     VoiceReq = KFPRI.CurrentVoiceCommsRequest;
-    HealthToRegen = HealthToRegen > 0 ? HealthToRegen - HealthInfo.Value : 0;
+    HealthToRegen = HealthToRegen > 0 ? (HealthToRegen - HealthInfo.Value) : 0;
 
     ArmorRatio = ArmorInfo.MaxValue > 0 ? (float(ArmorInfo.Value) / float(ArmorInfo.MaxValue)) : 0.f;
     HealthRatio = HealthInfo.MaxValue > 0 ? (float(HealthInfo.Value) / float(HealthInfo.MaxValue)) : 0.f;
+    RegenRatio = HealthInfo.MaxValue > 0 ? (float(HealthToRegen) / float(HealthInfo.MaxValue)) : 0.f;
 
     // If enabled, don't render dead teammates
     if (HUDConfig.IgnoreDeadTeammates && HealthRatio <= 0.f) return false;
@@ -301,6 +304,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     // Draw armor bar
     DrawBar(Canvas,
         ArmorRatio,
+        0.f,
         PosX + PerkIconSize + IconMarginX,
         PosY + TextHeight + NameMarginY,
         HUDConfig.ArmorColor
@@ -309,26 +313,12 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     // Draw health bar
     DrawBar(Canvas,
         HealthRatio,
+        RegenRatio,
         PosX + PerkIconSize + IconMarginX,
         PosY + BarHeight + TextHeight + NameMarginY,
-        HUDConfig.HealthColor
+        HUDConfig.HealthColor,
+        HUDConfig.HealthRegenColor
     );
-
-    // Draw the regen health buffer over the health bar
-    if (HealthToRegen > 0)
-    {
-        SetCanvasColor(Canvas, HUDConfig.HealthRegenColor);
-        Canvas.SetPos(
-            PosX + PerkIconSize + IconMarginX + ((BarWidth - 2.0) * HealthRatio) + 1,
-            PosY + BarHeight + TextHeight + NameMarginY + 1
-        );
-        Canvas.DrawTile(
-            BarBGTexture,
-            (BarWidth - 2.0) * (HealthToRegen / float(KFPH.HealthMax)),
-            BarHeight - 2.0,
-            0, 0, 32, 32
-        );
-    }
 
     return true;
 }
@@ -378,16 +368,88 @@ simulated function DrawBuffs(Canvas Canvas, MedBuffInfo BuffInfo, float PosX, fl
     }
 }
 
-simulated function DrawBar(Canvas Canvas, float BarPercentage, float PosX, float PosY, Color BarColor)
+simulated function DrawBar(Canvas Canvas, float BarPercentage, float BufferPercentage, float PosX, float PosY, Color BarColor, optional Color BufferColor)
 {
-    SetCanvasColor(Canvas, HUDConfig.BGColor);
-    Canvas.SetPos(PosX, PosY);
-    Canvas.DrawTile(BarBGTexture, BarWidth, BarHeight, 0, 0, 32, 32);
+    local int CurrentBlockPosX;
+    local float CurrentBlockWidth;
+    local float PercentagePerBlock, P1, P2;
+    local int I;
 
-    // Draw foreground
-    SetCanvasColor(Canvas, BarColor);
-    Canvas.SetPos(PosX + 1, PosY + 1); // Adjust pos for border
-    Canvas.DrawTile(BarBGTexture, (BarWidth - 2.0) * BarPercentage, BarHeight - 2.0, 0, 0, 32, 32);
+    // Adjust coordinates to compensate for the outline
+    PosX += 1.f;
+    PosY += 1.f;
+
+    PercentagePerBlock = 1.f / HUDConfig.BlockCount;
+
+    for (I = 0; I < HUDConfig.BlockCount; I++)
+    {
+        CurrentBlockPosX = PosX + TotalBlockWidth * I;
+        BarPercentage -= PercentagePerBlock;
+        P1 = BarPercentage < 0.f
+            // We overflowed, so we have to subtract it
+            ? ((PercentagePerBlock + BarPercentage) / PercentagePerBlock)
+            // We can fill the block up to 100%
+            : 1.f;
+        P2 = 0.f;
+
+        // Once we've "drained" (rendered) all of the primary bar, start draining the buffer
+        if (BufferPercentage > 0.f && P1 < 1.f)
+        {
+            // Try to fill the rest of the block (that's not occupied by the first bar)
+            P2 = 1.f - FMax(P1, 0.f);
+            BufferPercentage -= P2 * PercentagePerBlock;
+
+            // If we overflowed, subtract the overflow from the buffer (P2)
+            if (BufferPercentage < 0.f)
+            {
+                // BufferPercentage is negative, so we need to add it to P2
+                P2 += BufferPercentage / PercentagePerBlock;
+            }
+        }
+
+        // TODO: add option to change the background color of empty blocks
+
+        // Draw background
+        SetCanvasColor(Canvas, HUDConfig.BGColor);
+        Canvas.SetPos(CurrentBlockPosX - 1.f, PosY - 1.f);
+        Canvas.DrawTile(BarBGTexture, BlockWidth + 2.f, BarHeight, 0, 0, 32, 32);
+
+        CurrentBlockWidth = 0.f;
+
+        // Draw foreground
+        if (P1 > 0.f)
+        {
+            CurrentBlockWidth = HUDConfig.BlockStyle == 0
+                // BlockStyle: Default
+                ? (BlockWidth * P1)
+                // BlockStyle: Full
+                : (BlockWidth * Round(P1));
+
+            SetCanvasColor(Canvas, BarColor);
+            Canvas.SetPos(CurrentBlockPosX, PosY);
+            Canvas.DrawTile(BarBGTexture, CurrentBlockWidth, BarHeight - 2.f, 0, 0, 32, 32);
+        }
+
+        // Draw the buffer after the main bar
+        // Second condition is to prevent rendering over a rounded-up block
+        if (P2 > 0.f && !(HUDConfig.BlockStyle != 0 && CurrentBlockWidth >= 1.f))
+        {
+            SetCanvasColor(Canvas, BufferColor);
+            Canvas.SetPos(CurrentBlockPosX + CurrentBlockWidth, PosY);
+            Canvas.DrawTile(
+                BarBGTexture,
+                // Width
+                HUDConfig.BlockStyle == 0
+                    // BlockStyle: Default
+                    ? (BlockWidth * P2)
+                    // BlockStyle: Full
+                    : FMin(BlockWidth * Round(P2), BlockWidth),
+                // Height
+                BarHeight - 2.f,
+                0, 0, 32, 32
+            );
+        }
+    }
 }
 
 simulated function DrawPerkIcon(Canvas Canvas, KFPlayerReplicationInfo KFPRI, Texture2D PlayerIcon, bool DrawPrestigeBorder, float PerkIconPosX, float PerkIconPosY)

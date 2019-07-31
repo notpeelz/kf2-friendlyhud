@@ -5,6 +5,10 @@ var config int INIVersion;
 var config float Scale;
 var config int Flow;
 var config int Layout;
+var config float BlockWidth;
+var config int BlockCount;
+var config float BlockGap;
+var config int BlockStyle;
 var config int ItemsPerColumn;
 var config int ItemsPerRow;
 var config float ItemMarginX;
@@ -69,6 +73,10 @@ simulated function Initialized()
             Opacity = 1.f;
             IconMarginX = 0.f;
             BuffLayout = 0;
+            BlockWidth = 200.f;
+            BlockCount = 1;
+            BlockGap = 4.f;
+            BlockStyle = 0;
 
             // Rename BuffMarginX to BuffMargin
             BuffMargin = float(BuffMarginX);
@@ -88,8 +96,10 @@ simulated function Initialized()
 simulated function LoadDefaultFHUDConfig()
 {
     INIVersion = 2;
-
     DisableHUD = false;
+    BlockWidth = 200.f;
+    BlockCount = 1;
+    BlockStyle = 0;
     OnlyForMedic = false;
     IgnoreSelf = true;
     IgnoreDeadTeammates = true;
@@ -112,6 +122,7 @@ simulated function LoadDefaultFHUDLayout()
     Scale = 1.f;
     Flow = 0;
     Layout = 0;
+    BlockGap = 4.f;
     ItemsPerColumn = 3;
     ItemsPerRow = 5;
     ItemMarginX = 14.f;
@@ -361,6 +372,44 @@ exec function SetFHUDLayout(string Value)
         default:
             // Non-int values get parsed as 0
             Layout = Clamp(int(Value), 0, 2);
+            break;
+    }
+
+    SaveConfig();
+}
+
+exec function SetFHUDBlockWidth(float Value)
+{
+    BlockWidth = FMax(Value, 3.f);
+    SaveConfig();
+}
+
+exec function SetFHUDBlockCount(int Value)
+{
+    BlockCount = Max(Value, 1);
+    SaveConfig();
+}
+
+exec function SetFHUDBlockGap(float Value)
+{
+    BlockGap = FMax(Value, 0.f);
+    SaveConfig();
+}
+
+exec function SetFHUDBlockStyle(string Value)
+{
+    switch (Locs(Value))
+    {
+        case "default":
+            BlockStyle = 0;
+            break;
+        case "round":
+        case "full":
+            BlockStyle = 1;
+            break;
+        default:
+            // Non-int values get parsed as 0
+            BlockStyle = Clamp(int(Value), 0, 1);
             break;
     }
 
