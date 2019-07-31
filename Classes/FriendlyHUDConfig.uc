@@ -240,6 +240,8 @@ exec function LoadFHUDColorPreset(string Value)
             HealthRegenColor = MakeColor(204, 186, 220, 192);
             break;
     }
+
+    SaveConfig();
 }
 
 exec function LoadFHUDPreset(string Value)
