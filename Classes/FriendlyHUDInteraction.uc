@@ -19,7 +19,7 @@ var Color AxisXLineColor;
 var Color AxisYLineColor;
 
 var FriendlyHUDMutator FHUDMutator;
-var float BarHeight, BarWidth, TextHeight, TotalItemWidth, TotalItemHeight;
+var float BarHeight, BarWidth, BarGap, TextHeight, TotalItemWidth, TotalItemHeight;
 var float PerkIconSize;
 var float BlockWidth, BlockGap, TotalBlockWidth;
 var float BuffIconSize, BuffIconMargin, BuffIconGap;
@@ -97,6 +97,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     BlockGap = HUDConfig.BlockGap * ResScale;
     TotalBlockWidth = BlockWidth + BlockGap + 2.f;
     BarHeight = FHUD_BarHeight * ResScale;
+    BarGap = HUDConfig.BarGap * ResScale;
     TextHeight = FHUD_FontSize * FontScale;
     TotalItemWidth = PerkIconSize + IconMarginX + (TotalBlockWidth * HUDConfig.BlockCount) + HUDConfig.ItemMarginX * ResScale;
     TotalItemHeight = BarHeight * 2.f + TextHeight + HUDConfig.ItemMarginY * ResScale;
@@ -315,7 +316,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
         HealthRatio,
         RegenRatio,
         PosX + PerkIconSize + IconMarginX,
-        PosY + BarHeight + TextHeight + NameMarginY,
+        PosY + BarHeight + BarGap + TextHeight + NameMarginY,
         HUDConfig.HealthColor,
         HUDConfig.HealthRegenColor
     );

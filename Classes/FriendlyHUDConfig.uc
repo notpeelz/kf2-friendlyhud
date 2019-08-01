@@ -5,6 +5,7 @@ var config int INIVersion;
 var config float Scale;
 var config int Flow;
 var config int Layout;
+var config float BarGap;
 var config float BlockWidth;
 var config int BlockCount;
 var config float BlockGap;
@@ -73,6 +74,7 @@ simulated function Initialized()
             Opacity = 1.f;
             IconMarginX = 0.f;
             BuffLayout = 0;
+            BarGap = 0.f;
             BlockWidth = 200.f;
             BlockCount = 1;
             BlockGap = 4.f;
@@ -97,6 +99,7 @@ simulated function LoadDefaultFHUDConfig()
 {
     INIVersion = 2;
     DisableHUD = false;
+    BarGap = 0.f;
     BlockWidth = 200.f;
     BlockCount = 1;
     BlockStyle = 0;
@@ -375,6 +378,12 @@ exec function SetFHUDLayout(string Value)
             break;
     }
 
+    SaveConfig();
+}
+
+exec function SetFHUDBarGap(float Value)
+{
+    BarGap = FMax(Value, 0.f);
     SaveConfig();
 }
 
