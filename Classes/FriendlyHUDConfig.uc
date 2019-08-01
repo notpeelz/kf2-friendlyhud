@@ -74,7 +74,7 @@ simulated function Initialized()
             DO_T0 = 4.f;
             DO_T1 = 0.f;
             Opacity = 1.f;
-            IconGap = 0.f;
+            IconGap = 4.f;
             BuffLayout = 0;
             BarGap = 0.f;
             BlockWidth = 200.f;
@@ -140,7 +140,7 @@ simulated function LoadDefaultFHUDLayout()
     BuffSize = 8.f;
     BuffMargin = 2.f;
     BuffGap = 3.f;
-    IconGap = 0.f;
+    IconGap = 4.f;
     OffsetX = 0.f;
     OffsetY = 0.f;
     ReverseX = false;
