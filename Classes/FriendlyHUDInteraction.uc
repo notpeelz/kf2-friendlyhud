@@ -29,6 +29,7 @@ var float ScreenPosX, ScreenPosY;
 var float ObjectOpacity;
 
 const PrestigeIconScale = 0.75f;
+const FHUD_EMPTY_BLOCK_THRESHOLD = 0.1;
 const FHUD_PlayerStatusIconSize = 32.f;
 const FHUD_BarHeight = 10.f; // 10 pixels high at 1080p
 const FHUD_FontSize = 36.f;
@@ -309,7 +310,8 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
         PosX + PerkIconSize + IconGap,
         PosY + TextHeight + NameMarginY,
         HUDConfig.ArmorColor,
-        HUDConfig.ArmorBGColor
+        HUDConfig.ArmorBGColor,
+        HUDConfig.ArmorEmptyBGColor
     );
 
     // Draw health bar
@@ -320,6 +322,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
         PosY + BarHeight + BarGap + TextHeight + NameMarginY,
         HUDConfig.HealthColor,
         HUDConfig.HealthBGColor,
+        HUDConfig.HealthEmptyBGColor,
         HUDConfig.HealthRegenColor
     );
 
@@ -371,10 +374,10 @@ simulated function DrawBuffs(Canvas Canvas, MedBuffInfo BuffInfo, float PosX, fl
     }
 }
 
-simulated function DrawBar(Canvas Canvas, float BarPercentage, float BufferPercentage, float PosX, float PosY, Color BarColor, Color BGColor, optional Color BufferColor)
+simulated function DrawBar(Canvas Canvas, float BarPercentage, float BufferPercentage, float PosX, float PosY, Color BarColor, Color BGColor, Color EmptyBGColor, optional Color BufferColor)
 {
     local int CurrentBlockPosX;
-    local float CurrentBlockWidth;
+    local float BarBlockWidth, BufferBlockWidth;
     local float PercentagePerBlock, P1, P2;
     local int I;
 
@@ -410,32 +413,31 @@ simulated function DrawBar(Canvas Canvas, float BarPercentage, float BufferPerce
             }
         }
 
-        // TODO: add option to change the background color of empty blocks
+        BarBlockWidth = P1 > 0.f ? GetBlockWidth(P1) : 0.f;
+        // Second condition is to prevent rendering over a rounded-up block
+        BufferBlockWidth = (P2 > 0.f && !(HUDConfig.BlockStyle != 0 && BarBlockWidth >= 1.f))
+            ? GetBlockWidth(P2, P1)
+            : 0.f;
 
         // Draw background
-        SetCanvasColor(Canvas, BGColor);
+        SetCanvasColor(Canvas, ((BarBlockWidth + BufferBlockWidth) / BlockWidth) <= HUDConfig.EmptyBlockThreshold ? EmptyBGColor : BGColor);
         Canvas.SetPos(CurrentBlockPosX - 1.f, PosY - 1.f);
         Canvas.DrawTile(BarBGTexture, BlockWidth + 2.f, BarHeight, 0, 0, 32, 32);
 
-        CurrentBlockWidth = 0.f;
-
-        // Draw foreground
-        if (P1 > 0.f)
+        // Draw main bar
+        if (BarBlockWidth > 0.f)
         {
-            CurrentBlockWidth = GetBlockWidth(P1);
-
             SetCanvasColor(Canvas, BarColor);
             Canvas.SetPos(CurrentBlockPosX, PosY);
-            Canvas.DrawTile(BarBGTexture, CurrentBlockWidth, BarHeight - 2.f, 0, 0, 32, 32);
+            Canvas.DrawTile(BarBGTexture, BarBlockWidth, BarHeight - 2.f, 0, 0, 32, 32);
         }
 
         // Draw the buffer after the main bar
-        // Second condition is to prevent rendering over a rounded-up block
-        if (P2 > 0.f && !(HUDConfig.BlockStyle != 0 && CurrentBlockWidth >= 1.f))
+        if (BufferBlockWidth > 0.f)
         {
             SetCanvasColor(Canvas, BufferColor);
-            Canvas.SetPos(CurrentBlockPosX + CurrentBlockWidth, PosY);
-            Canvas.DrawTile(BarBGTexture, GetBlockWidth(P2, P1), BarHeight - 2.f, 0, 0, 32, 32);
+            Canvas.SetPos(CurrentBlockPosX + BarBlockWidth, PosY);
+            Canvas.DrawTile(BarBGTexture, BufferBlockWidth, BarHeight - 2.f, 0, 0, 32, 32);
         }
     }
 }

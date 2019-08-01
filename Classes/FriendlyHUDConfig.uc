@@ -25,10 +25,13 @@ var config Color ShadowColor;
 var config Color TextColor;
 var config Color IconColor;
 var config Color ArmorBGColor;
+var config Color ArmorEmptyBGColor;
 var config Color ArmorColor;
 var config Color HealthBGColor;
+var config Color HealthEmptyBGColor;
 var config Color HealthColor;
 var config Color HealthRegenColor;
+var config float EmptyBlockThreshold;
 var config Color BuffColor;
 var config bool DisableHUD;
 var config bool OnlyForMedic;
@@ -59,6 +62,8 @@ const DEPRECATED_ENTRY = "DELETE_ME";
 
 simulated function Initialized()
 {
+    local Color OldBGColor;
+
     if (INIVersion == 0)
     {
         LoadDefaultFHUDConfig();
@@ -77,14 +82,19 @@ simulated function Initialized()
             IconGap = 4.f;
             BuffLayout = 0;
             BarGap = 0.f;
+            EmptyBlockThreshold = 0.1f;
             BlockWidth = 200.f;
             BlockCount = 1;
             BlockGap = 4.f;
             BlockStyle = 0;
 
-            ArmorBGColor = class'FriendlyHUD.FriendlyHUDHelper'.static.ColorFromString(BGColor);
-            HealthBGColor = class'FriendlyHUD.FriendlyHUDHelper'.static.ColorFromString(BGColor);
+            OldBGColor = class'FriendlyHUD.FriendlyHUDHelper'.static.ColorFromString(BGColor);
+            ArmorBGColor = OldBGColor;
+            HealthBGColor = OldBGColor;
             BGColor = DEPRECATED_ENTRY;
+
+            ArmorEmptyBGColor = OldBGColor;
+            HealthEmptyBGColor = OldBGColor;
 
             // Rename BuffMarginX to BuffMargin
             BuffMargin = float(BuffMarginX);
@@ -109,6 +119,7 @@ simulated function LoadDefaultFHUDConfig()
     BlockWidth = 200.f;
     BlockCount = 1;
     BlockStyle = 0;
+    EmptyBlockThreshold = 0.1f;
     OnlyForMedic = false;
     IgnoreSelf = true;
     IgnoreDeadTeammates = true;
@@ -154,6 +165,8 @@ simulated function LoadDefaultFHUDColors()
     IconColor = MakeColor(255, 255, 255, 192);
     ArmorBGColor = MakeColor(16, 16, 16, 192);
     HealthBGColor = MakeColor(16, 16, 16, 192);
+    ArmorEmptyBGColor = MakeColor(16, 16, 16, 192);
+    HealthEmptyBGColor = MakeColor(16, 16, 16, 192);
     ArmorColor = MakeColor(0, 100, 210, 192);
     HealthColor = MakeColor(0, 192, 0, 192);
     HealthRegenColor = MakeColor(0, 70, 0, 192);
@@ -494,7 +507,32 @@ exec function SetFHUDHealthColor(byte R, byte G, byte B, optional byte A = 192)
 
 exec function SetFHUDArmorBGColor(byte R, byte G, byte B, optional byte A = 192)
 {
+    // If the ArmorEmptyBGColor is the same as the ArmorBGColor, we assume that
+    // it wasn't customized
+    if (ArmorEmptyBGColor == ArmorBGColor)
+    {
+        ArmorEmptyBGColor = MakeColor(R, G, B, A);
+    }
     ArmorBGColor = MakeColor(R, G, B, A);
+    SaveConfig();
+}
+
+exec function SetFHUDHealthEmptyBGColor(byte R, byte G, byte B, optional byte A = 192)
+{
+    // If the HealthEmptyBGColor is the same as the HealthBGColor, we assume that
+    // it wasn't customized
+    if (HealthEmptyBGColor == HealthBGColor)
+    {
+        HealthEmptyBGColor = MakeColor(R, G, B, A);
+    }
+    HealthEmptyBGColor = MakeColor(R, G, B, A);
+    SaveConfig();
+}
+
+
+exec function SetFHUDArmorEmptyBGColor(byte R, byte G, byte B, optional byte A = 192)
+{
+    ArmorEmptyBGColor = MakeColor(R, G, B, A);
     SaveConfig();
 }
 
@@ -507,6 +545,12 @@ exec function SetFHUDHealthBGColor(byte R, byte G, byte B, optional byte A = 192
 exec function SetFHUDHealthRegenColor(byte R, byte G, byte B, optional byte A = 192)
 {
     HealthRegenColor = MakeColor(R, G, B, A);
+    SaveConfig();
+}
+
+exec function SetFHUDEmptyBlockThreshold(float Value)
+{
+    EmptyBlockThreshold = Value;
     SaveConfig();
 }
 
