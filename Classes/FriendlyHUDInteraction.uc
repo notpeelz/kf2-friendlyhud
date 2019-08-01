@@ -24,7 +24,7 @@ var float PerkIconSize;
 var float BlockWidth, BlockGap, TotalBlockWidth;
 var float BuffIconSize, BuffIconMargin, BuffIconGap;
 var float NameMarginX, NameMarginY;
-var float IconMarginX;
+var float IconGap;
 var float ScreenPosX, ScreenPosY;
 var float ObjectOpacity;
 
@@ -99,13 +99,13 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     BarHeight = FHUD_BarHeight * ResScale;
     BarGap = HUDConfig.BarGap * ResScale;
     TextHeight = FHUD_FontSize * FontScale;
-    TotalItemWidth = PerkIconSize + IconMarginX + (TotalBlockWidth * HUDConfig.BlockCount) + HUDConfig.ItemMarginX * ResScale;
+    TotalItemWidth = PerkIconSize + IconGap + (TotalBlockWidth * HUDConfig.BlockCount) + HUDConfig.ItemMarginX * ResScale;
     TotalItemHeight = BarHeight * 2.f + TextHeight + HUDConfig.ItemMarginY * ResScale;
     BuffIconSize = HUDConfig.BuffSize * ResScale;
     BuffIconMargin = HUDConfig.BuffMargin * ResScale;
     BuffIconGap = HUDConfig.BuffGap * ResScale;
 
-    IconMarginX = HUDConfig.IconMarginX * ResScale;
+    IconGap = HUDConfig.IconGap * ResScale;
 
     NameMarginX = 4.f * ResScale;
     NameMarginY = ResScale < 0.9f ? 0.f : FHUD_NameMarginY;
@@ -289,7 +289,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     // Draw drop shadow behind the player name
     SetCanvasColor(Canvas, HUDConfig.ShadowColor);
     Canvas.SetPos(
-        PosX + PerkIconSize + IconMarginX + NameMarginX,
+        PosX + PerkIconSize + IconGap + NameMarginX,
         PosY + 1
     );
     Canvas.DrawText(KFPRI.PlayerName, , FontScale, FontScale, TextFontRenderInfo);
@@ -297,7 +297,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     // Draw player name
     SetCanvasColor(Canvas, HUDConfig.TextColor);
     Canvas.SetPos(
-        PosX + PerkIconSize + IconMarginX + NameMarginX,
+        PosX + PerkIconSize + IconGap + NameMarginX,
         PosY
     );
     Canvas.DrawText(KFPRI.PlayerName, , FontScale, FontScale, TextFontRenderInfo);
@@ -306,7 +306,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     DrawBar(Canvas,
         ArmorRatio,
         0.f,
-        PosX + PerkIconSize + IconMarginX,
+        PosX + PerkIconSize + IconGap,
         PosY + TextHeight + NameMarginY,
         HUDConfig.ArmorColor
     );
@@ -315,7 +315,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     DrawBar(Canvas,
         HealthRatio,
         RegenRatio,
-        PosX + PerkIconSize + IconMarginX,
+        PosX + PerkIconSize + IconGap,
         PosY + BarHeight + BarGap + TextHeight + NameMarginY,
         HUDConfig.HealthColor,
         HUDConfig.HealthRegenColor

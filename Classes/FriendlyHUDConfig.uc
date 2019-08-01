@@ -18,7 +18,7 @@ var config int BuffLayout;
 var config float BuffSize;
 var config float BuffMargin;
 var config float BuffGap;
-var config float IconMarginX;
+var config float IconGap;
 var config float OffsetX;
 var config float OffsetY;
 var config Color ShadowColor;
@@ -72,7 +72,7 @@ simulated function Initialized()
             DO_T0 = 4.f;
             DO_T1 = 0.f;
             Opacity = 1.f;
-            IconMarginX = 0.f;
+            IconGap = 0.f;
             BuffLayout = 0;
             BarGap = 0.f;
             BlockWidth = 200.f;
@@ -134,7 +134,7 @@ simulated function LoadDefaultFHUDLayout()
     BuffSize = 8.f;
     BuffMargin = 2.f;
     BuffGap = 3.f;
-    IconMarginX = 0.f;
+    IconGap = 0.f;
     OffsetX = 0.f;
     OffsetY = 0.f;
     ReverseX = false;
@@ -551,9 +551,9 @@ exec function SetFHUDBuffGap(float Value)
     SaveConfig();
 }
 
-exec function SetFHUDIconMarginX(float Value)
+exec function SetFHUDIconGap(float Value)
 {
-    IconMarginX = Value;
+    IconGap = Value;
     SaveConfig();
 }
 
