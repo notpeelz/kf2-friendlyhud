@@ -308,7 +308,8 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
         0.f,
         PosX + PerkIconSize + IconGap,
         PosY + TextHeight + NameMarginY,
-        HUDConfig.ArmorColor
+        HUDConfig.ArmorColor,
+        HUDConfig.ArmorBGColor
     );
 
     // Draw health bar
@@ -318,6 +319,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
         PosX + PerkIconSize + IconGap,
         PosY + BarHeight + BarGap + TextHeight + NameMarginY,
         HUDConfig.HealthColor,
+        HUDConfig.HealthBGColor,
         HUDConfig.HealthRegenColor
     );
 
@@ -369,7 +371,7 @@ simulated function DrawBuffs(Canvas Canvas, MedBuffInfo BuffInfo, float PosX, fl
     }
 }
 
-simulated function DrawBar(Canvas Canvas, float BarPercentage, float BufferPercentage, float PosX, float PosY, Color BarColor, optional Color BufferColor)
+simulated function DrawBar(Canvas Canvas, float BarPercentage, float BufferPercentage, float PosX, float PosY, Color BarColor, Color BGColor, optional Color BufferColor)
 {
     local int CurrentBlockPosX;
     local float CurrentBlockWidth;
@@ -411,7 +413,7 @@ simulated function DrawBar(Canvas Canvas, float BarPercentage, float BufferPerce
         // TODO: add option to change the background color of empty blocks
 
         // Draw background
-        SetCanvasColor(Canvas, HUDConfig.BGColor);
+        SetCanvasColor(Canvas, BGColor);
         Canvas.SetPos(CurrentBlockPosX - 1.f, PosY - 1.f);
         Canvas.DrawTile(BarBGTexture, BlockWidth + 2.f, BarHeight, 0, 0, 32, 32);
 

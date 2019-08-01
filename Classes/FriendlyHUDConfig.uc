@@ -24,8 +24,9 @@ var config float OffsetY;
 var config Color ShadowColor;
 var config Color TextColor;
 var config Color IconColor;
-var config Color BGColor;
+var config Color ArmorBGColor;
 var config Color ArmorColor;
+var config Color HealthBGColor;
 var config Color HealthColor;
 var config Color HealthRegenColor;
 var config Color BuffColor;
@@ -45,6 +46,7 @@ var config bool UMCompatEnabled;
 var config int UMDisableHMTechChargeHUD;
 
 // Removed/renamed/deprecated settings
+var config string BGColor;
 var config string BuffMarginX;
 var config string BuffMarginY;
 
@@ -79,6 +81,10 @@ simulated function Initialized()
             BlockCount = 1;
             BlockGap = 4.f;
             BlockStyle = 0;
+
+            ArmorBGColor = class'FriendlyHUD.FriendlyHUDHelper'.static.ColorFromString(BGColor);
+            HealthBGColor = class'FriendlyHUD.FriendlyHUDHelper'.static.ColorFromString(BGColor);
+            BGColor = DEPRECATED_ENTRY;
 
             // Rename BuffMarginX to BuffMargin
             BuffMargin = float(BuffMarginX);
@@ -146,7 +152,8 @@ simulated function LoadDefaultFHUDColors()
     ShadowColor = MakeColor(0, 0, 0, 255);
     TextColor = MakeColor(255, 255, 255, 192);
     IconColor = MakeColor(255, 255, 255, 192);
-    BGColor = MakeColor(16, 16, 16, 192);
+    ArmorBGColor = MakeColor(16, 16, 16, 192);
+    HealthBGColor = MakeColor(16, 16, 16, 192);
     ArmorColor = MakeColor(0, 100, 210, 192);
     HealthColor = MakeColor(0, 192, 0, 192);
     HealthRegenColor = MakeColor(0, 70, 0, 192);
@@ -482,6 +489,18 @@ exec function SetFHUDArmorColor(byte R, byte G, byte B, optional byte A = 192)
 exec function SetFHUDHealthColor(byte R, byte G, byte B, optional byte A = 192)
 {
     HealthColor = MakeColor(R, G, B, A);
+    SaveConfig();
+}
+
+exec function SetFHUDArmorBGColor(byte R, byte G, byte B, optional byte A = 192)
+{
+    ArmorBGColor = MakeColor(R, G, B, A);
+    SaveConfig();
+}
+
+exec function SetFHUDHealthBGColor(byte R, byte G, byte B, optional byte A = 192)
+{
+    HealthBGColor = MakeColor(R, G, B, A);
     SaveConfig();
 }
 
