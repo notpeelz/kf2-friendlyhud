@@ -82,7 +82,7 @@ simulated function Initialized()
             IconGap = 4.f;
             BuffLayout = 0;
             BarGap = 0.f;
-            EmptyBlockThreshold = 0.1f;
+            EmptyBlockThreshold = 0.01f;
             BlockWidth = 200.f;
             BlockCount = 1;
             BlockGap = 4.f;

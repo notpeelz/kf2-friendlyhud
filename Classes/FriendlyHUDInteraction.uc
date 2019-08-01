@@ -28,8 +28,8 @@ var float IconGap;
 var float ScreenPosX, ScreenPosY;
 var float ObjectOpacity;
 
+const FLOAT_EPSILON = 0.01f;
 const PrestigeIconScale = 0.75f;
-const FHUD_EMPTY_BLOCK_THRESHOLD = 0.1;
 const FHUD_PlayerStatusIconSize = 32.f;
 const FHUD_BarHeight = 10.f; // 10 pixels high at 1080p
 const FHUD_FontSize = 36.f;
@@ -413,14 +413,15 @@ simulated function DrawBar(Canvas Canvas, float BarPercentage, float BufferPerce
             }
         }
 
-        BarBlockWidth = P1 > 0.f ? GetBlockWidth(P1) : 0.f;
+        BarBlockWidth = GetBlockWidth(P1);
+
         // Second condition is to prevent rendering over a rounded-up block
         BufferBlockWidth = (P2 > 0.f && !(HUDConfig.BlockStyle != 0 && BarBlockWidth >= 1.f))
             ? GetBlockWidth(P2, P1)
             : 0.f;
 
         // Draw background
-        SetCanvasColor(Canvas, ((BarBlockWidth + BufferBlockWidth) / BlockWidth) <= HUDConfig.EmptyBlockThreshold ? EmptyBGColor : BGColor);
+        SetCanvasColor(Canvas, (((BarBlockWidth + BufferBlockWidth) / BlockWidth) - HUDConfig.EmptyBlockThreshold) <= 0.01 ? EmptyBGColor : BGColor);
         Canvas.SetPos(CurrentBlockPosX - 1.f, PosY - 1.f);
         Canvas.DrawTile(BarBGTexture, BlockWidth + 2.f, BarHeight, 0, 0, 32, 32);
 
@@ -476,21 +477,38 @@ simulated function Texture2D GetPlayerIcon(KFPlayerReplicationInfo KFPRI, EVoice
     return class'KFLocalMessage_VoiceComms'.default.VoiceCommsIcons[VoiceReq];
 }
 
+`if(`isdefined(debug))
+exec function DebugSetHealth(int Value)
+{
+    if (KFPlayerOwner.Pawn != None)
+    {
+        KFPlayerOwner.Pawn.Health = Value;
+    }
+}
+`endif
+
 simulated function float GetBlockWidth(float P1, optional float P2 = 0.f)
 {
     local float C;
+    local float X;
 
     C = P1 + P2;
 
+    X = C;
+
+    // Correct float imprecisions for Ceil and Floor
+    if ((1.f - C) < 0.f) X = 1;
+    else if ((1.f - C) < FLOAT_EPSILON) X = 1;
+    else if ((1.f - C) >= -FLOAT_EPSILON && (1.f - C) < 0.f) X = 1;
+
     switch (HUDConfig.BlockStyle)
     {
-        case 1:
-            return BlockWidth * Round(C);
-        case 2:
-            return BlockWidth * FCeil(C);
-        case 3:
-            // If the value is within the ]0.99, 1[ range, we round up instead of flooring because of possible float errors
-            return BlockWidth * ((C > 0.99f && C < 1.f) ? 1 : FFloor(C));
+        case 1: // Round
+            return BlockWidth * (Abs(C - 0.5f) >= FLOAT_EPSILON ? Round(C + FLOAT_EPSILON) : 0);
+        case 2: // Ceil
+            return BlockWidth * FCeil(X);
+        case 3: // Floor
+            return BlockWidth * FFloor(X);
         case 0:
         default:
             return BlockWidth * P1;
