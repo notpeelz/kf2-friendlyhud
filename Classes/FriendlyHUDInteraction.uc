@@ -444,7 +444,7 @@ simulated function DrawBar(Canvas Canvas, float BarPercentage, float BufferPerce
                     // BlockStyle: Default
                     ? (BlockWidth * P2)
                     // BlockStyle: Full
-                    : FMin(BlockWidth * Round(P2), BlockWidth),
+                    : BlockWidth * Round(P1 + P2),
                 // Height
                 BarHeight - 2.f,
                 0, 0, 32, 32
