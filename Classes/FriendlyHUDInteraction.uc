@@ -388,7 +388,7 @@ simulated function DrawBar(Canvas Canvas, float BarPercentage, float BufferPerce
         BarPercentage -= PercentagePerBlock;
         P1 = BarPercentage < 0.f
             // We overflowed, so we have to subtract it
-            ? ((PercentagePerBlock + BarPercentage) / PercentagePerBlock)
+            ? FMax((PercentagePerBlock + BarPercentage) / PercentagePerBlock, 0.f)
             // We can fill the block up to 100%
             : 1.f;
         P2 = 0.f;
@@ -397,7 +397,7 @@ simulated function DrawBar(Canvas Canvas, float BarPercentage, float BufferPerce
         if (BufferPercentage > 0.f && P1 < 1.f)
         {
             // Try to fill the rest of the block (that's not occupied by the first bar)
-            P2 = 1.f - FMax(P1, 0.f);
+            P2 = 1.f - P1;
             BufferPercentage -= P2 * PercentagePerBlock;
 
             // If we overflowed, subtract the overflow from the buffer (P2)
@@ -420,11 +420,7 @@ simulated function DrawBar(Canvas Canvas, float BarPercentage, float BufferPerce
         // Draw foreground
         if (P1 > 0.f)
         {
-            CurrentBlockWidth = HUDConfig.BlockStyle == 0
-                // BlockStyle: Default
-                ? (BlockWidth * P1)
-                // BlockStyle: Full
-                : (BlockWidth * Round(P1));
+            CurrentBlockWidth = GetBlockWidth(P1);
 
             SetCanvasColor(Canvas, BarColor);
             Canvas.SetPos(CurrentBlockPosX, PosY);
@@ -437,18 +433,7 @@ simulated function DrawBar(Canvas Canvas, float BarPercentage, float BufferPerce
         {
             SetCanvasColor(Canvas, BufferColor);
             Canvas.SetPos(CurrentBlockPosX + CurrentBlockWidth, PosY);
-            Canvas.DrawTile(
-                BarBGTexture,
-                // Width
-                HUDConfig.BlockStyle == 0
-                    // BlockStyle: Default
-                    ? (BlockWidth * P2)
-                    // BlockStyle: Full
-                    : BlockWidth * Round(P1 + P2),
-                // Height
-                BarHeight - 2.f,
-                0, 0, 32, 32
-            );
+            Canvas.DrawTile(BarBGTexture, GetBlockWidth(P2, P1), BarHeight - 2.f, 0, 0, 32, 32);
         }
     }
 }
@@ -485,6 +470,27 @@ simulated function Texture2D GetPlayerIcon(KFPlayerReplicationInfo KFPRI, EVoice
     }
 
     return class'KFLocalMessage_VoiceComms'.default.VoiceCommsIcons[VoiceReq];
+}
+
+simulated function float GetBlockWidth(float P1, optional float P2 = 0.f)
+{
+    local float C;
+
+    C = P1 + P2;
+
+    switch (HUDConfig.BlockStyle)
+    {
+        case 1:
+            return BlockWidth * Round(C);
+        case 2:
+            return BlockWidth * FCeil(C);
+        case 3:
+            // If the value is within the ]0.99, 1[ range, we round up instead of flooring because of possible float errors
+            return BlockWidth * ((C > 0.99f && C < 1.f) ? 1 : FFloor(C));
+        case 0:
+        default:
+            return BlockWidth * P1;
+    }
 }
 
 defaultproperties

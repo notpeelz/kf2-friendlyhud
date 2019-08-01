@@ -416,9 +416,15 @@ exec function SetFHUDBlockStyle(string Value)
         case "full":
             BlockStyle = 1;
             break;
+        case "ceil":
+            BlockStyle = 2;
+            break;
+        case "floor":
+            BlockStyle = 3;
+            break;
         default:
             // Non-int values get parsed as 0
-            BlockStyle = Clamp(int(Value), 0, 1);
+            BlockStyle = Clamp(int(Value), 0, 3);
             break;
     }
 
