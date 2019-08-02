@@ -52,7 +52,8 @@ event PostRender(Canvas Canvas)
     // Don't render when HUD is hidden
     if (!HUD.bShowHUD) return;
 
-    if (KFPlayerOwner.GetTeamNum() == 0)
+    // Only render the HUD if we're not a Zed (Versus)
+    if (KFPlayerOwner.GetTeamNum() != 1)
     {
         DrawTeamHealthBars(Canvas);
     }
