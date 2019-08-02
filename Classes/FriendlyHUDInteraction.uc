@@ -234,7 +234,6 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     local float PerkIconPosX, PerkIconPosY;
     local FontRenderInfo TextFontRenderInfo;
     local KFPlayerReplicationInfo KFPRI;
-    local KFPawn_Human KFPH;
     local Texture2D PlayerIcon;
     local bool DrawPrestigeBorder;
     local float ArmorRatio, HealthRatio, RegenRatio;
@@ -477,16 +476,6 @@ simulated function Texture2D GetPlayerIcon(KFPlayerReplicationInfo KFPRI, EVoice
     return class'KFLocalMessage_VoiceComms'.default.VoiceCommsIcons[VoiceReq];
 }
 
-`if(`isdefined(debug))
-exec function DebugSetHealth(int Value)
-{
-    if (KFPlayerOwner.Pawn != None)
-    {
-        KFPlayerOwner.Pawn.Health = Value;
-    }
-}
-`endif
-
 simulated function float GetBlockWidth(float P1, optional float P2 = 0.f)
 {
     local float C;
@@ -512,6 +501,34 @@ simulated function float GetBlockWidth(float P1, optional float P2 = 0.f)
         case 0:
         default:
             return BlockWidth * P1;
+    }
+}
+
+exec function DebugFHUDSetArmor(int Armor, optional int MaxArmor = -1)
+{
+    local KFPawn_Human KFPH;
+
+    if (KFPlayerOwner.CheatManager == None) return;
+
+    KFPH = KFPawn_Human(KFPlayerOwner.Pawn);
+    if (KFPH == None) return;
+
+    KFPH.Armor = Armor;
+    if (MaxArmor > 0)
+    {
+        KFPH.MaxArmor = MaxArmor;
+    }
+}
+
+exec function DebugFHUDSetHealth(int Health, optional int MaxHealth = -1)
+{
+    if (KFPlayerOwner.CheatManager == None) return;
+    if (KFPlayerOwner.Pawn == None) return;
+
+    KFPlayerOwner.Pawn.Health = Health;
+    if (MaxHealth > 0)
+    {
+        KFPlayerOwner.Pawn.HealthMax = MaxHealth;
     }
 }
 
