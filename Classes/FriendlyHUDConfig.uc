@@ -7,6 +7,7 @@ var config int Flow;
 var config int Layout;
 var config float BarGap;
 var config float BlockWidth;
+var config float BlockHeight;
 var config int BlockCount;
 var config float BlockGap;
 var config int BlockStyle;
@@ -86,6 +87,7 @@ simulated function Initialized()
             BarGap = 0.f;
             EmptyBlockThreshold = 0.01f;
             BlockWidth = 200.f;
+            BlockHeight = 10.f;
             BlockCount = 1;
             BlockGap = 4.f;
             BlockStyle = 0;
@@ -121,6 +123,7 @@ simulated function LoadDefaultFHUDConfig()
     DisableHUD = false;
     BarGap = 0.f;
     BlockWidth = 200.f;
+    BlockHeight = 10.f;
     BlockCount = 1;
     BlockStyle = 0;
     EmptyBlockThreshold = 0.1f;
@@ -413,9 +416,13 @@ exec function SetFHUDBarGap(float Value)
     SaveConfig();
 }
 
-exec function SetFHUDBlockWidth(float Value)
+exec function SetFHUDBlockSize(float Width, optional float Height = -1)
 {
-    BlockWidth = FMax(Value, 3.f);
+    Width = FMax(Width, 3.f);
+    if (Height < 0.f) Height = Width;
+
+    BlockWidth = Width;
+    BlockHeight = Height;
     SaveConfig();
 }
 

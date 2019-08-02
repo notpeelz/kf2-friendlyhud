@@ -31,7 +31,6 @@ var float ObjectOpacity;
 const FLOAT_EPSILON = 0.0001f;
 const PrestigeIconScale = 0.75f;
 const FHUD_PlayerStatusIconSize = 32.f;
-const FHUD_BarHeight = 10.f; // 10 pixels high at 1080p
 const FHUD_FontSize = 36.f;
 
 simulated function Initialized()
@@ -97,7 +96,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     BlockWidth = HUDConfig.BlockWidth * ResScale;
     BlockGap = HUDConfig.BlockGap * ResScale;
     TotalBlockWidth = BlockWidth + BlockGap + 2.f;
-    BarHeight = FHUD_BarHeight * ResScale;
+    BarHeight = HUDConfig.BlockHeight * ResScale;
     BarGap = HUDConfig.BarGap * ResScale;
     // TODO: fix text scaling
     TextHeight = FHUD_FontSize * FontScale + (ResScale < 0.95f ? 0.f : 6.f);
