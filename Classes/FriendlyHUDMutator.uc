@@ -75,6 +75,12 @@ simulated function InitializeHUD()
 
     `Log("[FriendlyHUD] Found KFPC");
 
+    // Initialize the HUD configuration
+    HUDConfig = new (KFPC) class'FriendlyHUD.FriendlyHUDConfig';
+    HUDConfig.KFPlayerOwner = KFPC;
+    KFPC.Interactions.AddItem(HUDConfig);
+    HUDConfig.Initialized();
+
     // Give a chance for other mutators to initialize
     SetTimer(4.0, false, nameof(InitializeCompat));
 }
@@ -91,12 +97,6 @@ simulated function InitializeCompat()
         `Log("[FriendlyHUD] Incompatible HUD detected; aborting.");
         return;
     }
-
-    // Initialize the HUD configuration
-    HUDConfig = new (KFPC) class'FriendlyHUD.FriendlyHUDConfig';
-    HUDConfig.KFPlayerOwner = KFPC;
-    KFPC.Interactions.AddItem(HUDConfig);
-    HUDConfig.Initialized();
 
     // Initialize the HUD interaction
     FHUDInteraction = new (KFPC) class'FriendlyHUD.FriendlyHUDInteraction';

@@ -244,7 +244,6 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     local MedBuffInfo BuffInfo;
 
     KFPRI = ItemInfo.KFPRI;
-    KFPH = ItemInfo.KFPH;
     ItemInfo.RepInfo.GetPlayerInfo(ItemInfo.RepIndex, ArmorInfo, HealthInfo, HealthToRegen, BuffInfo);
     VoiceReq = KFPRI.CurrentVoiceCommsRequest;
     HealthToRegen = HealthToRegen > 0 ? (HealthToRegen - HealthInfo.Value) : 0;
