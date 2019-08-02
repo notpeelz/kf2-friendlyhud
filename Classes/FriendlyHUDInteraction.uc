@@ -33,7 +33,6 @@ const PrestigeIconScale = 0.75f;
 const FHUD_PlayerStatusIconSize = 32.f;
 const FHUD_BarHeight = 10.f; // 10 pixels high at 1080p
 const FHUD_FontSize = 36.f;
-const FHUD_NameMarginY = 6.f;
 
 simulated function Initialized()
 {
@@ -99,17 +98,17 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     TotalBlockWidth = BlockWidth + BlockGap + 2.f;
     BarHeight = FHUD_BarHeight * ResScale;
     BarGap = HUDConfig.BarGap * ResScale;
-    TextHeight = FHUD_FontSize * FontScale;
+    // TODO: fix text scaling
+    TextHeight = FHUD_FontSize * FontScale + (ResScale < 0.95f ? 0.f : 6.f);
+    NameMarginX = HUDConfig.NameMarginX * ResScale;
+    NameMarginY = HUDConfig.NameMarginY * ResScale;
     TotalItemWidth = PerkIconSize + IconGap + (TotalBlockWidth * HUDConfig.BlockCount) + HUDConfig.ItemMarginX * ResScale;
-    TotalItemHeight = BarHeight * 2.f + TextHeight + HUDConfig.ItemMarginY * ResScale;
+    TotalItemHeight = BarHeight * 2.f + TextHeight + NameMarginY + HUDConfig.ItemMarginY * ResScale;
     BuffIconSize = HUDConfig.BuffSize * ResScale;
     BuffIconMargin = HUDConfig.BuffMargin * ResScale;
     BuffIconGap = HUDConfig.BuffGap * ResScale;
 
     IconGap = HUDConfig.IconGap * ResScale;
-
-    NameMarginX = 4.f * ResScale;
-    NameMarginY = ResScale < 0.9f ? 0.f : FHUD_NameMarginY;
 
     // Layout: Bottom
     if (HUDConfig.Layout == 0)

@@ -19,6 +19,8 @@ var config float BuffSize;
 var config float BuffMargin;
 var config float BuffGap;
 var config float IconGap;
+var config float NameMarginX;
+var config float NameMarginY;
 var config float OffsetX;
 var config float OffsetY;
 var config Color ShadowColor;
@@ -87,6 +89,8 @@ simulated function Initialized()
             BlockCount = 1;
             BlockGap = 4.f;
             BlockStyle = 0;
+            NameMarginX = 0.f;
+            NameMarginY = 0.f;
 
             OldBGColor = class'FriendlyHUD.FriendlyHUDHelper'.static.ColorFromString(BGColor);
             ArmorBGColor = OldBGColor;
@@ -152,6 +156,8 @@ simulated function LoadDefaultFHUDLayout()
     BuffMargin = 2.f;
     BuffGap = 3.f;
     IconGap = 4.f;
+    NameMarginX = 0.f;
+    NameMarginY = 0.f;
     OffsetX = 0.f;
     OffsetY = 0.f;
     ReverseX = false;
@@ -617,6 +623,18 @@ exec function SetFHUDBuffGap(float Value)
 exec function SetFHUDIconGap(float Value)
 {
     IconGap = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDNameMarginX(float Value)
+{
+    NameMarginX = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDNameMarginY(float Value)
+{
+    NameMarginY = Value;
     SaveConfig();
 }
 
