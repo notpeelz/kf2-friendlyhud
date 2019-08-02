@@ -121,11 +121,6 @@ simulated function LoadDefaultFHUDConfig()
 {
     INIVersion = 2;
     DisableHUD = false;
-    BarGap = 0.f;
-    BlockWidth = 200.f;
-    BlockHeight = 10.f;
-    BlockCount = 1;
-    BlockStyle = 0;
     EmptyBlockThreshold = 0.1f;
     OnlyForMedic = false;
     IgnoreSelf = true;
@@ -161,6 +156,11 @@ simulated function LoadDefaultFHUDLayout()
     IconGap = 4.f;
     NameMarginX = 0.f;
     NameMarginY = 0.f;
+    BarGap = 0.f;
+    BlockWidth = 200.f;
+    BlockHeight = 10.f;
+    BlockCount = 1;
+    BlockStyle = 0;
     OffsetX = 0.f;
     OffsetY = 0.f;
     ReverseX = false;
