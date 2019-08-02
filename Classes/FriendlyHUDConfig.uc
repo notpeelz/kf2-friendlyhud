@@ -515,9 +515,9 @@ exec function SetFHUDArmorBGColor(byte R, byte G, byte B, optional byte A = 192)
 {
     // If the ArmorEmptyBGColor is the same as the ArmorBGColor, we assume that
     // it wasn't customized
-    if (ArmorEmptyBGColor == ArmorBGColor)
+    if (ArmorEmptyBGColor.R == ArmorBGColor.R && ArmorEmptyBGColor.G == ArmorBGColor.G && ArmorEmptyBGColor.B == ArmorBGColor.B)
     {
-        ArmorEmptyBGColor = MakeColor(R, G, B, A);
+        ArmorEmptyBGColor = MakeColor(R, G, B, ArmorEmptyBGColor.A == ArmorBGColor.A ? A : ArmorEmptyBGColor.A);
     }
     ArmorBGColor = MakeColor(R, G, B, A);
     SaveConfig();
@@ -527,9 +527,9 @@ exec function SetFHUDHealthEmptyBGColor(byte R, byte G, byte B, optional byte A 
 {
     // If the HealthEmptyBGColor is the same as the HealthBGColor, we assume that
     // it wasn't customized
-    if (HealthEmptyBGColor == HealthBGColor)
+    if (HealthEmptyBGColor.R == HealthBGColor.R && HealthEmptyBGColor.G == HealthBGColor.G && HealthEmptyBGColor.B == HealthBGColor.B)
     {
-        HealthEmptyBGColor = MakeColor(R, G, B, A);
+        HealthEmptyBGColor = MakeColor(R, G, B, HealthEmptyBGColor.A == HealthBGColor.A ? A : HealthEmptyBGColor.A);
     }
     HealthEmptyBGColor = MakeColor(R, G, B, A);
     SaveConfig();
