@@ -28,7 +28,7 @@ var float IconGap;
 var float ScreenPosX, ScreenPosY;
 var float ObjectOpacity;
 
-const FLOAT_EPSILON = 0.01f;
+const FLOAT_EPSILON = 0.0001f;
 const PrestigeIconScale = 0.75f;
 const FHUD_PlayerStatusIconSize = 32.f;
 const FHUD_BarHeight = 10.f; // 10 pixels high at 1080p
