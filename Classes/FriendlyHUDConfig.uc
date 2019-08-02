@@ -82,7 +82,7 @@ simulated function Initialized()
             DO_T1 = 0.f;
             Opacity = 1.f;
             IconGap = 4.f;
-            BuffLayout = 0;
+            BuffLayout = 1;
             BarGap = 0.f;
             EmptyBlockThreshold = 0.01f;
             BlockWidth = 200.f;
@@ -151,7 +151,7 @@ simulated function LoadDefaultFHUDLayout()
     ItemsPerRow = 5;
     ItemMarginX = 14.f;
     ItemMarginY = 5.f;
-    BuffLayout = 0;
+    BuffLayout = 1;
     BuffSize = 8.f;
     BuffMargin = 2.f;
     BuffGap = 3.f;
@@ -582,20 +582,24 @@ exec function SetFHUDBuffLayout(string Value)
 {
     switch (Locs(Value))
     {
-        case "left":
+        case "none":
+        case "disabled":
             BuffLayout = 0;
-        case "right":
-            BuffLayout = 1;
             break;
-        case "top":
+        case "left":
+            BuffLayout = 1;
+        case "right":
             BuffLayout = 2;
             break;
-        case "bottom":
+        case "top":
             BuffLayout = 3;
+            break;
+        case "bottom":
+            BuffLayout = 4;
             break;
         default:
             // Non-int values get parsed as 0
-            BuffLayout = Clamp(int(Value), 0, 3);
+            BuffLayout = Clamp(int(Value), 0, 4);
             break;
     }
 

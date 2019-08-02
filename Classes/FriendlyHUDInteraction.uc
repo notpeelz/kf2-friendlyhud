@@ -121,7 +121,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
         ScreenPosY += (Canvas.ClipY - ScreenPosY) * 0.3f;
 
         // BuffLayout: Left
-        if (HUDConfig.BuffLayout == 0)
+        if (HUDConfig.BuffLayout == 1)
         {
             // This ensures that we don't overlap (however unlikely) with the playerstats UI
             ScreenPosX += BuffIconMargin + BuffIconSize;
@@ -142,7 +142,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
             : (Canvas.ClipY + StatsDI.y);
 
         // BuffLayout: Left
-        if (HUDConfig.BuffLayout == 0)
+        if (HUDConfig.BuffLayout == 1)
         {
             // This ensures that we don't render off-bounds (too far left)
             ScreenPosX += BuffIconMargin + BuffIconSize;
@@ -157,7 +157,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
             : (Canvas.ClipY + GearDI.y);
 
         // BuffLayout: Left
-        if (HUDConfig.BuffLayout == 0)
+        if (HUDConfig.BuffLayout == 1)
         {
             // This ensures that we don't render off-bounds (too far right)
             ScreenPosX -= BuffIconMargin + BuffIconSize;
@@ -279,7 +279,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     DrawBuffs(Canvas, BuffInfo, PerkIconPosX, PerkIconPosY);
 
     // BuffLayout: Right
-    if (HUDConfig.BuffLayout == 1)
+    if (HUDConfig.BuffLayout == 2)
     {
         // This ensures that we don't render over the player name (and bars)
         PosX += BuffIconMargin + BuffIconSize;
@@ -333,30 +333,32 @@ simulated function DrawBuffs(Canvas Canvas, MedBuffInfo BuffInfo, float PosX, fl
     local int BuffLevel;
     local int I;
 
+    if (HUDConfig.BuffLayout == 0) return;
+
     BuffLevel = Min(Max(BuffInfo.DamageBoost, Max(BuffInfo.DamageResistance, BuffInfo.SpeedBoost)), class'FriendlyHUDMutator'.const.MAX_BUFF_COUNT);
 
     for (I = 0; I < BuffLevel; I++)
     {
         // BuffLayout: Left
-        if (HUDConfig.BuffLayout == 0)
+        if (HUDConfig.BuffLayout == 1)
         {
             CurrentPosX = PosX - BuffIconMargin - BuffIconSize;
             CurrentPosY = PosY + (BuffIconGap + BuffIconSize) * I;
         }
         // BuffLayout: Right
-        else if (HUDConfig.BuffLayout == 1)
+        else if (HUDConfig.BuffLayout == 2)
         {
             CurrentPosX = PosX + PerkIconSize + BuffIconMargin;
             CurrentPosY = PosY + (BuffIconGap + BuffIconSize) * I;
         }
         // BuffLayout: Top
-        else if (HUDConfig.BuffLayout == 2)
+        else if (HUDConfig.BuffLayout == 3)
         {
             CurrentPosX = PosX + (BuffIconGap + BuffIconSize) * I;
             CurrentPosY = PosY - BuffIconMargin - BuffIconSize;
         }
         // BuffLayout: Bottom
-        else if (HUDConfig.BuffLayout == 3)
+        else if (HUDConfig.BuffLayout == 4)
         {
             CurrentPosX = PosX + (BuffIconGap + BuffIconSize) * I;
             CurrentPosY = PosY + PerkIconSize + BuffIconMargin;
