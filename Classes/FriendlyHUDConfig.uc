@@ -493,7 +493,7 @@ exec function SetFHUDIconColor(byte R, byte G, byte B, optional byte A = 192)
     SaveConfig();
 }
 
-exec function SetFHUDTextColor(byte R, byte G, byte B, optional byte A = 192)
+exec function SetFHUDNameColor(byte R, byte G, byte B, optional byte A = 192)
 {
     IconColor = MakeColor(R, G, B, A);
     SaveConfig();
