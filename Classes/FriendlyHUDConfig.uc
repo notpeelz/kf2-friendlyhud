@@ -2,6 +2,8 @@ class FriendlyHUDConfig extends Interaction
     config(FriendlyHUD);
 
 var config int INIVersion;
+var config float UpdateInterval;
+var config int SortStrategy;
 var config float Scale;
 var config int Flow;
 var config int Layout;
@@ -57,6 +59,7 @@ var config string BuffMarginX;
 var config string BuffMarginY;
 
 var KFPlayerController KFPlayerOwner;
+var FriendlyHUDInteraction FHUDInteraction;
 
 var bool Debug;
 var bool DrawDebugLines;
@@ -77,6 +80,8 @@ simulated function Initialized()
         {
             INIVersion = 2;
 
+            UpdateInterval = 1.f;
+            SortStrategy = 0;
             DO_MinOpacity = 1.f;
             DO_MaxOpacity = 1.f;
             DO_T0 = 4.f;
@@ -120,6 +125,8 @@ simulated function Initialized()
 simulated function LoadDefaultFHUDConfig()
 {
     INIVersion = 2;
+    UpdateInterval = 1.f;
+    SortStrategy = 0;
     DisableHUD = false;
     EmptyBlockThreshold = 0.1f;
     OnlyForMedic = false;
@@ -698,6 +705,36 @@ exec function SetFHUDIgnoreDeadTeammates(bool Value)
 exec function SetFHUDMinHealthThreshold(float Value)
 {
     MinHealthThreshold = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDUpdateInterval(float Value)
+{
+    UpdateInterval = FMax(Value, 0.1f);
+    if (FHUDInteraction != None)
+    {
+        FHUDInteraction.ResetUpdateTimer();
+    }
+
+    SaveConfig();
+}
+
+exec function SetFHUDSortStrategy(string Strategy, optional bool Descending = true)
+{
+    switch (Locs(Strategy))
+    {
+        case "health":
+            SortStrategy = Descending ? 1 : 2;
+            break;
+        case "regenhealth":
+            SortStrategy = Descending ? 3 : 4;
+            break;
+        case "default":
+        default:
+            SortStrategy = 0;
+            break;
+    }
+
     SaveConfig();
 }
 

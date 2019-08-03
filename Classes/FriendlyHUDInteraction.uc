@@ -9,9 +9,21 @@ struct PlayerItemInfo
     var int RepIndex;
 };
 
+struct PRIEntry
+{
+    var int RepIndex;
+    var FriendlyHUDReplicationInfo RepInfo;
+    var KFPawn_Human KFPH;
+    var float HealthRatio;
+    var float RegenHealthRatio;
+    var KFPlayerReplicationInfo KFPRI;
+};
+
 var KFGFxHudWrapper HUD;
 var KFPlayerController KFPlayerOwner;
 var FriendlyHUDConfig HUDConfig;
+
+var array<PRIEntry> SortedKFPRIArray;
 
 var Texture2d BarBGTexture;
 var Texture2d BuffIconTexture;
@@ -36,6 +48,77 @@ const FHUD_FontSize = 36.f;
 simulated function Initialized()
 {
     `Log("[FriendlyHUD] Initialized interaction");
+
+    // Make sure this isn't running on the server for some reason...
+    if (KFPlayerOwner.WorldInfo.NetMode != NM_DedicatedServer)
+    {
+        ResetUpdateTimer();
+    }
+}
+
+function ResetUpdateTimer()
+{
+    `TimerHelper.ClearTimer(nameof(UpdatePRIArray), Self);
+    `TimerHelper.SetTimer(HUDConfig.UpdateInterval, true, nameof(UpdatePRIArray), Self);
+}
+
+function UpdatePRIArray()
+{
+    local FriendlyHUDReplicationInfo FHUDRepInfo;
+    local KFPawn_Human KFPH;
+    local PRIEntry CurrentPRIEntry;
+    local int I, ArrayIndex;
+
+    if (HUDConfig.DisableHUD) return;
+
+    SortedKFPRIArray.Length = 0;
+    FHUDRepInfo = FHUDMutator.RepInfo;
+    while (FHUDRepInfo != None)
+    {
+
+        for (I = 0; I < class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
+        {
+            if (FHUDRepInfo.KFPRIArray[I] == None) continue;
+
+            KFPH = FHUDRepInfo.KFPHArray[I];
+
+            CurrentPRIEntry.RepIndex = I;
+            CurrentPRIEntry.RepInfo = FHUDRepInfo;
+            CurrentPRIEntry.KFPRI = FHUDRepInfo.KFPRIArray[I];
+            CurrentPRIEntry.KFPH = KFPH;
+            CurrentPRIEntry.HealthRatio = KFPH != None
+                ? float(KFPH.Health) / float(KFPH.HealthMax)
+                : 0.f;
+            CurrentPRIEntry.RegenHealthRatio = KFPH != None
+                ? float(FHUDRepInfo.RegenHealthArray[I]) / float(KFPH.HealthMax)
+                : 0.f;
+
+            SortedKFPRIArray[ArrayIndex] = CurrentPRIEntry;
+
+            ArrayIndex++;
+        }
+        FHUDRepInfo = FHUDRepInfo.NextRepInfo;
+    }
+
+    switch (HUDConfig.SortStrategy)
+    {
+        case 1:
+            SortedKFPRIArray.Sort(SortKFPRIByHealthDescending);
+            break;
+        case 2:
+            SortedKFPRIArray.Sort(SortKFPRIByHealth);
+            break;
+        case 3:
+            SortedKFPRIArray.Sort(SortKFPRIByRegenHealthDescending);
+            break;
+        case 4:
+            SortedKFPRIArray.Sort(SortKFPRIByRegenHealth);
+            break;
+        case 0:
+        default:
+            SortedKFPRIArray.Sort(SortKFPRI);
+            break;
+    }
 }
 
 event PostRender(Canvas Canvas)
@@ -67,11 +150,12 @@ simulated function SetCanvasColor(Canvas Canvas, Color C)
 simulated function DrawTeamHealthBars(Canvas Canvas)
 {
     local FriendlyHUDReplicationInfo FHUDRepInfo;
+    local PRIEntry CurrentPRIEntry;
     local KFPlayerReplicationInfo KFPRI;
     local float BaseResScale, ResScale, FontScale;
     local ASDisplayInfo StatsDI, GearDI;
     local float CurrentItemPosX, CurrentItemPosY;
-    local int I, ItemCount, Column, Row;
+    local int ItemCount, Column, Row;
     local PlayerItemInfo ItemInfo;
 
     if (HUD.HUDMovie == None || HUD.HUDMovie.PlayerStatusContainer == None || HUD.HUDMovie.PlayerBackpackContainer == None)
@@ -178,54 +262,54 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
         );
     }
 
+    // Abort if the sorted array hasn't been initialized yet
+    if (SortedKFPRIArray.Length == 0) return;
+
     ItemCount = 0;
-    FHUDRepInfo = FHUDMutator.RepInfo;
-    while (FHUDRepInfo != None)
+    foreach SortedKFPRIArray(CurrentPRIEntry)
     {
-        for (I = 0; I < class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
+        FHUDRepInfo = CurrentPRIEntry.RepInfo;
+        KFPRI = CurrentPRIEntry.KFPRI;
+
+        if (KFPRI == None) continue;
+
+        // HasHadInitialSpawn() doesn't work on bots, so we use HUDConfig.Debug for testing
+        if ((KFPRI != KFPlayerOwner.PlayerReplicationInfo || !HUDConfig.IgnoreSelf) && (KFPRI.HasHadInitialSpawn() || HUDConfig.Debug))
         {
-            KFPRI = FHUDRepInfo.KFPRIArray[I];
-            if (KFPRI == None) continue;
-
-            // HasHadInitialSpawn() doesn't work on bots, so we use HUDConfig.Debug for testing
-            if ((KFPRI != KFPlayerOwner.PlayerReplicationInfo || !HUDConfig.IgnoreSelf) && (KFPRI.HasHadInitialSpawn() || HUDConfig.Debug))
+            // Layout: row first
+            if (HUDConfig.Flow == 1)
             {
-                // Layout: row first
-                if (HUDConfig.Flow == 1)
-                {
-                    Column = ItemCount % HUDConfig.ItemsPerRow;
-                    Row = ItemCount / HUDConfig.ItemsPerRow;
-                }
-                // Layout: column first
-                else
-                {
-                    Column = ItemCount / HudConfig.ItemsPerColumn;
-                    Row = ItemCount % HudConfig.ItemsPerColumn;
-                }
+                Column = ItemCount % HUDConfig.ItemsPerRow;
+                Row = ItemCount / HUDConfig.ItemsPerRow;
+            }
+            // Layout: column first
+            else
+            {
+                Column = ItemCount / HudConfig.ItemsPerColumn;
+                Row = ItemCount % HudConfig.ItemsPerColumn;
+            }
 
-                CurrentItemPosX = (HUDConfig.Layout == 3)
-                    // Right layout flows right-to-left
-                    ? (ScreenPosX - TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column))
-                    // Everything else flows left-to-right
-                    : (ScreenPosX + TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column));
-                CurrentItemPosY = (HUDConfig.Layout == 0)
-                    // Bottom layout flows down
-                    ? (ScreenPosY + TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row))
-                    // Left/right layouts flow up
-                    : (ScreenPosY - TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row));
+            CurrentItemPosX = (HUDConfig.Layout == 3)
+                // Right layout flows right-to-left
+                ? (ScreenPosX - TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column))
+                // Everything else flows left-to-right
+                : (ScreenPosX + TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column));
+            CurrentItemPosY = (HUDConfig.Layout == 0)
+                // Bottom layout flows down
+                ? (ScreenPosY + TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row))
+                // Left/right layouts flow up
+                : (ScreenPosY - TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row));
 
-                ItemInfo.KFPH = FHUDRepInfo.KFPHArray[I];
-                ItemInfo.KFPRI = KFPRI;
-                ItemInfo.RepInfo = FHUDRepInfo;
-                ItemInfo.RepIndex = I;
+            ItemInfo.KFPH = FHUDRepInfo.KFPHArray[CurrentPRIEntry.RepIndex];
+            ItemInfo.KFPRI = KFPRI;
+            ItemInfo.RepInfo = FHUDRepInfo;
+            ItemInfo.RepIndex = CurrentPRIEntry.RepIndex;
 
-                if (DrawHealthBarItem(Canvas, ItemInfo, CurrentItemPosX, CurrentItemPosY, FontScale))
-                {
-                    ItemCount++;
-                }
+            if (DrawHealthBarItem(Canvas, ItemInfo, CurrentItemPosX, CurrentItemPosY, FontScale))
+            {
+                ItemCount++;
             }
         }
-        FHUDRepInfo = FHUDRepInfo.NextRepInfo;
     }
 }
 
@@ -530,6 +614,98 @@ exec function DebugFHUDSetHealth(int Health, optional int MaxHealth = -1)
     {
         KFPlayerOwner.Pawn.HealthMax = MaxHealth;
     }
+}
+
+delegate int SortKFPRI(PRIEntry A, PRIEntry B)
+{
+    // Handle empty entries
+    if (B.KFPRI == None && A.KFPRI != None) return 1;
+    if (A.KFPRI == None && B.KFPRI != None) return -1;
+    if (A.KFPRI == B.KFPRI) return 0;
+
+    if (A.KFPRI.PlayerID < B.KFPRI.PlayerID) return -1;
+    if (A.KFPRI.PlayerID > B.KFPRI.PlayerID) return 1;
+    return 0;
+}
+
+delegate int SortKFPRIByHealth(PRIEntry A, PRIEntry B)
+{
+    // Handle empty entries
+    if (B.KFPRI == None && A.KFPRI != None) return 1;
+    if (A.KFPRI == None && B.KFPRI != None) return -1;
+    if (B.KFPH == None && A.KFPH != None) return 1;
+    if (A.KFPH == None && B.KFPH != None) return -1;
+
+    if (A.KFPH != None && B.KFPH != None)
+    {
+        if (A.HealthRatio < B.HealthRatio) return -1;
+        if (A.HealthRatio > B.HealthRatio) return 1;
+    }
+
+    if (A.KFPRI == B.KFPRI) return 0;
+    if (A.KFPRI.PlayerID < B.KFPRI.PlayerID) return -1;
+    if (A.KFPRI.PlayerID > B.KFPRI.PlayerID) return 1;
+    return 0;
+}
+
+delegate int SortKFPRIByHealthDescending(PRIEntry A, PRIEntry B)
+{
+    // Handle empty entries
+    if (B.KFPRI == None && A.KFPRI != None) return 1;
+    if (A.KFPRI == None && B.KFPRI != None) return -1;
+    if (B.KFPH == None && A.KFPH != None) return 1;
+    if (A.KFPH == None && B.KFPH != None) return -1;
+
+    if (A.KFPH != None && B.KFPH != None)
+    {
+        if (A.HealthRatio < B.HealthRatio) return 1;
+        if (A.HealthRatio > B.HealthRatio) return -1;
+    }
+
+    if (A.KFPRI == B.KFPRI) return 0;
+    if (A.KFPRI.PlayerID < B.KFPRI.PlayerID) return -1;
+    if (A.KFPRI.PlayerID > B.KFPRI.PlayerID) return 1;
+    return 0;
+}
+
+delegate int SortKFPRIByRegenHealth(PRIEntry A, PRIEntry B)
+{
+    // Handle empty entries
+    if (B.KFPRI == None && A.KFPRI != None) return 1;
+    if (A.KFPRI == None && B.KFPRI != None) return -1;
+    if (B.KFPH == None && A.KFPH != None) return 1;
+    if (A.KFPH == None && B.KFPH != None) return -1;
+
+    if (A.KFPH != None && B.KFPH != None)
+    {
+        if (A.RegenHealthRatio < B.RegenHealthRatio) return -1;
+        if (A.RegenHealthRatio > B.RegenHealthRatio) return 1;
+    }
+
+    if (A.KFPRI == B.KFPRI) return 0;
+    if (A.KFPRI.PlayerID < B.KFPRI.PlayerID) return -1;
+    if (A.KFPRI.PlayerID > B.KFPRI.PlayerID) return 1;
+    return 0;
+}
+
+delegate int SortKFPRIByRegenHealthDescending(PRIEntry A, PRIEntry B)
+{
+    // Handle empty entries
+    if (B.KFPRI == None && A.KFPRI != None) return 1;
+    if (A.KFPRI == None && B.KFPRI != None) return -1;
+    if (B.KFPH == None && A.KFPH != None) return 1;
+    if (A.KFPH == None && B.KFPH != None) return -1;
+
+    if (A.KFPH != None && B.KFPH != None)
+    {
+        if (A.RegenHealthRatio < B.RegenHealthRatio) return 1;
+        if (A.RegenHealthRatio > B.RegenHealthRatio) return -1;
+    }
+
+    if (A.KFPRI == B.KFPRI) return 0;
+    if (A.KFPRI.PlayerID < B.KFPRI.PlayerID) return -1;
+    if (A.KFPRI.PlayerID > B.KFPRI.PlayerID) return 1;
+    return 0;
 }
 
 defaultproperties

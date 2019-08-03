@@ -50,11 +50,11 @@ simulated event PostBeginPlay()
 
     if (WorldInfo.NetMode != NM_Client)
     {
-        SetTimer(0.1, true, nameof(UpdateInfo));
+        SetTimer(0.1f, true, nameof(UpdateInfo));
     }
 }
 
-simulated function NotifyLogin(Controller C)
+function NotifyLogin(Controller C)
 {
     local int I;
 
@@ -86,7 +86,7 @@ simulated function NotifyLogin(Controller C)
     NextRepInfo.NotifyLogin(C);
 }
 
-simulated function NotifyLogout(Controller C)
+function NotifyLogout(Controller C)
 {
     local int I;
 

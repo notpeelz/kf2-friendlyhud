@@ -25,7 +25,7 @@ simulated function PostBeginPlay()
         RepInfo = Spawn(class'FriendlyHUD.FriendlyHUDReplicationInfo', Self);
         RepInfo.LocalPC = KFPC;
         RepInfo.HUDConfig = HUDConfig;
-        SetTimer(2.0, true, nameof(CheckBots));
+        SetTimer(2.f, true, nameof(CheckBots));
     }
 
     InitializeHUD();
@@ -69,7 +69,7 @@ simulated function InitializeHUD()
 
     if (KFPC == None)
     {
-        SetTimer(1.0, false, nameof(InitializeHUD));
+        SetTimer(1.f, false, nameof(InitializeHUD));
         return;
     }
 
@@ -82,7 +82,7 @@ simulated function InitializeHUD()
     HUDConfig.Initialized();
 
     // Give a chance for other mutators to initialize
-    SetTimer(4.0, false, nameof(InitializeCompat));
+    SetTimer(4.f, false, nameof(InitializeCompat));
 }
 
 simulated function InitializeCompat()
@@ -106,6 +106,7 @@ simulated function InitializeCompat()
     FHUDInteraction.HUDConfig = HUDConfig;
     KFPC.Interactions.AddItem(FHUDInteraction);
     FHUDInteraction.Initialized();
+    HUDConfig.FHUDInteraction = FHUDInteraction;
 
     if (class'UnofficialMod.UMClientConfig' != None)
     {
