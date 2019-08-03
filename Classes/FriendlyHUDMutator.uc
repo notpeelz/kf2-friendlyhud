@@ -76,6 +76,7 @@ simulated function InitializeHUD()
     // Initialize the HUD configuration
     HUDConfig = new (KFPC) class'FriendlyHUD.FriendlyHUDConfig';
     HUDConfig.KFPlayerOwner = KFPC;
+    HUDConfig.FHUDMutator = Self;
     KFPC.Interactions.AddItem(HUDConfig);
     HUDConfig.Initialized();
 

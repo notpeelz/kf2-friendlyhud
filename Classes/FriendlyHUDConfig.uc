@@ -52,6 +52,7 @@ var config float DO_T0;
 var config float DO_T1;
 var config float Opacity;
 var config bool UMCompatEnabled;
+var config bool UMColorSyncEnabled;
 var config int UMDisableHMTechChargeHUD;
 
 // Removed/renamed/deprecated settings
@@ -60,6 +61,7 @@ var config string BuffMarginX;
 var config string BuffMarginY;
 
 var KFPlayerController KFPlayerOwner;
+var FriendlyHUDMutator FHUDMutator;
 var FriendlyHUDInteraction FHUDInteraction;
 
 var bool Debug;
@@ -101,6 +103,7 @@ simulated function Initialized()
             NameMarginX = 0.f;
             NameMarginY = 0.f;
             UMDisableHMTechChargeHUD = 0;
+            UMColorSyncEnabled = true;
 
             OldBGColor = class'FriendlyHUD.FriendlyHUDHelper'.static.ColorFromString(BGColor);
             ArmorBGColor = OldBGColor;
@@ -143,6 +146,7 @@ simulated function LoadDefaultFHUDConfig()
     DO_T1 = 0.f;
     Opacity = 1.f;
     UMCompatEnabled = true;
+    UMColorSyncEnabled = true;
 
     LoadDefaultFHUDLayout();
     LoadDefaultFHUDColors();
@@ -294,6 +298,8 @@ exec function LoadFHUDColorPreset(string Value)
             HealthRegenColor = MakeColor(204, 186, 220, 192);
             break;
     }
+
+    InitUMCompat();
 
     SaveConfig();
 }
@@ -520,12 +526,14 @@ exec function SetFHUDNameColor(byte R, byte G, byte B, optional byte A = 192)
 exec function SetFHUDArmorColor(byte R, byte G, byte B, optional byte A = 192)
 {
     ArmorColor = MakeColor(R, G, B, A);
+    InitUMCompat();
     SaveConfig();
 }
 
 exec function SetFHUDHealthColor(byte R, byte G, byte B, optional byte A = 192)
 {
     HealthColor = MakeColor(R, G, B, A);
+    InitUMCompat();
     SaveConfig();
 }
 
@@ -569,6 +577,7 @@ exec function SetFHUDHealthBGColor(byte R, byte G, byte B, optional byte A = 192
 exec function SetFHUDHealthRegenColor(byte R, byte G, byte B, optional byte A = 192)
 {
     HealthRegenColor = MakeColor(R, G, B, A);
+    InitUMCompat();
     SaveConfig();
 }
 
@@ -766,9 +775,7 @@ exec function SetFHUDOpacity(float Value)
 exec function SetFHUDUMCompatEnabled(bool Value)
 {
     UMCompatEnabled = Value;
-
-    if (Value) InitUMCompat();
-
+    InitUMCompat();
     SaveConfig();
 }
 
@@ -779,9 +786,17 @@ exec function ResetFHUDConfig()
 
 function InitUMCompat()
 {
-    if (UMCompatEnabled)
+    if (UMCompatEnabled && FHUDMutator.IsUMLoaded())
     {
         // Forcefully disable UM's dart cooldowns
         KFPlayerOwner.ConsoleCommand("UMHMTechChargeHUD 2");
+
+        // Sync colors with UM
+        if (UMColorSyncEnabled)
+        {
+            KFPlayerOwner.ConsoleCommand("UMHealthColor" @ HealthColor.R @ HealthColor.G @ HealthColor.B @ HealthColor.A);
+            KFPlayerOwner.ConsoleCommand("UMArmorColor" @ ArmorColor.R @ ArmorColor.G @ ArmorColor.B @ ArmorColor.A);
+            KFPlayerOwner.ConsoleCommand("UMRegenHealthColor" @ HealthRegenColor.R @ HealthRegenColor.G @ HealthRegenColor.B @ HealthRegenColor.A);
+        }
     }
 }
