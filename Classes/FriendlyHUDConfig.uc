@@ -98,6 +98,7 @@ simulated function Initialized()
             BlockStyle = 0;
             NameMarginX = 0.f;
             NameMarginY = 0.f;
+            UMDisableHMTechChargeHUD = 0;
 
             OldBGColor = class'FriendlyHUD.FriendlyHUDHelper'.static.ColorFromString(BGColor);
             ArmorBGColor = OldBGColor;
@@ -756,10 +757,22 @@ exec function SetFHUDOpacity(float Value)
 exec function SetFHUDUMCompatEnabled(bool Value)
 {
     UMCompatEnabled = Value;
+
+    if (Value) InitUMCompat();
+
     SaveConfig();
 }
 
 exec function ResetFHUDConfig()
 {
     LoadDefaultFHUDConfig();
+}
+
+function InitUMCompat()
+{
+    if (UMCompatEnabled)
+    {
+        // Forcefully disable UM's dart cooldowns
+        KFPlayerOwner.ConsoleCommand("UMHMTechChargeHUD 2");
+    }
 }

@@ -4,7 +4,13 @@ class UMCompatInteraction extends Interaction
 var KFGFxHudWrapper HUD;
 var KFPlayerController KFPlayerOwner;
 var FriendlyHUDConfig HUDConfig;
-var UMClientConfig UMConfig;
+
+var const Texture2d BGTexture;
+var const color WeaponIconColor;
+var const rotator MedicWeaponRot;
+var const float MedicWeaponHeight;
+var const color MedicWeaponBGColor;
+var const color MedicWeaponNotChargedColor, MedicWeaponChargedColor;
 
 simulated function Initialized()
 {
@@ -26,17 +32,9 @@ event PostRender(Canvas Canvas)
 {
     if (!HUDConfig.UMCompatEnabled) return;
 
-    // Forcefully disable UM's dart cooldowns
-    if (UMConfig.DisableHMTechChargeHUD != 2)
-    {
-        HUDConfig.UMDisableHMTechChargeHUD = UMConfig.DisableHMTechChargeHUD;
-        UMConfig.DisableHMTechChargeHUD = 2;
-    }
+    if (!AllowHMTechChargeDisplay()) return;
 
-    if (AllowHMTechChargeDisplay())
-    {
-        DrawMedicWeaponRecharge(Canvas);
-    }
+    DrawMedicWeaponRecharge(Canvas);
 }
 
 function DrawMedicWeaponRecharge(Canvas Canvas)
@@ -57,7 +55,7 @@ function DrawMedicWeaponRecharge(Canvas Canvas)
     DI = HUD.HUDMovie.PlayerBackpackContainer.GetDisplayInfo();
 
     ScreenRatioY = Canvas.ClipY / 1080.0;
-    IconHeight = class'UnofficialMod.KFGFxHudWrapper_UM'.default.MedicWeaponHeight * ScreenRatioY;
+    IconHeight = default.MedicWeaponHeight * ScreenRatioY;
     IconWidth = IconHeight / 2.f;
 
     IconBaseX = Canvas.ClipX + DI.x - IconWidth;
@@ -74,27 +72,38 @@ function DrawMedicWeaponRecharge(Canvas Canvas)
         WeaponBaseX = IconBaseX - (MedicWeaponCount * IconWidth * 1.2f);
 
         // Draw background
-        Canvas.DrawColor = class'UnofficialMod.KFGFxHudWrapper_UM'.default.MedicWeaponBGColor;
+        Canvas.DrawColor = default.MedicWeaponBGColor;
         Canvas.SetPos(WeaponBaseX, IconBaseY);
-        Canvas.DrawTile(class'UnofficialMod.KFGFxHudWrapper_UM'.default.PlayerStatusBarBGTexture, IconWidth, IconHeight, 0, 0, 32, 32);
+        Canvas.DrawTile(default.BGTexture, IconWidth, IconHeight, 0, 0, 32, 32);
 
         // Draw charge
         ChargePct = float(KFWMB.AmmoCount[1]) / float(KFWMB.MagazineCapacity[1]);
         ChargeBaseY = IconBaseY + IconHeight * (1.f - ChargePct);
         ChargeColor = (KFWMB.HasAmmo(1)
-            ? class'UnofficialMod.KFGFxHudWrapper_UM'.default.MedicWeaponChargedColor
-            : class'UnofficialMod.KFGFxHudWrapper_UM'.default.MedicWeaponNotChargedColor
+            ? default.MedicWeaponChargedColor
+            : default.MedicWeaponNotChargedColor
         );
         Canvas.DrawColor = ChargeColor;
         Canvas.SetPos(WeaponBaseX, ChargeBaseY);
-        Canvas.DrawTile(class'UnofficialMod.KFGFxHudWrapper_UM'.default.PlayerStatusBarBGTexture, IconWidth, IconHeight * ChargePct, 0, 0, 32, 32);
+        Canvas.DrawTile(default.BGTexture, IconWidth, IconHeight * ChargePct, 0, 0, 32, 32);
 
         // Draw weapon
-        Canvas.DrawColor = class'UnofficialMod.KFGFxHudWrapper_UM'.default.WeaponIconColor;
+        Canvas.DrawColor = default.WeaponIconColor;
         // Weapon texture is rotated from the top-left corner, so offset the X
         Canvas.SetPos(WeaponBaseX + IconWidth, IconBaseY);
-        Canvas.DrawRotatedTile(KFWMB.WeaponSelectTexture, class'UnofficialMod.KFGFxHudWrapper_UM'.default.MedicWeaponRot, IconHeight, IconWidth, 0, 0, 256, 128, 0, 0);
+        Canvas.DrawRotatedTile(KFWMB.WeaponSelectTexture, default.MedicWeaponRot, IconHeight, IconWidth, 0, 0, 256, 128, 0, 0);
 
         MedicWeaponCount++;
     }
+}
+
+defaultproperties
+{
+    BGTexture = Texture2D'EngineResources.WhiteSquareTexture';
+    WeaponIconColor = (R=192, G=192, B=192, A=192);
+    MedicWeaponRot = (Yaw=16384);
+    MedicWeaponHeight = 88;
+    MedicWeaponBGColor = (R=0, G=0, B=0, A=128);
+    MedicWeaponNotChargedColor = (R=224, G=0, B=0, A=128);
+    MedicWeaponChargedColor = (R=0, G=224, B=224, A=128);
 }

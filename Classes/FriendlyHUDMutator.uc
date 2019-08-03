@@ -82,14 +82,12 @@ simulated function InitializeHUD()
     HUDConfig.Initialized();
 
     // Give a chance for other mutators to initialize
-    SetTimer(4.f, false, nameof(InitializeCompat));
+    SetTimer(4.f, false, nameof(InitializeDeferred));
 }
 
-simulated function InitializeCompat()
+simulated function InitializeDeferred()
 {
     local FriendlyHUDInteraction FHUDInteraction;
-    local UMCompatInteraction UMInteraction;
-    local UMClientConfig UMConfig;
 
     HUD = KFGFxHudWrapper(KFPC.myHUD);
     if (HUD == None)
@@ -108,24 +106,39 @@ simulated function InitializeCompat()
     FHUDInteraction.Initialized();
     HUDConfig.FHUDInteraction = FHUDInteraction;
 
-    if (class'UnofficialMod.UMClientConfig' != None)
-    {
-        UMConfig = class'UnofficialMod.UMClientConfig'.static.GetInstance();
-        if (UMConfig != None)
-        {
-            `Log("[FriendlyHUD] UnofficialMod detected");
-
-            UMInteraction = new (KFPC) class'FriendlyHUD.UMCompatInteraction';
-            UMInteraction.KFPlayerOwner = KFPC;
-            UMInteraction.HUD = HUD;
-            UMInteraction.HUDConfig = HUDConfig;
-            UMInteraction.UMConfig = UMConfig;
-            KFPC.Interactions.AddItem(UMInteraction);
-            UMInteraction.Initialized();
-        }
-    }
+    InitializeCompat();
 
     `Log("[FriendlyHUD] Initialized");
+}
+
+simulated function bool IsUMLoaded()
+{
+    local Mutator Mut;
+
+    for (Mut = WorldInfo.Game.BaseMutator; Mut != None; Mut = Mut.NextMutator)
+    {
+        if (Mut.IsA('UnofficialModMut')) return true;
+    }
+
+    return false;
+}
+
+simulated function InitializeCompat()
+{
+    local UMCompatInteraction UMInteraction;
+
+    if (!IsUMLoaded()) return;
+
+    `Log("[FriendlyHUD] UnofficialMod detected");
+
+    HUDConfig.InitUMCompat();
+
+    UMInteraction = new (KFPC) class'FriendlyHUD.UMCompatInteraction';
+    UMInteraction.KFPlayerOwner = KFPC;
+    UMInteraction.HUD = HUD;
+    UMInteraction.HUDConfig = HUDConfig;
+    KFPC.Interactions.AddItem(UMInteraction);
+    UMInteraction.Initialized();
 }
 
 defaultproperties
