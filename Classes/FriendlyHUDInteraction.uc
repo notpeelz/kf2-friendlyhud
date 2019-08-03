@@ -418,7 +418,7 @@ simulated function DrawBuffs(Canvas Canvas, MedBuffInfo BuffInfo, float PosX, fl
 
     if (HUDConfig.BuffLayout == 0) return;
 
-    BuffLevel = Min(Max(BuffInfo.DamageBoost, Max(BuffInfo.DamageResistance, BuffInfo.SpeedBoost)), class'FriendlyHUDMutator'.const.MAX_BUFF_COUNT);
+    BuffLevel = Min(Max(BuffInfo.DamageBoost, Max(BuffInfo.DamageResistance, BuffInfo.SpeedBoost)), HUDConfig.BuffCountMax);
 
     for (I = 0; I < BuffLevel; I++)
     {

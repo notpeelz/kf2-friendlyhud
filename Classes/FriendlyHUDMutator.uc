@@ -6,8 +6,6 @@ var KFGFxHudWrapper HUD;
 var FriendlyHUDConfig HUDConfig;
 var FriendlyHUDReplicationInfo RepInfo;
 
-const MAX_BUFF_COUNT = 3;
-
 replication
 {
     if (bNetDirty)

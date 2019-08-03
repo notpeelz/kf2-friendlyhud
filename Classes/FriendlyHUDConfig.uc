@@ -21,6 +21,7 @@ var config int BuffLayout;
 var config float BuffSize;
 var config float BuffMargin;
 var config float BuffGap;
+var config int BuffCountMax;
 var config float IconGap;
 var config float NameMarginX;
 var config float NameMarginY;
@@ -36,8 +37,8 @@ var config Color HealthBGColor;
 var config Color HealthEmptyBGColor;
 var config Color HealthColor;
 var config Color HealthRegenColor;
-var config float EmptyBlockThreshold;
 var config Color BuffColor;
+var config float EmptyBlockThreshold;
 var config bool DisableHUD;
 var config bool OnlyForMedic;
 var config bool ReverseX;
@@ -88,6 +89,7 @@ simulated function Initialized()
             DO_T1 = 0.f;
             Opacity = 1.f;
             IconGap = 4.f;
+            BuffCountMax = 3;
             BuffLayout = 1;
             BarGap = 0.f;
             EmptyBlockThreshold = 0.01f;
@@ -134,6 +136,7 @@ simulated function LoadDefaultFHUDConfig()
     IgnoreSelf = true;
     IgnoreDeadTeammates = true;
     MinHealthThreshold = 1.f;
+    BuffCountMax = 3;
     DO_MinOpacity = 1.f;
     DO_MaxOpacity = 1.f;
     DO_T0 = 4.f;
@@ -636,6 +639,12 @@ exec function SetFHUDBuffMargin(float Value)
 exec function SetFHUDBuffGap(float Value)
 {
     BuffGap = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDBuffCountMax(int Value)
+{
+    BuffCountMax = Max(Value, 0);
     SaveConfig();
 }
 

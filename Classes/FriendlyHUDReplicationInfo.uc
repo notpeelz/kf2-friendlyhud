@@ -177,6 +177,7 @@ function UpdateSpeedBoost(int Index)
 
     KFPH = KFPHArray[Index];
 
+    // If the timer is no longer active, reset the counter
     if (KFPH == None || !KFPH.IsTimerActive(nameof(KFPH.ResetHealingSpeedBoost)))
     {
         MedBuffArray[Index].SpeedBoost = 0;
@@ -187,7 +188,8 @@ function UpdateSpeedBoost(int Index)
         TimerCount = KFPH.GetTimerCount(nameof(KFPH.ResetHealingSpeedBoost));
         if (TimerCount <= SpeedBoostTimerArray[Index])
         {
-            MedBuffArray[Index].SpeedBoost = Min(MedBuffArray[Index].SpeedBoost + 1, class'FriendlyHUDMutator'.const.MAX_BUFF_COUNT);
+            // If we detect a timer rewind, increment the counter; cap out at 3
+            MedBuffArray[Index].SpeedBoost = Min(MedBuffArray[Index].SpeedBoost + 1, 3);
         }
 
         SpeedBoostTimerArray[Index] = TimerCount;
