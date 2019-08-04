@@ -43,7 +43,6 @@ var float ObjectOpacity;
 const FLOAT_EPSILON = 0.0001f;
 const PrestigeIconScale = 0.75f;
 const FHUD_PlayerStatusIconSize = 32.f;
-const FHUD_FontSize = 36.f;
 
 simulated function Initialized()
 {
@@ -152,6 +151,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     local FriendlyHUDReplicationInfo FHUDRepInfo;
     local PRIEntry CurrentPRIEntry;
     local KFPlayerReplicationInfo KFPRI;
+    local float TextWidth;
     local float BaseResScale, ResScale, FontScale;
     local ASDisplayInfo StatsDI, GearDI;
     local float CurrentItemPosX, CurrentItemPosY;
@@ -182,8 +182,8 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     TotalBlockWidth = BlockWidth + BlockGap + 2.f;
     BarHeight = HUDConfig.BlockHeight * ResScale;
     BarGap = HUDConfig.BarGap * ResScale;
-    // TODO: fix text scaling
-    TextHeight = FHUD_FontSize * FontScale + (ResScale < 0.95f ? 0.f : 6.f);
+    Canvas.TextSize("pqy", TextWidth, TextHeight, FontScale, FontScale);
+
     NameMarginX = HUDConfig.NameMarginX * ResScale;
     NameMarginY = HUDConfig.NameMarginY * ResScale;
     TotalItemWidth = PerkIconSize + IconGap + (TotalBlockWidth * HUDConfig.BlockCount) + HUDConfig.ItemMarginX * ResScale;
