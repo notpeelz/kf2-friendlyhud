@@ -320,15 +320,21 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     local KFPlayerReplicationInfo KFPRI;
     local Texture2D PlayerIcon;
     local bool DrawPrestigeBorder;
-    local float ArmorRatio, HealthRatio, RegenRatio;
+    local float ArmorRatio, HealthRatio, RegenRatio, TotalRegenRatio;
     local BarInfo ArmorInfo, HealthInfo;
+    local FriendlyHUDConfig.ColorThreshold ColorThreshold;
+    local Color HealthColor, HealthRegenColor;
     local EVoiceCommsType VoiceReq;
     local int HealthToRegen;
     local MedBuffInfo BuffInfo;
+    local bool FoundThresholdColor;
+    local int I;
 
     KFPRI = ItemInfo.KFPRI;
     ItemInfo.RepInfo.GetPlayerInfo(ItemInfo.RepIndex, ArmorInfo, HealthInfo, HealthToRegen, BuffInfo);
     VoiceReq = KFPRI.CurrentVoiceCommsRequest;
+
+    TotalRegenRatio = HealthInfo.MaxValue > 0 ? (float(HealthToRegen) / float(HealthInfo.MaxValue)) : 0.f;
     HealthToRegen = HealthToRegen > 0 ? (HealthToRegen - HealthInfo.Value) : 0;
 
     ArmorRatio = ArmorInfo.MaxValue > 0 ? (float(ArmorInfo.Value) / float(ArmorInfo.MaxValue)) : 0.f;
@@ -395,19 +401,62 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
         HUDConfig.ArmorEmptyBGColor
     );
 
+    HealthColor = HUDConfig.HealthColor;
+    HealthRegenColor = HUDConfig.HealthRegenColor;
+    for (I = 0; I < HUDConfig.ColorThresholds.Length; I++)
+    {
+        ColorThreshold = HUDConfig.ColorThresholds[I];
+
+        if (HealthRatio <= ColorThreshold.Value)
+        {
+            FoundThresholdColor = true;
+            HealthColor = ColorThreshold.BarColor;
+            if (ColorThreshold.CustomRegenColor)
+            {
+                HealthRegenColor = ColorThreshold.RegenColor;
+            }
+            break;
+        }
+    }
+
+    if (HUDConfig.DynamicColors >= 1)
+    {
+        if (FoundThresholdColor)
+        {
+            ColorThreshold = I < (HUDConfig.ColorThresholds.Length - 1) ? HUDConfig.ColorThresholds[I + 1] : HUDConfig.ColorThresholds[I];
+            LerpHealthColors(HealthColor, HealthRegenColor, HealthRatio, TotalRegenRatio, ColorThreshold);
+        }
+        else if (HUDConfig.ColorThresholds.Length > 0)
+        {
+            ColorThreshold = HUDConfig.ColorThresholds[0];
+            LerpHealthColors(HealthColor, HealthRegenColor, HealthRatio, TotalRegenRatio, ColorThreshold);
+        }
+    }
+
     // Draw health bar
     DrawBar(Canvas,
         HealthRatio,
         RegenRatio,
         PosX + PerkIconSize + IconGap,
         PosY + BarHeight + BarGap + TextHeight + NameMarginY,
-        HUDConfig.HealthColor,
+        HealthColor,
         HUDConfig.HealthBGColor,
         HUDConfig.HealthEmptyBGColor,
-        HUDConfig.HealthRegenColor
+        HealthRegenColor
     );
 
     return true;
+}
+
+simulated function LerpHealthColors(out Color HealthColor, out Color HealthRegenColor, float HealthRatio, float RegenRatio, FriendlyHUDConfig.ColorThreshold ColorThreshold)
+{
+    HealthColor = LerpColor(ColorThreshold.BarColor, HealthColor, (HealthRatio - ColorThreshold.Value) / (1.f - ColorThreshold.Value));
+    if (ColorThreshold.CustomRegenColor)
+    {
+        HealthRegenColor = HUDConfig.DynamicColors == 1
+            ? LerpColor(ColorThreshold.RegenColor, HealthRegenColor, (HealthRatio - ColorThreshold.Value) / (1.f - ColorThreshold.Value))
+            : LerpColor(ColorThreshold.RegenColor, HealthRegenColor, (RegenRatio - ColorThreshold.Value) / (1.f - ColorThreshold.Value));
+    }
 }
 
 simulated function DrawBuffs(Canvas Canvas, MedBuffInfo BuffInfo, float PosX, float PosY)

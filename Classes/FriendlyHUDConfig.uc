@@ -1,6 +1,14 @@
 class FriendlyHUDConfig extends Interaction
     config(FriendlyHUD);
 
+struct ColorThreshold
+{
+    var Color BarColor;
+    var Color RegenColor;
+    var bool CustomRegenColor;
+    var float Value;
+};
+
 var config int INIVersion;
 var config float UpdateInterval;
 var config int SortStrategy;
@@ -51,6 +59,8 @@ var config float DO_MaxOpacity;
 var config float DO_T0;
 var config float DO_T1;
 var config float Opacity;
+var config array<ColorThreshold> ColorThresholds;
+var config int DynamicColors;
 var config bool UMCompatEnabled;
 var config bool UMColorSyncEnabled;
 var config int UMDisableHMTechChargeHUD;
@@ -102,6 +112,7 @@ simulated function Initialized()
             BlockStyle = 0;
             NameMarginX = 0.f;
             NameMarginY = 0.f;
+            DynamicColors = 0;
             UMDisableHMTechChargeHUD = 0;
             UMColorSyncEnabled = true;
 
@@ -125,6 +136,8 @@ simulated function Initialized()
         SaveConfig();
     }
 
+    ColorThresholds.Sort(SortColorThresholds);
+
     `Log("[FriendlyHUD] Initialized config");
 }
 
@@ -144,10 +157,12 @@ simulated function LoadDefaultFHUDConfig()
     DO_MaxOpacity = 1.f;
     DO_T0 = 4.f;
     DO_T1 = 0.f;
+    DynamicColors = 0;
     Opacity = 1.f;
     UMCompatEnabled = true;
     UMColorSyncEnabled = true;
 
+    ResetFHUDColorThresholds();
     LoadDefaultFHUDLayout();
     LoadDefaultFHUDColors();
 
@@ -772,6 +787,128 @@ exec function SetFHUDOpacity(float Value)
     SaveConfig();
 }
 
+exec function ResetFHUDColorThresholds()
+{
+    ColorThresholds.Length = 0;
+
+    SaveConfig();
+}
+
+exec function RemoveFHUDColorThreshold(float Threshold)
+{
+    local Console C;
+    local ColorThreshold ExistingItem;
+
+    C = LocalPlayer(KFPlayerOwner.Player).ViewportClient.ViewportConsole;
+
+    foreach ColorThresholds(ExistingItem)
+    {
+        if (ExistingItem.Value == Threshold)
+        {
+            ColorThresholds.RemoveItem(ExistingItem);
+            C.OutputText("Removed color threshold:" @ Threshold);
+            SaveConfig();
+            return;
+        }
+    }
+
+    C.OutputText("Failed to find threshold" @ Threshold);
+}
+
+exec function SetFHUDRegenColorThreshold(float Threshold, byte R, byte G, byte B, optional byte A = 192)
+{
+    local Console C;
+    local int I;
+
+    C = LocalPlayer(KFPlayerOwner.Player).ViewportClient.ViewportConsole;
+
+    for (I = 0; I < ColorThresholds.Length; I++)
+    {
+        if (ColorThresholds[I].Value == Threshold)
+        {
+            ColorThresholds[I].RegenColor = MakeColor(R, G, B, A);
+            ColorThresholds[I].CustomRegenColor = true;
+            C.OutputText("Successfully set regen color for threshold" @ Threshold);
+            SaveConfig();
+            return;
+        }
+    }
+
+    C.OutputText("Failed to find threshold" @ Threshold);
+}
+
+exec function AddFHUDColorThreshold(float Threshold, byte R, byte G, byte B, optional byte A = 192)
+{
+    local Console C;
+    local ColorThreshold NewItem, ExistingItem;
+
+    C = LocalPlayer(KFPlayerOwner.Player).ViewportClient.ViewportConsole;
+
+    foreach ColorThresholds(ExistingItem)
+    {
+        if (ExistingItem.Value == Threshold)
+        {
+            ExistingItem.BarColor = MakeColor(R, G, B, A);
+            C.OutputText("Successfully replaced threshold" @ Threshold);
+            SaveConfig();
+            return;
+        }
+    }
+
+    NewItem.BarColor = MakeColor(R, G, B, A);
+    NewItem.Value = Threshold;
+    ColorThresholds.AddItem(NewItem);
+    ColorThresholds.Sort(SortColorThresholds);
+
+    C.OutputText("Successfully added new threshold" @ Threshold);
+
+    SaveConfig();
+}
+
+exec function MoveFHUDColorThreshold(float Threshold, float NewThreshold)
+{
+    local Console C;
+    local int I;
+
+    C = LocalPlayer(KFPlayerOwner.Player).ViewportClient.ViewportConsole;
+
+    for (I = 0; I < ColorThresholds.Length; I++)
+    {
+        if (ColorThresholds[I].Value == Threshold)
+        {
+            ColorThresholds[I].Value = NewThreshold;
+            C.OutputText("Successfully moved threshold from" @ Threshold @ "to" @ NewThreshold);
+            SaveConfig();
+            return;
+        }
+    }
+
+    C.OutputText("Failed to find threshold" @ Threshold);
+}
+
+exec function SetFHUDDynamicColors(String Value)
+{
+    switch (Locs(Value))
+    {
+        case "default":
+        case "static":
+            DynamicColors = 0;
+            break;
+        case "lerp":
+            DynamicColors = 1;
+            break;
+        case "lerpregen":
+            DynamicColors = 2;
+            break;
+        default:
+            // Non-int values get parsed as 0
+            DynamicColors = Clamp(int(Value), 0, 2);
+            break;
+    }
+
+    SaveConfig();
+}
+
 exec function SetFHUDUMCompatEnabled(bool Value)
 {
     UMCompatEnabled = Value;
@@ -799,4 +936,11 @@ function InitUMCompat()
             KFPlayerOwner.ConsoleCommand("UMRegenHealthColor" @ HealthRegenColor.R @ HealthRegenColor.G @ HealthRegenColor.B @ HealthRegenColor.A);
         }
     }
+}
+
+delegate int SortColorThresholds(ColorThreshold A, ColorThreshold B)
+{
+    if (A.Value < B.Value) return -1;
+    if (A.Value > B.Value) return 1;
+    return 0;
 }
