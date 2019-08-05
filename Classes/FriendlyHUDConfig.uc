@@ -62,6 +62,7 @@ var config float DO_T1;
 var config float Opacity;
 var config array<ColorThreshold> ColorThresholds;
 var config int DynamicColors;
+var config bool ForceShowBuffs;
 var config bool UMCompatEnabled;
 var config bool UMColorSyncEnabled;
 var config int UMDisableHMTechChargeHUD;
@@ -115,6 +116,7 @@ simulated function Initialized()
             NameMarginY = 0.f;
             NameScale = 1.f;
             DynamicColors = 0;
+            ForceShowBuffs = false;
             UMDisableHMTechChargeHUD = 0;
             UMColorSyncEnabled = true;
 
@@ -161,6 +163,7 @@ simulated function LoadDefaultFHUDConfig()
     DO_T1 = 0.f;
     DynamicColors = 0;
     Opacity = 1.f;
+    ForceShowBuffs = false;
     UMCompatEnabled = true;
     UMColorSyncEnabled = true;
 
@@ -912,6 +915,12 @@ exec function SetFHUDDynamicColors(String Value)
             break;
     }
 
+    SaveConfig();
+}
+
+exec function SetFHUDForceShowBuffs(bool Value)
+{
+    ForceShowBuffs = Value;
     SaveConfig();
 }
 

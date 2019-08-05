@@ -327,7 +327,9 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     local EVoiceCommsType VoiceReq;
     local int HealthToRegen;
     local MedBuffInfo BuffInfo;
+    local bool ForceShowBuffs;
     local bool FoundThresholdColor;
+    local int BuffLevel;
     local int I;
 
     KFPRI = ItemInfo.KFPRI;
@@ -341,15 +343,28 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     HealthRatio = HealthInfo.MaxValue > 0 ? (float(HealthInfo.Value) / float(HealthInfo.MaxValue)) : 0.f;
     RegenRatio = HealthInfo.MaxValue > 0 ? (float(HealthToRegen) / float(HealthInfo.MaxValue)) : 0.f;
 
+    BuffLevel = Min(Max(BuffInfo.DamageBoost, Max(BuffInfo.DamageResistance, BuffInfo.SpeedBoost)), HUDConfig.BuffCountMax);
+
+    ForceShowBuffs = HUDConfig.ForceShowBuffs && BuffLevel > 0;
+
     // If enabled, don't render dead teammates
     if (HUDConfig.IgnoreDeadTeammates && HealthRatio <= 0.f) return false;
 
     // If enabled, don't render teammates above a certain health threshold
-    if (HealthRatio > HUDConfig.MinHealthThreshold) return false;
+    if (HealthRatio > HUDConfig.MinHealthThreshold && !ForceShowBuffs) return false;
 
     TextFontRenderInfo = Canvas.CreateFontRenderInfo(true);
 
-    ObjectOpacity = FMin(FCubicInterp(HUDConfig.DO_MaxOpacity, HUDConfig.DO_T0, HUDConfig.DO_MinOpacity, HUDConfig.DO_T1, HealthRatio), 1.f) * HUDConfig.Opacity;
+    ObjectOpacity = FMin(
+            FCubicInterp(
+                HUDConfig.DO_MaxOpacity,
+                HUDConfig.DO_T0,
+                HUDConfig.DO_MinOpacity,
+                HUDConfig.DO_T1,
+                // If ForceShowBuffs is enabled and the player has buffs, force the opacity to its maximum
+                ForceShowBuffs ? 1.f : HealthRatio
+            ), 1.f
+        ) * HUDConfig.Opacity;
 
     PlayerIcon = GetPlayerIcon(KFPRI, VoiceReq);
     DrawPrestigeBorder = VoiceReq == VCT_NONE;
@@ -365,7 +380,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     DrawPerkIcon(Canvas, KFPRI, PlayerIcon, DrawPrestigeBorder, PerkIconPosX, PerkIconPosY);
 
     // Draw buffs
-    DrawBuffs(Canvas, BuffInfo, PerkIconPosX, PerkIconPosY);
+    DrawBuffs(Canvas, BuffLevel, PerkIconPosX, PerkIconPosY);
 
     // BuffLayout: Right
     if (HUDConfig.BuffLayout == 2)
@@ -459,15 +474,12 @@ simulated function LerpHealthColors(out Color HealthColor, out Color HealthRegen
     }
 }
 
-simulated function DrawBuffs(Canvas Canvas, MedBuffInfo BuffInfo, float PosX, float PosY)
+simulated function DrawBuffs(Canvas Canvas, int BuffLevel, float PosX, float PosY)
 {
     local float CurrentPosX, CurrentPosY;
-    local int BuffLevel;
     local int I;
 
     if (HUDConfig.BuffLayout == 0) return;
-
-    BuffLevel = Min(Max(BuffInfo.DamageBoost, Max(BuffInfo.DamageResistance, BuffInfo.SpeedBoost)), HUDConfig.BuffCountMax);
 
     for (I = 0; I < BuffLevel; I++)
     {
