@@ -33,6 +33,7 @@ var config int BuffCountMax;
 var config float IconGap;
 var config float NameMarginX;
 var config float NameMarginY;
+var config float NameScale;
 var config float OffsetX;
 var config float OffsetY;
 var config Color ShadowColor;
@@ -112,6 +113,7 @@ simulated function Initialized()
             BlockStyle = 0;
             NameMarginX = 0.f;
             NameMarginY = 0.f;
+            NameScale = 1.f;
             DynamicColors = 0;
             UMDisableHMTechChargeHUD = 0;
             UMColorSyncEnabled = true;
@@ -186,6 +188,7 @@ simulated function LoadDefaultFHUDLayout()
     IconGap = 4.f;
     NameMarginX = 0.f;
     NameMarginY = 0.f;
+    NameScale = 1.f;
     BarGap = 0.f;
     BlockWidth = 200.f;
     BlockHeight = 10.f;
@@ -398,7 +401,7 @@ exec function LoadFHUDPreset(string Value)
 
 exec function SetFHUDScale(float Value)
 {
-    Scale = Value;
+    Scale = FMax(Value, 0.f);
     SaveConfig();
 }
 
@@ -690,6 +693,12 @@ exec function SetFHUDNameMarginY(float Value)
 exec function SetFHUDOffsetX(float Value)
 {
     OffsetX = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDNameScale(float Value)
+{
+    NameScale = FMax(Value, 0.f);
     SaveConfig();
 }
 

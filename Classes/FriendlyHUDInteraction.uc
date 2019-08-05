@@ -173,7 +173,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     ResScale = BaseResScale * HUDConfig.Scale;
 
     Canvas.Font = class'KFGameEngine'.static.GetKFCanvasFont();
-    FontScale = class'KFGameEngine'.static.GetKFFontScale() * ResScale;
+    FontScale = class'KFGameEngine'.static.GetKFFontScale() * HUDConfig.NameScale * ResScale;
 
     PerkIconSize = FHUD_PlayerStatusIconSize * ResScale;
 
