@@ -78,7 +78,7 @@ var FriendlyHUDInteraction FHUDInteraction;
 var bool Debug;
 var bool DrawDebugLines;
 
-const DEPRECATED_ENTRY = "DELETE_ME";
+const DEPRECATED_ENTRY = "DEPRECATED";
 
 simulated function Initialized()
 {
