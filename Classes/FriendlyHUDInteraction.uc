@@ -184,6 +184,8 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     BarGap = HUDConfig.BarGap * ResScale;
     Canvas.TextSize("pqy", TextWidth, TextHeight, FontScale, FontScale);
 
+    IconGap = HUDConfig.IconGap * ResScale;
+
     NameMarginX = HUDConfig.NameMarginX * ResScale;
     NameMarginY = HUDConfig.NameMarginY * ResScale;
     TotalItemWidth = PerkIconSize + IconGap + (TotalBlockWidth * HUDConfig.BlockCount) + HUDConfig.ItemMarginX * ResScale;
@@ -192,7 +194,6 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     BuffIconMargin = HUDConfig.BuffMargin * ResScale;
     BuffIconGap = HUDConfig.BuffGap * ResScale;
 
-    IconGap = HUDConfig.IconGap * ResScale;
 
     // Layout: Bottom
     if (HUDConfig.Layout == 0)
