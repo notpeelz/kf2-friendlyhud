@@ -30,6 +30,7 @@ var config float BuffSize;
 var config float BuffMargin;
 var config float BuffGap;
 var config int BuffCountMax;
+var config float IconSize;
 var config float IconMargin;
 var config float IconGap;
 var config float NameMarginX;
@@ -103,6 +104,7 @@ simulated function Initialized()
             DO_T0 = 4.f;
             DO_T1 = 0.f;
             Opacity = 1.f;
+            IconSize = 32.f;
             IconMargin = 0.f;
             IconGap = 4.f;
             BuffCountMax = 3;
@@ -190,6 +192,7 @@ simulated function LoadDefaultFHUDLayout()
     BuffSize = 8.f;
     BuffMargin = 2.f;
     BuffGap = 3.f;
+    IconSize = 32.f;
     IconMargin = 0.f;
     IconGap = 4.f;
     NameMarginX = 0.f;
@@ -675,6 +678,12 @@ exec function SetFHUDBuffGap(float Value)
 exec function SetFHUDBuffCountMax(int Value)
 {
     BuffCountMax = Max(Value, 0);
+    SaveConfig();
+}
+
+exec function SetFHUDIconSize(float Value)
+{
+    IconSize = FMax(Value, 0.f);
     SaveConfig();
 }
 

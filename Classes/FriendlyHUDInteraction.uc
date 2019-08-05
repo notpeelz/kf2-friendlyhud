@@ -41,7 +41,6 @@ var float ObjectOpacity;
 
 const FLOAT_EPSILON = 0.0001f;
 const PrestigeIconScale = 0.75f;
-const FHUD_PlayerStatusIconSize = 32.f;
 
 simulated function Initialized()
 {
@@ -174,7 +173,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     Canvas.Font = class'KFGameEngine'.static.GetKFCanvasFont();
     FontScale = class'KFGameEngine'.static.GetKFFontScale() * HUDConfig.NameScale * ResScale;
 
-    PerkIconSize = FHUD_PlayerStatusIconSize * ResScale;
+    PerkIconSize = HUDConfig.IconSize * ResScale;
     PerkIconGap = HUDConfig.IconGap * ResScale;
     PerkIconMargin = HUDConfig.IconMargin * ResScale;
 
