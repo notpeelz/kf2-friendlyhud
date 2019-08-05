@@ -106,7 +106,7 @@ simulated function Initialized()
             BuffCountMax = 3;
             BuffLayout = 1;
             BarGap = 0.f;
-            EmptyBlockThreshold = 0.01f;
+            EmptyBlockThreshold = 0.f;
             BlockWidth = 200.f;
             BlockHeight = 10.f;
             BlockCount = 1;
@@ -151,7 +151,7 @@ simulated function LoadDefaultFHUDConfig()
     UpdateInterval = 1.f;
     SortStrategy = 0;
     DisableHUD = false;
-    EmptyBlockThreshold = 0.1f;
+    EmptyBlockThreshold = 0.f;
     OnlyForMedic = false;
     IgnoreSelf = true;
     IgnoreDeadTeammates = true;

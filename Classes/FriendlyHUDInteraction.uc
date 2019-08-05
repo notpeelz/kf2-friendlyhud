@@ -565,7 +565,7 @@ simulated function DrawBar(Canvas Canvas, float BarPercentage, float BufferPerce
             : 0.f;
 
         // Draw background
-        SetCanvasColor(Canvas, (((BarBlockWidth + BufferBlockWidth) / BlockWidth) - HUDConfig.EmptyBlockThreshold) <= 0.01 ? EmptyBGColor : BGColor);
+        SetCanvasColor(Canvas, ((BarBlockWidth + BufferBlockWidth) / BlockWidth) <= HUDConfig.EmptyBlockThreshold ? EmptyBGColor : BGColor);
         Canvas.SetPos(CurrentBlockPosX - 1.f, PosY - 1.f);
         Canvas.DrawTile(BarBGTexture, BlockWidth + 2.f, BarHeight, 0, 0, 32, 32);
 
