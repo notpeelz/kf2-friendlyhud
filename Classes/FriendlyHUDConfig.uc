@@ -462,8 +462,8 @@ exec function SetFHUDBarGap(float Value)
 
 exec function SetFHUDBlockSize(optional float Width = 200.f, optional float Height = 10.f)
 {
-    BlockWidth = FMax(Width, 3.f);
-    BlockHeight = FMax(Height, 3.f);
+    BlockWidth = FMax(Width, 1.f);
+    BlockHeight = FMax(Height, 1.f);
     SaveConfig();
 }
 
