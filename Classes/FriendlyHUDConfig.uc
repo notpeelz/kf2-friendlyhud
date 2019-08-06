@@ -780,7 +780,7 @@ exec function SetFHUDUpdateInterval(float Value)
     SaveConfig();
 }
 
-exec function SetFHUDSortStrategy(string Strategy, optional bool Descending = true)
+exec function SetFHUDSortStrategy(string Strategy, optional bool Descending = false)
 {
     switch (Locs(Strategy))
     {

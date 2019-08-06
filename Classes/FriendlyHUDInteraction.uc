@@ -688,7 +688,7 @@ delegate int SortKFPRI(PRIEntry A, PRIEntry B)
     return 0;
 }
 
-delegate int SortKFPRIByHealth(PRIEntry A, PRIEntry B)
+delegate int SortKFPRIByHealthDescending(PRIEntry A, PRIEntry B)
 {
     // Handle empty entries
     if (B.KFPRI == None && A.KFPRI != None) return 1;
@@ -708,7 +708,7 @@ delegate int SortKFPRIByHealth(PRIEntry A, PRIEntry B)
     return 0;
 }
 
-delegate int SortKFPRIByHealthDescending(PRIEntry A, PRIEntry B)
+delegate int SortKFPRIByHealth(PRIEntry A, PRIEntry B)
 {
     // Handle empty entries
     if (B.KFPRI == None && A.KFPRI != None) return 1;
@@ -728,7 +728,7 @@ delegate int SortKFPRIByHealthDescending(PRIEntry A, PRIEntry B)
     return 0;
 }
 
-delegate int SortKFPRIByRegenHealth(PRIEntry A, PRIEntry B)
+delegate int SortKFPRIByRegenHealthDescending(PRIEntry A, PRIEntry B)
 {
     // Handle empty entries
     if (B.KFPRI == None && A.KFPRI != None) return 1;
@@ -748,7 +748,7 @@ delegate int SortKFPRIByRegenHealth(PRIEntry A, PRIEntry B)
     return 0;
 }
 
-delegate int SortKFPRIByRegenHealthDescending(PRIEntry A, PRIEntry B)
+delegate int SortKFPRIByRegenHealth(PRIEntry A, PRIEntry B)
 {
     // Handle empty entries
     if (B.KFPRI == None && A.KFPRI != None) return 1;
