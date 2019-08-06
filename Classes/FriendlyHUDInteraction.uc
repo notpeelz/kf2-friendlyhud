@@ -320,7 +320,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     local Texture2D PlayerIcon;
     local bool DrawPrestigeBorder;
     local float ArmorRatio, HealthRatio, RegenRatio, TotalRegenRatio;
-    local BarInfo ArmorInfo, HealthInfo;
+    local FriendlyHUDReplicationInfo.BarInfo ArmorInfo, HealthInfo;
     local FriendlyHUDConfig.ColorThreshold ColorThreshold;
     local Color HealthColor, HealthRegenColor;
     local EVoiceCommsType VoiceReq;
@@ -335,12 +335,12 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     ItemInfo.RepInfo.GetPlayerInfo(ItemInfo.RepIndex, ArmorInfo, HealthInfo, HealthToRegen, BuffInfo);
     VoiceReq = KFPRI.CurrentVoiceCommsRequest;
 
-    TotalRegenRatio = HealthInfo.MaxValue > 0 ? (float(HealthToRegen) / float(HealthInfo.MaxValue)) : 0.f;
-    HealthToRegen = HealthToRegen > 0 ? (HealthToRegen - HealthInfo.Value) : 0;
+    TotalRegenRatio = HealthInfo.MaxValue > 0 ? FMin(FMax(float(HealthToRegen) / float(HealthInfo.MaxValue), 0.f), 1.f) : 0.f;
+    HealthToRegen = HealthToRegen > 0 ? Max(HealthToRegen - HealthInfo.Value, 0) : 0;
 
-    ArmorRatio = ArmorInfo.MaxValue > 0 ? (float(ArmorInfo.Value) / float(ArmorInfo.MaxValue)) : 0.f;
-    HealthRatio = HealthInfo.MaxValue > 0 ? (float(HealthInfo.Value) / float(HealthInfo.MaxValue)) : 0.f;
-    RegenRatio = HealthInfo.MaxValue > 0 ? (float(HealthToRegen) / float(HealthInfo.MaxValue)) : 0.f;
+    ArmorRatio = ArmorInfo.MaxValue > 0 ? FMin(FMax(float(ArmorInfo.Value) / float(ArmorInfo.MaxValue), 0.f), 1.f) : 0.f;
+    HealthRatio = HealthInfo.MaxValue > 0 ? FMin(FMax(float(HealthInfo.Value) / float(HealthInfo.MaxValue), 0.f), 1.f) : 0.f;
+    RegenRatio = HealthInfo.MaxValue > 0 ? FMin(FMax(float(HealthToRegen) / float(HealthInfo.MaxValue), 0.f), 1.f) : 0.f;
 
     BuffLevel = Min(Max(BuffInfo.DamageBoost, Max(BuffInfo.DamageResistance, BuffInfo.SpeedBoost)), HUDConfig.BuffCountMax);
 
