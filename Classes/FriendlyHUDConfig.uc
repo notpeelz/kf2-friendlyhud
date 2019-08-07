@@ -10,6 +10,7 @@ struct ColorThreshold
 };
 
 var config int INIVersion;
+var config int LastChangeLogVersion;
 var config float UpdateInterval;
 var config int SortStrategy;
 var config float Scale;
@@ -82,6 +83,7 @@ var bool Debug;
 var bool DrawDebugLines;
 
 const DEPRECATED_ENTRY = "DEPRECATED";
+const LatestVersion = 2;
 
 simulated function Initialized()
 {
@@ -147,6 +149,12 @@ simulated function Initialized()
     ColorThresholds.Sort(SortColorThresholds);
 
     `Log("[FriendlyHUD] Initialized config");
+}
+
+simulated function UpdateChangeLogVersion()
+{
+    LastChangeLogVersion = LatestVersion;
+    SaveConfig();
 }
 
 simulated function LoadDefaultFHUDConfig()
