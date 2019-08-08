@@ -236,73 +236,69 @@ exec function FHUDHelp(optional bool ShowAdvancedCommands = false) { PrintFHUDHe
 
 exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
 {
-    local Console C;
+    ConsolePrint("FHUD Commands");
+    ConsolePrint("--------------------------");
 
-    C = LocalPlayer(KFPlayerOwner.Player).ViewportClient.ViewportConsole;
+    ConsolePrint("PrintFHUDHelp: prints this help message; 'PrintFHUDHelp true' will display advanced commands");
+    ConsolePrint("ResetFHUDConfig: resets the config to the default settings");
+    ConsolePrint("LoadFHUDColorPreset <string>: loads a color preset scheme");
+    ConsolePrint("LoadFHUDPreset <string>: loads predefined HUD layout/position settings");
+    ConsolePrint("SetFHUDEnabled <bool>: :(");
+    ConsolePrint("SetFHUDOnlyForMedic <bool>: controls whether the HUD should only be visible when playing as medic");
+    ConsolePrint("SetFHUDIgnoreSelf <bool>: controls the visibility of your own health bar (default is true)");
+    ConsolePrint("SetFHUDIgnoreDeadTeammates <bool>: controls whether dead teammates should be hidden from the list (default is true)");
+    ConsolePrint("SetFHUDMinHealthThreshold <float>: hides players below a certain health ratio (default is 1.0, i.e. never hidden)");
 
-    C.OutputText("FHUD Commands");
-    C.OutputText("--------------------------");
-
-    C.OutputText("PrintFHUDHelp: prints this help message; 'PrintFHUDHelp true' will display advanced commands");
-    C.OutputText("ResetFHUDConfig: resets the config to the default settings");
-    C.OutputText("LoadFHUDColorPreset <string>: loads a color preset scheme");
-    C.OutputText("LoadFHUDPreset <string>: loads predefined HUD layout/position settings");
-    C.OutputText("SetFHUDEnabled <bool>: :(");
-    C.OutputText("SetFHUDOnlyForMedic <bool>: controls whether the HUD should only be visible when playing as medic");
-    C.OutputText("SetFHUDIgnoreSelf <bool>: controls the visibility of your own health bar (default is true)");
-    C.OutputText("SetFHUDIgnoreDeadTeammates <bool>: controls whether dead teammates should be hidden from the list (default is true)");
-    C.OutputText("SetFHUDMinHealthThreshold <float>: hides players below a certain health ratio (default is 1.0, i.e. never hidden)");
-
-    C.OutputText(" ");
+    ConsolePrint(" ");
     if (ShowAdvancedCommands)
     {
-        C.OutputText("Advanced Commands");
-        C.OutputText("--------------------------");
+        ConsolePrint("Advanced Commands");
+        ConsolePrint("--------------------------");
 
-        C.OutputText("SetFHUDScale <float>: controls the scale of the HUD (1.0 by default); use values between 0.6 and 1.4 for best results");
-        C.OutputText("SetFHUDFlow <string>: controls the rendering direction of the health bars; possible values: row, column");
-        C.OutputText("SetFHUDLayout <string>: controls the HUD anchor point to render from (default is bottom); possible values: bottom, left, right");
-        C.OutputText("SetFHUDItemsPerColumn <int>: controls the number of health bars to render per column");
-        C.OutputText("SetFHUDItemsPerRow <int>: controls the number of health bars to render per row");
-        C.OutputText("SetFHUDReverseX <bool>: renders health bars starting from the last column");
-        C.OutputText("SetFHUDReverseY <bool>: renders health bars starting from the last row");
-        C.OutputText("SetFHUDShadowColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the HUD shadows (1-pixel outline below; default is 0,0,0,192)");
-        C.OutputText("SetFHUDIconColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the perk icon (default is 255,255,255,192)");
-        C.OutputText("SetFHUDTextColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the player names (default is 255,255,255,192)");
-        C.OutputText("SetFHUDArmorColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the armor bar (default is 0,100,210,192)");
-        C.OutputText("SetFHUDHealthColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the health bar (default is 0,192,0,192)");
-        C.OutputText("SetFHUDHealthRegenColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the regen health buffer (default is 0,70,0,192)");
-        C.OutputText("SetFHUDBuffColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the medic buff icons (default is 255,255,255,192)");
-        C.OutputText("SetFHUDItemMarginX <float>: controls the horizontal margin between health bars (default is 14.0; WARNING: doesn't account for medic buff icons!)");
-        C.OutputText("SetFHUDItemMarginY <float>: controls the vertical margin between health bars (default is 5.0)");
-        C.OutputText("SetFHUDBuffSize <float>: controls the size of the medic buff icons (default is 8.0)");
-        C.OutputText("SetFHUDBuffMarginX <float>: controls the horizontal margin between the buff icons and the health bar");
-        C.OutputText("SetFHUDBuffMarginY <float>: controls the vertical margin between the buff icons");
-        C.OutputText("SetFHUDOffsetX <float>: controls the horizontal offset of the HUD, relative to the position of the anchor point (default is 0.0)");
-        C.OutputText("SetFHUDOffsetY <float>: controls the vertical offset of the HUD, relative to the position of the anchor point (default is 0.0)");
-        C.OutputText("SetFHUDDebug <bool>: allows bots to show up on the HUD -- useful for testing and configuring settings");
-        C.OutputText("SetFHUDDrawDebugLines <bool>: displays debug lines -- useful for debugging layout issues");
-        C.OutputText("SetFHUDUMCompatEnabled <bool>: controls whether FHUD should override UnofficialMod's HMTech cooldowns HUD to prevent layout conflicts");
+        ConsolePrint("SetFHUDScale <float>: controls the scale of the HUD (1.0 by default); use values between 0.6 and 1.4 for best results");
+        ConsolePrint("SetFHUDFlow <string>: controls the rendering direction of the health bars; possible values: row, column");
+        ConsolePrint("SetFHUDLayout <string>: controls the HUD anchor point to render from (default is bottom); possible values: bottom, left, right");
+        ConsolePrint("SetFHUDItemsPerColumn <int>: controls the number of health bars to render per column");
+        ConsolePrint("SetFHUDItemsPerRow <int>: controls the number of health bars to render per row");
+        ConsolePrint("SetFHUDReverseX <bool>: renders health bars starting from the last column");
+        ConsolePrint("SetFHUDReverseY <bool>: renders health bars starting from the last row");
+        ConsolePrint("SetFHUDShadowColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the HUD shadows (1-pixel outline below; default is 0,0,0,192)");
+        ConsolePrint("SetFHUDIconColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the perk icon (default is 255,255,255,192)");
+        ConsolePrint("SetFHUDTextColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the player names (default is 255,255,255,192)");
+        ConsolePrint("SetFHUDArmorColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the armor bar (default is 0,100,210,192)");
+        ConsolePrint("SetFHUDHealthColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the health bar (default is 0,192,0,192)");
+        ConsolePrint("SetFHUDHealthRegenColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the regen health buffer (default is 0,70,0,192)");
+        ConsolePrint("SetFHUDBuffColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the medic buff icons (default is 255,255,255,192)");
+        ConsolePrint("SetFHUDItemMarginX <float>: controls the horizontal margin between health bars (default is 14.0; WARNING: doesn't account for medic buff icons!)");
+        ConsolePrint("SetFHUDItemMarginY <float>: controls the vertical margin between health bars (default is 5.0)");
+        ConsolePrint("SetFHUDBuffSize <float>: controls the size of the medic buff icons (default is 8.0)");
+        ConsolePrint("SetFHUDBuffMarginX <float>: controls the horizontal margin between the buff icons and the health bar");
+        ConsolePrint("SetFHUDBuffMarginY <float>: controls the vertical margin between the buff icons");
+        ConsolePrint("SetFHUDOffsetX <float>: controls the horizontal offset of the HUD, relative to the position of the anchor point (default is 0.0)");
+        ConsolePrint("SetFHUDOffsetY <float>: controls the vertical offset of the HUD, relative to the position of the anchor point (default is 0.0)");
+        ConsolePrint("SetFHUDDebug <bool>: allows bots to show up on the HUD -- useful for testing and configuring settings");
+        ConsolePrint("SetFHUDDrawDebugLines <bool>: displays debug lines -- useful for debugging layout issues");
+        ConsolePrint("SetFHUDUMCompatEnabled <bool>: controls whether FHUD should override UnofficialMod's HMTech cooldowns HUD to prevent layout conflicts");
     }
     else
     {
-        C.OutputText("Layout presets (1080_ for 1080p, 1440_ for 1440p, etc.)");
-        C.OutputText("--------------------------");
-        C.OutputText("default: default settings");
-        C.OutputText("1080_l4d, 1440_l4d: Left 4 Dead-style health bars");
-        C.OutputText("1080_column2, 1440_column2: similar to default, but slightly bigger and renders in 2 columns instead of 3");
-        C.OutputText("1080_left, 1440_left: left-side layout (above chat)");
-        C.OutputText("1080_topright, 1440_topright: right-side layout (starting from the top)");
-        C.OutputText("1080_right, 1440_right: right-side layout (starting from the bottom)");
+        ConsolePrint("Layout presets (1080_ for 1080p, 1440_ for 1440p, etc.)");
+        ConsolePrint("--------------------------");
+        ConsolePrint("default: default settings");
+        ConsolePrint("1080_l4d, 1440_l4d: Left 4 Dead-style health bars");
+        ConsolePrint("1080_column2, 1440_column2: similar to default, but slightly bigger and renders in 2 columns instead of 3");
+        ConsolePrint("1080_left, 1440_left: left-side layout (above chat)");
+        ConsolePrint("1080_topright, 1440_topright: right-side layout (starting from the top)");
+        ConsolePrint("1080_right, 1440_right: right-side layout (starting from the bottom)");
 
-        C.OutputText(" ");
-        C.OutputText("Color presets");
-        C.OutputText("--------------------------");
-        C.OutputText("default: default colors (green health, navy blue armor)");
-        C.OutputText("classic: classic colors (light blue health, saturated blue armor)");
-        C.OutputText("red: beta-style colors (red health, saturated blue armor)");
-        C.OutputText("purple: well, it's purple...");
-        C.OutputText("redregen: default colors with red regen color");
+        ConsolePrint(" ");
+        ConsolePrint("Color presets");
+        ConsolePrint("--------------------------");
+        ConsolePrint("default: default colors (green health, navy blue armor)");
+        ConsolePrint("classic: classic colors (light blue health, saturated blue armor)");
+        ConsolePrint("red: beta-style colors (red health, saturated blue armor)");
+        ConsolePrint("purple: well, it's purple...");
+        ConsolePrint("redregen: default colors with red regen color");
     }
 }
 
@@ -331,6 +327,9 @@ exec function LoadFHUDColorPreset(string Value)
             ArmorColor = MakeColor(186, 220, 255, 192);
             HealthColor = MakeColor(85, 26, 139, 192);
             HealthRegenColor = MakeColor(204, 186, 220, 192);
+            break;
+        default:
+            ConsolePrint("Invalid color preset:" @ Value);
             break;
     }
 
@@ -411,6 +410,9 @@ exec function LoadFHUDPreset(string Value)
             ItemsPerRow = 1;
             OffsetY = -60.f;
             break;
+        default:
+            ConsolePrint("Invalid preset:" @ Value);
+            break;
     }
 
     SaveConfig();
@@ -435,6 +437,12 @@ exec function SetFHUDFlow(string Value)
         default:
             // Non-int values get parsed as 0
             Flow = Clamp(int(Value), 0, 1);
+
+            // Invalid value
+            if (Layout == 0 && Value != "0")
+            {
+                ConsolePrint("Invalid flow:" @ Value);
+            }
             break;
     }
 
@@ -456,6 +464,12 @@ exec function SetFHUDLayout(string Value)
         default:
             // Non-int values get parsed as 0
             Layout = Clamp(int(Value), 0, 2);
+
+            // Invalid value
+            if (Layout == 0 && Value != "0")
+            {
+                ConsolePrint("Invalid layout:" @ Value);
+            }
             break;
     }
 
@@ -507,6 +521,12 @@ exec function SetFHUDBlockStyle(string Value)
         default:
             // Non-int values get parsed as 0
             BlockStyle = Clamp(int(Value), 0, 3);
+
+            // Invalid value
+            if (BlockStyle == 0 && Value != "0" || int(Value) != BlockStyle)
+            {
+                ConsolePrint("Invalid block style:" @ Value);
+            }
             break;
     }
 
@@ -659,6 +679,12 @@ exec function SetFHUDBuffLayout(string Value)
         default:
             // Non-int values get parsed as 0
             BuffLayout = Clamp(int(Value), 0, 4);
+
+            // Invalid value
+            if (BuffLayout == 0 && Value != "0"|| int(Value) != BuffLayout)
+            {
+                ConsolePrint("Invalid buff layout:" @ Value);
+            }
             break;
     }
 
@@ -799,8 +825,11 @@ exec function SetFHUDSortStrategy(string Strategy, optional bool Descending = fa
             SortStrategy = Descending ? 3 : 4;
             break;
         case "default":
+            SortStrategy = 0;
+            break;
         default:
             SortStrategy = 0;
+            ConsolePrint("Invalid sort strategy:" @ Strategy);
             break;
     }
 
@@ -831,31 +860,25 @@ exec function ResetFHUDColorThresholds()
 
 exec function RemoveFHUDColorThreshold(float Threshold)
 {
-    local Console C;
     local ColorThreshold ExistingItem;
-
-    C = LocalPlayer(KFPlayerOwner.Player).ViewportClient.ViewportConsole;
 
     foreach ColorThresholds(ExistingItem)
     {
         if (ExistingItem.Value == Threshold)
         {
             ColorThresholds.RemoveItem(ExistingItem);
-            C.OutputText("Removed color threshold:" @ Threshold);
+            ConsolePrint("Removed color threshold:" @ Threshold);
             SaveConfig();
             return;
         }
     }
 
-    C.OutputText("Failed to find threshold" @ Threshold);
+    ConsolePrint("Failed to find threshold" @ Threshold);
 }
 
 exec function SetFHUDRegenColorThreshold(float Threshold, byte R, byte G, byte B, optional byte A = 192)
 {
-    local Console C;
     local int I;
-
-    C = LocalPlayer(KFPlayerOwner.Player).ViewportClient.ViewportConsole;
 
     for (I = 0; I < ColorThresholds.Length; I++)
     {
@@ -863,28 +886,25 @@ exec function SetFHUDRegenColorThreshold(float Threshold, byte R, byte G, byte B
         {
             ColorThresholds[I].RegenColor = MakeColor(R, G, B, A);
             ColorThresholds[I].CustomRegenColor = true;
-            C.OutputText("Successfully set regen color for threshold" @ Threshold);
+            ConsolePrint("Successfully set regen color for threshold" @ Threshold);
             SaveConfig();
             return;
         }
     }
 
-    C.OutputText("Failed to find threshold" @ Threshold);
+    ConsolePrint("Failed to find threshold" @ Threshold);
 }
 
 exec function AddFHUDColorThreshold(float Threshold, byte R, byte G, byte B, optional byte A = 192)
 {
-    local Console C;
     local ColorThreshold NewItem, ExistingItem;
-
-    C = LocalPlayer(KFPlayerOwner.Player).ViewportClient.ViewportConsole;
 
     foreach ColorThresholds(ExistingItem)
     {
         if (ExistingItem.Value == Threshold)
         {
             ExistingItem.BarColor = MakeColor(R, G, B, A);
-            C.OutputText("Successfully replaced threshold" @ Threshold);
+            ConsolePrint("Successfully replaced threshold" @ Threshold);
             SaveConfig();
             return;
         }
@@ -895,30 +915,27 @@ exec function AddFHUDColorThreshold(float Threshold, byte R, byte G, byte B, opt
     ColorThresholds.AddItem(NewItem);
     ColorThresholds.Sort(SortColorThresholds);
 
-    C.OutputText("Successfully added new threshold" @ Threshold);
+    ConsolePrint("Successfully added new threshold" @ Threshold);
 
     SaveConfig();
 }
 
 exec function MoveFHUDColorThreshold(float Threshold, float NewThreshold)
 {
-    local Console C;
     local int I;
-
-    C = LocalPlayer(KFPlayerOwner.Player).ViewportClient.ViewportConsole;
 
     for (I = 0; I < ColorThresholds.Length; I++)
     {
         if (ColorThresholds[I].Value == Threshold)
         {
             ColorThresholds[I].Value = NewThreshold;
-            C.OutputText("Successfully moved threshold from" @ Threshold @ "to" @ NewThreshold);
+            ConsolePrint("Successfully moved threshold from" @ Threshold @ "to" @ NewThreshold);
             SaveConfig();
             return;
         }
     }
 
-    C.OutputText("Failed to find threshold" @ Threshold);
+    ConsolePrint("Failed to find threshold" @ Threshold);
 }
 
 exec function SetFHUDDynamicColors(String Value)
@@ -938,6 +955,12 @@ exec function SetFHUDDynamicColors(String Value)
         default:
             // Non-int values get parsed as 0
             DynamicColors = Clamp(int(Value), 0, 2);
+
+            // Invalid value
+            if (DynamicColors == 0 && Value != "0")
+            {
+                ConsolePrint("Invalid dynamic colors strategy:" @ Value);
+            }
             break;
     }
 
@@ -960,6 +983,11 @@ exec function SetFHUDUMCompatEnabled(bool Value)
 exec function ResetFHUDConfig()
 {
     LoadDefaultFHUDConfig();
+}
+
+function ConsolePrint(coerce string Text)
+{
+    LocalPlayer(KFPlayerOwner.Player).ViewportClient.ViewportConsole.OutputText(Text);
 }
 
 function InitUMCompat()
