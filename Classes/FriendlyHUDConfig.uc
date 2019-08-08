@@ -116,7 +116,7 @@ simulated function Initialized()
             BlockWidth = 200.f;
             BlockHeight = 10.f;
             BlockCount = 1;
-            BlockGap = 4.f;
+            BlockGap = 2.f;
             BlockStyle = 0;
             NameMarginX = 0.f;
             NameMarginY = 0.f;
@@ -181,19 +181,29 @@ simulated function LoadDefaultFHUDConfig()
 
     ResetFHUDColorThresholds();
     LoadDefaultFHUDLayout();
+    LoadDefaultBarPreset();
     LoadDefaultFHUDColors();
 
     SaveConfig();
 }
 
-simulated function LoadDefaultFHUDLayout()
+exec function LoadDefaultFHUDLayout()
 {
     Scale = 1.f;
     Flow = 0;
     Layout = 0;
-    BlockGap = 4.f;
     ItemsPerColumn = 3;
     ItemsPerRow = 5;
+    OffsetX = 0.f;
+    OffsetY = 0.f;
+    ReverseX = false;
+    ReverseY = false;
+
+    SaveConfig();
+}
+
+exec function LoadDefaultBarPreset()
+{
     ItemMarginX = 14.f;
     ItemMarginY = 5.f;
     BuffLayout = 1;
@@ -207,17 +217,16 @@ simulated function LoadDefaultFHUDLayout()
     NameMarginY = 0.f;
     NameScale = 1.f;
     BarGap = 0.f;
+    BlockGap = 2.f;
     BlockWidth = 200.f;
     BlockHeight = 10.f;
     BlockCount = 1;
     BlockStyle = 0;
-    OffsetX = 0.f;
-    OffsetY = 0.f;
-    ReverseX = false;
-    ReverseY = false;
+
+    SaveConfig();
 }
 
-simulated function LoadDefaultFHUDColors()
+exec function LoadDefaultFHUDColors()
 {
     ShadowColor = MakeColor(0, 0, 0, 255);
     TextColor = MakeColor(255, 255, 255, 192);
@@ -418,6 +427,82 @@ exec function LoadFHUDPreset(string Value)
     SaveConfig();
 }
 
+exec function LoadFHUDBarPreset(string Value)
+{
+    LoadDefaultBarPreset();
+
+    switch (Locs(Value))
+    {
+        case "default":
+            break;
+        case "1080_block5":
+            BlockStyle = 1;
+            BlockCount = 5;
+            BlockWidth = 11.f;
+            BlockHeight = 11.f;
+            BarGap = 2.f;
+            break;
+        case "1440_block5":
+            BlockStyle = 1;
+            BlockCount = 5;
+            BlockWidth = 13.f;
+            BlockHeight = 13.f;
+            BarGap = 2.f;
+            break;
+        case "1080_block10":
+            BlockStyle = 1;
+            BlockCount = 10;
+            BlockWidth = 11.f;
+            BlockHeight = 11.f;
+            BarGap = 2.f;
+            break;
+        case "1440_block10":
+            BlockStyle = 1;
+            BlockCount = 10;
+            BlockWidth = 13.f;
+            BlockHeight = 13.f;
+            BarGap = 4.f;
+            break;
+        case "block2":
+            BlockCount = 2;
+            BlockWidth = 100.f;
+            BarGap = 4.f;
+            break;
+        case "block8":
+            BlockCount = 8;
+            BlockWidth = 13.f;
+            break;
+        case "1080_barcode":
+            IconSize = 50.f;
+            IconMargin = -10.f;
+            BlockGap = 0.f;
+            BlockStyle = 3;
+            BlockCount = 50;
+            BlockWidth = 2.f;
+            BlockHeight = 10.f;
+            BarGap = 2.f;
+            BuffSize = 16.f;
+            BuffGap = 24.f;
+        case "1440_barcode":
+            IconSize = 50.f;
+            IconMargin = -10.f;
+            BlockGap = 0.f;
+            BlockStyle = 3;
+            BlockCount = 50;
+            BlockWidth = 2.f;
+            BlockHeight = 10.f;
+            BarGap = 4.f;
+            BuffSize = 16.f;
+            BuffGap = 24.f;
+            break;
+        default:
+            ConsolePrint("Invalid bar preset:" @ Value);
+            break;
+    }
+
+    SaveConfig();
+}
+
 exec function SetFHUDScale(float Value)
 {
     Scale = FMax(Value, 0.f);
@@ -478,7 +563,7 @@ exec function SetFHUDLayout(string Value)
 
 exec function SetFHUDBarGap(float Value)
 {
-    BarGap = FMax(Value, 0.f);
+    BarGap = Value;
     SaveConfig();
 }
 
