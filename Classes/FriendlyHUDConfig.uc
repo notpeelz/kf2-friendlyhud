@@ -16,6 +16,7 @@ var config int SortStrategy;
 var config float Scale;
 var config int Flow;
 var config int Layout;
+var config float BarWidthMin;
 var config float BarGap;
 var config float BlockWidth;
 var config float BlockHeight;
@@ -111,6 +112,7 @@ simulated function Initialized()
             IconGap = 4.f;
             BuffCountMax = 3;
             BuffLayout = 1;
+            BarWidthMin = 200.f;
             BarGap = 0.f;
             EmptyBlockThreshold = 0.f;
             BlockWidth = 200.f;
@@ -216,6 +218,7 @@ exec function LoadDefaultBarPreset()
     NameMarginX = 0.f;
     NameMarginY = 0.f;
     NameScale = 1.f;
+    BarWidthMin = 200.f;
     BarGap = 0.f;
     BlockGap = 2.f;
     BlockWidth = 200.f;
@@ -559,6 +562,11 @@ exec function SetFHUDLayout(string Value)
     }
 
     SaveConfig();
+}
+
+exec function SetFHUDBarWidthMin(float Value)
+{
+    BarWidthMin = FMax(Value, 0);
 }
 
 exec function SetFHUDBarGap(float Value)
