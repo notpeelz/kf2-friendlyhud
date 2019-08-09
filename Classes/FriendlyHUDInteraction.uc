@@ -327,7 +327,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     local int HealthToRegen;
     local MedBuffInfo BuffInfo;
     local bool ForceShowBuffs;
-    local bool FoundThresholdColor;
+    local bool FoundThresholdColor, FoundThresholdRegenColor;
     local int BuffLevel;
     local int I;
 
@@ -416,7 +416,6 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     );
 
     HealthColor = HUDConfig.HealthColor;
-    HealthRegenColor = HUDConfig.HealthRegenColor;
     for (I = 0; I < HUDConfig.ColorThresholds.Length; I++)
     {
         ColorThreshold = HUDConfig.ColorThresholds[I];
@@ -425,10 +424,19 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
         {
             FoundThresholdColor = true;
             HealthColor = ColorThreshold.BarColor;
-            if (ColorThreshold.CustomRegenColor)
-            {
-                HealthRegenColor = ColorThreshold.RegenColor;
-            }
+            break;
+        }
+    }
+
+    HealthRegenColor = HUDConfig.HealthRegenColor;
+    for (I = 0; I < HUDConfig.ColorThresholds.Length; I++)
+    {
+        ColorThreshold = HUDConfig.ColorThresholds[I];
+
+        if (TotalRegenRatio <= ColorThreshold.Value)
+        {
+            FoundThresholdRegenColor = true;
+            HealthRegenColor = ColorThreshold.RegenColor;
             break;
         }
     }
@@ -437,13 +445,25 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     {
         if (FoundThresholdColor)
         {
-            ColorThreshold = I < (HUDConfig.ColorThresholds.Length - 1) ? HUDConfig.ColorThresholds[I + 1] : HUDConfig.ColorThresholds[I];
-            LerpHealthColors(HealthColor, HealthRegenColor, HealthRatio, TotalRegenRatio, ColorThreshold);
+            ColorThreshold = I > 0 ? HUDConfig.ColorThresholds[I - 1] : HUDConfig.ColorThresholds[I];
+            HealthColor = LerpHealthColor(HealthColor, ColorThreshold.BarColor, HealthRatio, ColorThreshold.Value, HUDConfig.ColorThresholds[I].Value);
         }
         else if (HUDConfig.ColorThresholds.Length > 0)
         {
-            ColorThreshold = HUDConfig.ColorThresholds[0];
-            LerpHealthColors(HealthColor, HealthRegenColor, HealthRatio, TotalRegenRatio, ColorThreshold);
+            ColorThreshold = HUDConfig.ColorThresholds[HUDConfig.ColorThresholds.Length - 1];
+            HealthColor = LerpHealthColor(HealthColor, ColorThreshold.BarColor, HealthRatio, ColorThreshold.Value, 1.f);
+        }
+
+        if (HUDConfig.DynamicColors == 2)
+        {
+            if (FoundThresholdRegenColor)
+            {
+                HealthRegenColor = LerpHealthColor(HealthRegenColor, ColorThreshold.RegenColor, TotalRegenRatio, ColorThreshold.Value, HUDConfig.ColorThresholds[I].Value);
+            }
+            else if (HUDConfig.ColorThresholds.Length > 0)
+            {
+                HealthRegenColor = LerpHealthColor(HealthRegenColor, ColorThreshold.RegenColor, TotalRegenRatio, ColorThreshold.Value, 1.f);
+            }
         }
     }
 
@@ -462,15 +482,9 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     return true;
 }
 
-simulated function LerpHealthColors(out Color HealthColor, out Color HealthRegenColor, float HealthRatio, float RegenRatio, FriendlyHUDConfig.ColorThreshold ColorThreshold)
+simulated function Color LerpHealthColor(Color ColorHigh, Color ColorLow, float HealthRatio, float ThresholdLow, float ThresholdHigh)
 {
-    HealthColor = LerpColor(ColorThreshold.BarColor, HealthColor, (HealthRatio - ColorThreshold.Value) / (1.f - ColorThreshold.Value));
-    if (ColorThreshold.CustomRegenColor)
-    {
-        HealthRegenColor = HUDConfig.DynamicColors == 1
-            ? LerpColor(ColorThreshold.RegenColor, HealthRegenColor, (HealthRatio - ColorThreshold.Value) / (1.f - ColorThreshold.Value))
-            : LerpColor(ColorThreshold.RegenColor, HealthRegenColor, (RegenRatio - ColorThreshold.Value) / (1.f - ColorThreshold.Value));
-    }
+    return LerpColor(ColorLow, ColorHigh, (HealthRatio - ThresholdLow) / (ThresholdHigh - ThresholdLow));
 }
 
 simulated function DrawBuffs(Canvas Canvas, int BuffLevel, float PosX, float PosY)

@@ -1102,7 +1102,7 @@ function InitUMCompat()
 
 delegate int SortColorThresholds(ColorThreshold A, ColorThreshold B)
 {
-    if (A.Value < B.Value) return -1;
-    if (A.Value > B.Value) return 1;
+    if (A.Value < B.Value) return 1;
+    if (A.Value > B.Value) return -1;
     return 0;
 }
