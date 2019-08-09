@@ -181,7 +181,6 @@ simulated function LoadDefaultFHUDConfig()
     UMCompatEnabled = true;
     UMColorSyncEnabled = true;
 
-    ResetFHUDColorThresholds();
     LoadDefaultFHUDLayout();
     LoadDefaultBarPreset();
     LoadDefaultFHUDColors();
@@ -231,6 +230,7 @@ exec function LoadDefaultBarPreset()
 
 exec function LoadDefaultFHUDColors()
 {
+    ResetFHUDColorThresholds();
     ShadowColor = MakeColor(0, 0, 0, 255);
     TextColor = MakeColor(255, 255, 255, 192);
     IconColor = MakeColor(255, 255, 255, 192);
@@ -339,6 +339,13 @@ exec function LoadFHUDColorPreset(string Value)
             ArmorColor = MakeColor(186, 220, 255, 192);
             HealthColor = MakeColor(85, 26, 139, 192);
             HealthRegenColor = MakeColor(204, 186, 220, 192);
+            break;
+        case "gradient":
+            AddColorThreshold(0.7, 255, 255, 0);
+            SetRegenColorThreshold(0.7, 80, 80, 25);
+            AddColorThreshold(0.5, 255, 0, 0);
+            SetRegenColorThreshold(0.5, 80, 25, 25);
+            HealthRegenColor = MakeColor(25, 70, 25, 192);
             break;
         default:
             ConsolePrint("Invalid color preset:" @ Value);
@@ -971,6 +978,18 @@ exec function RemoveFHUDColorThreshold(float Threshold)
 
 exec function SetFHUDRegenColorThreshold(float Threshold, byte R, byte G, byte B, optional byte A = 192)
 {
+    if (SetRegenColorThreshold(Threshold, R, G, B, A))
+    {
+        ConsolePrint("Successfully set regen color for threshold" @ Threshold);
+    }
+    else
+    {
+        ConsolePrint("Failed to find threshold" @ Threshold);
+    }
+}
+
+function bool SetRegenColorThreshold(float Threshold, byte R, byte G, byte B, optional byte A = 192)
+{
     local int I;
 
     for (I = 0; I < ColorThresholds.Length; I++)
@@ -979,16 +998,27 @@ exec function SetFHUDRegenColorThreshold(float Threshold, byte R, byte G, byte B
         {
             ColorThresholds[I].RegenColor = MakeColor(R, G, B, A);
             ColorThresholds[I].CustomRegenColor = true;
-            ConsolePrint("Successfully set regen color for threshold" @ Threshold);
             SaveConfig();
-            return;
+            return true;
         }
     }
 
-    ConsolePrint("Failed to find threshold" @ Threshold);
+    return false;
 }
 
 exec function AddFHUDColorThreshold(float Threshold, byte R, byte G, byte B, optional byte A = 192)
+{
+    if (AddColorThreshold(Threshold, R, G, B, A))
+    {
+        ConsolePrint("Successfully replaced threshold" @ Threshold);
+    }
+    else
+    {
+        ConsolePrint("Successfully added new threshold" @ Threshold);
+    }
+}
+
+function bool AddColorThreshold(float Threshold, byte R, byte G, byte B, byte A = 192)
 {
     local ColorThreshold NewItem, ExistingItem;
 
@@ -997,9 +1027,8 @@ exec function AddFHUDColorThreshold(float Threshold, byte R, byte G, byte B, opt
         if (ExistingItem.Value == Threshold)
         {
             ExistingItem.BarColor = MakeColor(R, G, B, A);
-            ConsolePrint("Successfully replaced threshold" @ Threshold);
             SaveConfig();
-            return;
+            return true;
         }
     }
 
@@ -1008,9 +1037,8 @@ exec function AddFHUDColorThreshold(float Threshold, byte R, byte G, byte B, opt
     ColorThresholds.AddItem(NewItem);
     ColorThresholds.Sort(SortColorThresholds);
 
-    ConsolePrint("Successfully added new threshold" @ Threshold);
-
     SaveConfig();
+    return false;
 }
 
 exec function MoveFHUDColorThreshold(float Threshold, float NewThreshold)
