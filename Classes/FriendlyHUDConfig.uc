@@ -4,8 +4,6 @@ class FriendlyHUDConfig extends Interaction
 struct ColorThreshold
 {
     var Color BarColor;
-    var Color RegenColor;
-    var bool CustomRegenColor;
     var float Value;
 };
 
@@ -65,6 +63,7 @@ var config float DO_T0;
 var config float DO_T1;
 var config float Opacity;
 var config array<ColorThreshold> ColorThresholds;
+var config array<ColorThreshold> RegenColorThresholds;
 var config int DynamicColors;
 var config bool ForceShowBuffs;
 var config bool UMCompatEnabled;
@@ -341,11 +340,11 @@ exec function LoadFHUDColorPreset(string Value)
             HealthRegenColor = MakeColor(204, 186, 220, 192);
             break;
         case "gradient":
+            DynamicColors = 2;
             AddColorThreshold(0.7, 255, 255, 0);
-            SetRegenColorThreshold(0.7, 80, 80, 25);
+            SetRegenColorThreshold(0.7, 100, 100, 0);
             AddColorThreshold(0.5, 255, 0, 0);
             SetRegenColorThreshold(0.5, 80, 25, 25);
-            HealthRegenColor = MakeColor(25, 70, 25, 192);
             break;
         default:
             ConsolePrint("Invalid color preset:" @ Value);
@@ -922,6 +921,7 @@ exec function SetFHUDSortStrategy(string Strategy, optional bool Descending = fa
             SortStrategy = Descending ? 1 : 2;
             break;
         case "regenhealth":
+        case "healthregen":
             SortStrategy = Descending ? 3 : 4;
             break;
         case "default":
@@ -967,7 +967,22 @@ exec function RemoveFHUDColorThreshold(float Threshold)
         if (ExistingItem.Value == Threshold)
         {
             ColorThresholds.RemoveItem(ExistingItem);
+
+            // Remove the corresponding regen threshold (if existing)
+            foreach RegenColorThresholds(ExistingItem)
+            {
+                if (ExistingItem.Value == Threshold)
+                {
+                    RegenColorThresholds.RemoveItem(ExistingItem);
+                    break;
+                }
+            }
+
+            ColorThresholds.Sort(SortColorThresholds);
+            RegenColorThresholds.Sort(SortColorThresholds);
+
             ConsolePrint("Removed color threshold:" @ Threshold);
+
             SaveConfig();
             return;
         }
@@ -980,7 +995,7 @@ exec function SetFHUDRegenColorThreshold(float Threshold, byte R, byte G, byte B
 {
     if (SetRegenColorThreshold(Threshold, R, G, B, A))
     {
-        ConsolePrint("Successfully set regen color for threshold" @ Threshold);
+        ConsolePrint("Successfully regen color for threshold" @ Threshold);
     }
     else
     {
@@ -990,20 +1005,31 @@ exec function SetFHUDRegenColorThreshold(float Threshold, byte R, byte G, byte B
 
 function bool SetRegenColorThreshold(float Threshold, byte R, byte G, byte B, optional byte A = 192)
 {
+    local ColorThreshold NewItem;
     local int I;
 
-    for (I = 0; I < ColorThresholds.Length; I++)
+    for (I = 0; I < RegenColorThresholds.Length; I++)
     {
-        if (ColorThresholds[I].Value == Threshold)
+        if (RegenColorThresholds[I].Value == Threshold)
         {
-            ColorThresholds[I].RegenColor = MakeColor(R, G, B, A);
-            ColorThresholds[I].CustomRegenColor = true;
+            RegenColorThresholds[I].BarColor = MakeColor(R, G, B, A);
             SaveConfig();
             return true;
         }
     }
 
+    NewItem.BarColor = MakeColor(R, G, B, A);
+    NewItem.Value = Threshold;
+    RegenColorThresholds.AddItem(NewItem);
+    RegenColorThresholds.Sort(SortColorThresholds);
+
+    SaveConfig();
     return false;
+}
+
+exec function SetFHUDColorThreshold(float Threshold, byte R, byte G, byte B, optional byte A = 192)
+{
+    AddFHUDColorThreshold(Threshold, R, G, B, A);
 }
 
 exec function AddFHUDColorThreshold(float Threshold, byte R, byte G, byte B, optional byte A = 192)
@@ -1020,13 +1046,14 @@ exec function AddFHUDColorThreshold(float Threshold, byte R, byte G, byte B, opt
 
 function bool AddColorThreshold(float Threshold, byte R, byte G, byte B, byte A = 192)
 {
-    local ColorThreshold NewItem, ExistingItem;
+    local ColorThreshold NewItem;
+    local int I;
 
-    foreach ColorThresholds(ExistingItem)
+    for (I = 0; I < ColorThresholds.Length; I++)
     {
-        if (ExistingItem.Value == Threshold)
+        if (ColorThresholds[I].Value == Threshold)
         {
-            ExistingItem.BarColor = MakeColor(R, G, B, A);
+            ColorThresholds[I].BarColor = MakeColor(R, G, B, A);
             SaveConfig();
             return true;
         }
@@ -1050,7 +1077,22 @@ exec function MoveFHUDColorThreshold(float Threshold, float NewThreshold)
         if (ColorThresholds[I].Value == Threshold)
         {
             ColorThresholds[I].Value = NewThreshold;
+
+            // Update the corresponding regen threshold (if existing)
+            for (I = 0; I < RegenColorThresholds.Length; I++)
+            {
+                if (RegenColorThresholds[I].Value == Threshold)
+                {
+                    RegenColorThresholds[I].Value = NewThreshold;
+                    break;
+                }
+            }
+
+            ColorThresholds.Sort(SortColorThresholds);
+            RegenColorThresholds.Sort(SortColorThresholds);
+
             ConsolePrint("Successfully moved threshold from" @ Threshold @ "to" @ NewThreshold);
+
             SaveConfig();
             return;
         }
@@ -1067,15 +1109,18 @@ exec function SetFHUDDynamicColors(String Value)
         case "static":
             DynamicColors = 0;
             break;
-        case "lerp":
+        case "lerphealthonly":
             DynamicColors = 1;
             break;
-        case "lerpregen":
+        case "lerphealth":
             DynamicColors = 2;
+            break;
+        case "lerpboth":
+            DynamicColors = 3;
             break;
         default:
             // Non-int values get parsed as 0
-            DynamicColors = Clamp(int(Value), 0, 2);
+            DynamicColors = Clamp(int(Value), 0, 3);
 
             // Invalid value
             if (DynamicColors == 0 && Value != "0")
