@@ -180,14 +180,14 @@ simulated function LoadDefaultFHUDConfig()
     UMCompatEnabled = true;
     UMColorSyncEnabled = true;
 
-    LoadDefaultFHUDLayout();
-    LoadDefaultBarPreset();
-    LoadDefaultFHUDColors();
+    LoadFHUDDefaultLayout();
+    LoadFHUDDefaultBarPreset();
+    LoadFHUDDefaultColors();
 
     SaveConfig();
 }
 
-exec function LoadDefaultFHUDLayout()
+exec function LoadFHUDDefaultLayout()
 {
     Scale = 1.f;
     Flow = 0;
@@ -202,7 +202,7 @@ exec function LoadDefaultFHUDLayout()
     SaveConfig();
 }
 
-exec function LoadDefaultBarPreset()
+exec function LoadFHUDDefaultBarPreset()
 {
     ItemMarginX = 14.f;
     ItemMarginY = 5.f;
@@ -227,7 +227,7 @@ exec function LoadDefaultBarPreset()
     SaveConfig();
 }
 
-exec function LoadDefaultFHUDColors()
+exec function LoadFHUDDefaultColors()
 {
     ResetFHUDColorThresholds();
     ShadowColor = MakeColor(0, 0, 0, 255);
@@ -315,7 +315,7 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
 
 exec function LoadFHUDColorPreset(string Value)
 {
-    LoadDefaultFHUDColors();
+    LoadFHUDDefaultColors();
 
     switch (Locs(Value))
     {
@@ -358,7 +358,7 @@ exec function LoadFHUDColorPreset(string Value)
 
 exec function LoadFHUDPreset(string Value)
 {
-    LoadDefaultFHUDLayout();
+    LoadFHUDDefaultLayout();
 
     switch (Locs(Value))
     {
@@ -438,7 +438,7 @@ exec function LoadFHUDPreset(string Value)
 
 exec function LoadFHUDBarPreset(string Value)
 {
-    LoadDefaultBarPreset();
+    LoadFHUDDefaultBarPreset();
 
     switch (Locs(Value))
     {
