@@ -101,7 +101,7 @@ simulated function Initialized()
         {
             INIVersion = 2;
 
-            UpdateInterval = 1.f;
+            UpdateInterval = 0.5f;
             SortStrategy = 0;
             DO_MinOpacity = 1.f;
             DO_MaxOpacity = 1.f;
@@ -165,7 +165,7 @@ simulated function UpdateChangeLogVersion()
 simulated function LoadDefaultFHUDConfig()
 {
     INIVersion = 2;
-    UpdateInterval = 1.f;
+    UpdateInterval = 0.5f;
     SortStrategy = 0;
     DisableHUD = false;
     EmptyBlockThreshold = 0.f;
@@ -359,7 +359,7 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("SetFHUDDrawDebugLines <bool>: displays debug lines -- useful for debugging layout issues");
         ConsolePrint("DebugFHUDSetArmor <int Armor> <int MaxArmor = -1>: sets the armor value for your own character -- cheats only");
         ConsolePrint("DebugFHUDSetHealth <int Health> <int MaxHealth = -1>: sets the health value for your own character -- cheats only");
-        ConsolePrint("SetFHUDUpdateInterval <float>: controls the interval (in seconds) between player list updates (default is 1)");
+        ConsolePrint("SetFHUDUpdateInterval <float>: controls the interval (in seconds) between player list updates (default is 0.5)");
         ConsolePrint("SetFHUDEmptyBlockThreshold <float>: the minimum block ratio to consider a block empty (used for EmptyBG colors)");
         ConsolePrint("SetFHUDUMCompatEnabled <bool>: controls whether FHUD should override Unofficial Mod's HMTech cooldowns HUD to prevent layout conflicts");
         ConsolePrint("SetFHUDUMColorSyncEnabled <bool>: controls whether FHUD should automatically synchronize Unofficial Mod's color scheme");
