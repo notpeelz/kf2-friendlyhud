@@ -32,7 +32,7 @@ var Color AxisYLineColor;
 
 var FriendlyHUDMutator FHUDMutator;
 var float BarHeight, BarWidth, BarGap, TextHeight, TotalItemWidth, TotalItemHeight;
-var float PerkIconSize, PerkIconGap, PerkIconMargin;
+var float PerkIconSize, PerkIconGap, PerkIconOffset;
 var float BlockWidth, BlockGap, TotalBlockWidth;
 var float BuffOffset, BuffIconSize, BuffPerkIconMargin, BuffPerkIconGap;
 var float NameMarginX, NameMarginY;
@@ -175,7 +175,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
 
     PerkIconSize = HUDConfig.IconSize * ResScale;
     PerkIconGap = HUDConfig.IconGap * ResScale;
-    PerkIconMargin = HUDConfig.IconMargin * ResScale;
+    PerkIconOffset = HUDConfig.IconOffset * ResScale;
 
     BlockWidth = HUDConfig.BlockWidth * ResScale;
     BlockGap = HUDConfig.BlockGap * ResScale;
@@ -187,7 +187,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     NameMarginX = HUDConfig.NameMarginX * ResScale;
     NameMarginY = HUDConfig.NameMarginY * ResScale;
     TotalItemWidth = PerkIconSize + PerkIconGap + FMax(TotalBlockWidth * HUDConfig.BlockCount, HUDConfig.BarWidthMin) + HUDConfig.ItemMarginX * ResScale;
-    TotalItemHeight = FMax(BarHeight * 2.f + TextHeight + BarGap + NameMarginY, PerkIconSize + PerkIconMargin) + HUDConfig.ItemMarginY * ResScale;
+    TotalItemHeight = FMax(BarHeight * 2.f + TextHeight + BarGap + NameMarginY, PerkIconSize + PerkIconOffset) + HUDConfig.ItemMarginY * ResScale;
     BuffOffset = HUDConfig.BuffOffset * ResScale;
     BuffIconSize = HUDConfig.BuffSize * ResScale;
     BuffPerkIconMargin = HUDConfig.BuffMargin * ResScale;
@@ -369,7 +369,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     // Draw drop shadow behind the perk icon
     SetCanvasColor(Canvas, HUDConfig.ShadowColor);
     PerkIconPosX = PosX;
-    PerkIconPosY = PosY + PerkIconMargin + (TextHeight + NameMarginY) / 2.f;
+    PerkIconPosY = PosY + PerkIconOffset + (TextHeight + NameMarginY) / 2.f;
     DrawPerkIcon(Canvas, KFPRI, PlayerIcon, DrawPrestigeBorder, PerkIconPosX + 1, PerkIconPosY);
 
     // Draw perk icon

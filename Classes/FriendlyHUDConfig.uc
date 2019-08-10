@@ -32,7 +32,7 @@ var config float BuffGap;
 var config float BuffOffset;
 var config int BuffCountMax;
 var config float IconSize;
-var config float IconMargin;
+var config float IconOffset;
 var config float IconGap;
 var config float NameMarginX;
 var config float NameMarginY;
@@ -109,7 +109,7 @@ simulated function Initialized()
             DO_T1 = 0.f;
             Opacity = 1.f;
             IconSize = 32.f;
-            IconMargin = 0.f;
+            IconOffset = 0.f;
             IconGap = 4.f;
             BuffCountMax = 3;
             BuffLayout = 1;
@@ -217,7 +217,7 @@ exec function LoadFHUDDefaultBarPreset()
     BuffGap = 3.f;
     BuffOffset = 0.f;
     IconSize = 32.f;
-    IconMargin = 0.f;
+    IconOffset = 0.f;
     IconGap = 4.f;
     NameMarginX = 0.f;
     NameMarginY = 0.f;
@@ -490,7 +490,7 @@ exec function LoadFHUDBarPreset(string Value)
             break;
         case "barcode":
             IconSize = 50.f;
-            IconMargin = -10.f;
+            IconOffset = -10.f;
             BlockGap = 0.f;
             BlockStyle = 3;
             BlockCount = 50;
@@ -823,9 +823,9 @@ exec function SetFHUDIconSize(float Value)
     SaveConfig();
 }
 
-exec function SetFHUDIconMargin(float Value)
+exec function SetFHUDIconOffset(float Value)
 {
-    IconMargin = Value;
+    IconOffset = Value;
     SaveConfig();
 }
 
