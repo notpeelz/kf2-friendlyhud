@@ -36,6 +36,7 @@ var float PerkIconSize, PerkIconGap, PerkIconOffset;
 var float BlockWidth, BlockGap, TotalBlockWidth;
 var float BuffOffset, BuffIconSize, BuffPerkIconMargin, BuffPerkIconGap;
 var float NameMarginX, NameMarginY;
+var float ItemMarginX, ItemMarginY;
 var float ScreenPosX, ScreenPosY;
 var float ObjectOpacity;
 
@@ -186,8 +187,10 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
 
     NameMarginX = HUDConfig.NameMarginX * ResScale;
     NameMarginY = HUDConfig.NameMarginY * ResScale;
-    TotalItemWidth = PerkIconSize + PerkIconGap + FMax(TotalBlockWidth * HUDConfig.BlockCount, HUDConfig.BarWidthMin) + HUDConfig.ItemMarginX * ResScale;
-    TotalItemHeight = FMax(BarHeight * 2.f + TextHeight + BarGap + NameMarginY, PerkIconSize + PerkIconOffset) + HUDConfig.ItemMarginY * ResScale;
+    ItemMarginX = HUDConfig.ItemMarginX * ResScale;
+    ItemMarginY = HUDConfig.ItemMarginY * ResScale;
+    TotalItemWidth = PerkIconSize + PerkIconGap + FMax(TotalBlockWidth * HUDConfig.BlockCount - BlockGap, HUDConfig.BarWidthMin) + ItemMarginX;
+    TotalItemHeight = FMax(BarHeight * 2.f + TextHeight + BarGap + NameMarginY, PerkIconSize + PerkIconOffset) + ItemMarginY;
     BuffOffset = HUDConfig.BuffOffset * ResScale;
     BuffIconSize = HUDConfig.BuffSize * ResScale;
     BuffPerkIconMargin = HUDConfig.BuffMargin * ResScale;

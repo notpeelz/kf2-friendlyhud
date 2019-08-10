@@ -114,7 +114,7 @@ simulated function Initialized()
             BuffCountMax = 3;
             BuffLayout = 1;
             BuffOffset = 0;
-            BarWidthMin = 200.f;
+            BarWidthMin = 202.f;
             BarGap = -1.f;
             EmptyBlockThreshold = 0.f;
             BlockWidth = 200.f;
@@ -222,7 +222,7 @@ exec function ResetFHUDBarSettings()
     NameMarginX = 0.f;
     NameMarginY = 0.f;
     NameScale = 1.f;
-    BarWidthMin = 200.f;
+    BarWidthMin = 202.f;
     BarGap = -1.f;
     BlockGap = 2.f;
     BlockWidth = 200.f;
@@ -320,7 +320,7 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("SetFHUDNameScale <float>: controls the scale of the player name");
         ConsolePrint("SetFHUDNameMarginX <float>: controls the horizontal margin of the player name");
         ConsolePrint("SetFHUDNameMarginY <float>: controls the vertical margin of the player name");
-        ConsolePrint("SetFHUDBarWidthMin <float>: forces healthbars to assume a minimum spacing between them, so to prevent names from overlapping (default is 200)");
+        ConsolePrint("SetFHUDBarWidthMin <float>: forces healthbars to assume a minimum spacing between them, so to prevent names from overlapping (default is 202)");
 
         ConsolePrint(" ");
         ConsolePrint("Buff Settings");
