@@ -9,7 +9,7 @@ var FriendlyHUDReplicationInfo RepInfo;
 var GFxClikWidget ChatInputField, PartyChatInputField;
 
 const HelpURL = "https://steamcommunity.com/sharedfiles/filedetails/?id=1827646464";
-const WhatsNewURL = "https://steamcommunity.com/sharedfiles/filedetails/?id=1827647600";
+const WhatsNewURL = "https://steamcommunity.com/sharedfiles/filedetails/?id=1827646464#3177485";
 
 replication
 {
