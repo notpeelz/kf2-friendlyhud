@@ -174,6 +174,11 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     Canvas.Font = class'KFGameEngine'.static.GetKFCanvasFont();
     FontScale = class'KFGameEngine'.static.GetKFFontScale() * HUDConfig.NameScale * ResScale;
 
+    BuffOffset = HUDConfig.BuffOffset * ResScale;
+    BuffIconSize = HUDConfig.BuffSize * ResScale;
+    BuffPerkIconMargin = HUDConfig.BuffMargin * ResScale;
+    BuffPerkIconGap = HUDConfig.BuffGap * ResScale;
+
     PerkIconSize = HUDConfig.IconSize * ResScale;
     PerkIconGap = HUDConfig.IconGap * ResScale;
     PerkIconOffset = HUDConfig.IconOffset * ResScale;
@@ -191,11 +196,16 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     ItemMarginY = HUDConfig.ItemMarginY * ResScale;
     TotalItemWidth = PerkIconSize + PerkIconGap + FMax(TotalBlockWidth * HUDConfig.BlockCount - BlockGap, HUDConfig.BarWidthMin) + ItemMarginX;
     TotalItemHeight = FMax(BarHeight * 2.f + TextHeight + BarGap + NameMarginY, PerkIconSize + PerkIconOffset) + ItemMarginY;
-    BuffOffset = HUDConfig.BuffOffset * ResScale;
-    BuffIconSize = HUDConfig.BuffSize * ResScale;
-    BuffPerkIconMargin = HUDConfig.BuffMargin * ResScale;
-    BuffPerkIconGap = HUDConfig.BuffGap * ResScale;
 
+    // BuffLayout: Left or Right
+    if (HUDConfig.BuffLayout == 1 || HUDConfig.BuffLayout == 2)
+    {
+        TotalItemWidth += BuffPerkIconMargin + BuffIconSize;
+    }
+    else if (HUDConfig.BuffLayout == 3 || HUDConfig.BuffLayout == 4)
+    {
+        TotalItemHeight += BuffPerkIconMargin + BuffIconSize;
+    }
 
     // Layout: Bottom
     if (HUDConfig.Layout == 0)
