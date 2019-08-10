@@ -34,7 +34,7 @@ var FriendlyHUDMutator FHUDMutator;
 var float BarHeight, BarWidth, BarGap, TextHeight, TotalItemWidth, TotalItemHeight;
 var float PerkIconSize, PerkIconGap, PerkIconMargin;
 var float BlockWidth, BlockGap, TotalBlockWidth;
-var float BuffIconSize, BuffPerkIconMargin, BuffPerkIconGap;
+var float BuffOffset, BuffIconSize, BuffPerkIconMargin, BuffPerkIconGap;
 var float NameMarginX, NameMarginY;
 var float ScreenPosX, ScreenPosY;
 var float ObjectOpacity;
@@ -188,6 +188,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     NameMarginY = HUDConfig.NameMarginY * ResScale;
     TotalItemWidth = PerkIconSize + PerkIconGap + FMax(TotalBlockWidth * HUDConfig.BlockCount, HUDConfig.BarWidthMin) + HUDConfig.ItemMarginX * ResScale;
     TotalItemHeight = FMax(BarHeight * 2.f + TextHeight + BarGap + NameMarginY, PerkIconSize + PerkIconMargin) + HUDConfig.ItemMarginY * ResScale;
+    BuffOffset = HUDConfig.BuffOffset * ResScale;
     BuffIconSize = HUDConfig.BuffSize * ResScale;
     BuffPerkIconMargin = HUDConfig.BuffMargin * ResScale;
     BuffPerkIconGap = HUDConfig.BuffGap * ResScale;
@@ -506,24 +507,24 @@ simulated function DrawBuffs(Canvas Canvas, int BuffLevel, float PosX, float Pos
         if (HUDConfig.BuffLayout == 1)
         {
             CurrentPosX = PosX - BuffPerkIconMargin - BuffIconSize;
-            CurrentPosY = PosY + (BuffPerkIconGap + BuffIconSize) * I;
+            CurrentPosY = PosY + BuffOffset + (BuffPerkIconGap + BuffIconSize) * I;
         }
         // BuffLayout: Right
         else if (HUDConfig.BuffLayout == 2)
         {
             CurrentPosX = PosX + PerkIconSize + BuffPerkIconMargin;
-            CurrentPosY = PosY + (BuffPerkIconGap + BuffIconSize) * I;
+            CurrentPosY = PosY + BuffOffset + (BuffPerkIconGap + BuffIconSize) * I;
         }
         // BuffLayout: Top
         else if (HUDConfig.BuffLayout == 3)
         {
-            CurrentPosX = PosX + (BuffPerkIconGap + BuffIconSize) * I;
+            CurrentPosX = PosX + BuffOffset + (BuffPerkIconGap + BuffIconSize) * I;
             CurrentPosY = PosY - BuffPerkIconMargin - BuffIconSize;
         }
         // BuffLayout: Bottom
         else if (HUDConfig.BuffLayout == 4)
         {
-            CurrentPosX = PosX + (BuffPerkIconGap + BuffIconSize) * I;
+            CurrentPosX = PosX + BuffOffset + (BuffPerkIconGap + BuffIconSize) * I;
             CurrentPosY = PosY + PerkIconSize + BuffPerkIconMargin;
         }
 

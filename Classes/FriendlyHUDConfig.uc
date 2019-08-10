@@ -29,6 +29,7 @@ var config int BuffLayout;
 var config float BuffSize;
 var config float BuffMargin;
 var config float BuffGap;
+var config float BuffOffset;
 var config int BuffCountMax;
 var config float IconSize;
 var config float IconMargin;
@@ -112,6 +113,7 @@ simulated function Initialized()
             IconGap = 4.f;
             BuffCountMax = 3;
             BuffLayout = 1;
+            BuffOffset = 0;
             BarWidthMin = 200.f;
             BarGap = 0.f;
             EmptyBlockThreshold = 0.f;
@@ -213,6 +215,7 @@ exec function LoadFHUDDefaultBarPreset()
     BuffSize = 8.f;
     BuffMargin = 2.f;
     BuffGap = 3.f;
+    BuffOffset = 0.f;
     IconSize = 32.f;
     IconMargin = 0.f;
     IconGap = 4.f;
@@ -808,6 +811,12 @@ exec function SetFHUDBuffMargin(float Value)
 exec function SetFHUDBuffGap(float Value)
 {
     BuffGap = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDBuffOffset(float Value)
+{
+    BuffOffset = Value;
     SaveConfig();
 }
 
