@@ -65,6 +65,7 @@ var config float Opacity;
 var config array<ColorThreshold> ColorThresholds;
 var config array<ColorThreshold> RegenColorThresholds;
 var config int DynamicColors;
+var config int DynamicRegenColors;
 var config bool ForceShowBuffs;
 var config bool UMCompatEnabled;
 var config bool UMColorSyncEnabled;
@@ -123,6 +124,7 @@ simulated function Initialized()
             NameMarginY = 0.f;
             NameScale = 1.f;
             DynamicColors = 0;
+            DynamicRegenColors = 0;
             ForceShowBuffs = false;
             UMDisableHMTechChargeHUD = 0;
             UMColorSyncEnabled = true;
@@ -175,6 +177,7 @@ simulated function LoadDefaultFHUDConfig()
     DO_T0 = 4.f;
     DO_T1 = 0.f;
     DynamicColors = 0;
+    DynamicRegenColors = 0;
     Opacity = 1.f;
     ForceShowBuffs = false;
     UMCompatEnabled = true;
@@ -341,6 +344,7 @@ exec function LoadFHUDColorPreset(string Value)
             break;
         case "gradient":
             DynamicColors = 2;
+            DynamicRegenColors = 2;
             AddColorThreshold(0.7, 255, 255, 0);
             SetRegenColorThreshold(0.7, 100, 100, 0);
             AddColorThreshold(0.5, 255, 0, 0);
@@ -533,7 +537,7 @@ exec function SetFHUDFlow(string Value)
             Flow = Clamp(int(Value), 0, 1);
 
             // Invalid value
-            if (Layout == 0 && Value != "0")
+            if (Flow == 0 && Value != "0" || int(Value) != Flow)
             {
                 ConsolePrint("Invalid flow:" @ Value);
             }
@@ -560,7 +564,7 @@ exec function SetFHUDLayout(string Value)
             Layout = Clamp(int(Value), 0, 2);
 
             // Invalid value
-            if (Layout == 0 && Value != "0")
+            if (Layout == 0 && Value != "0" || int(Value) != Layout)
             {
                 ConsolePrint("Invalid layout:" @ Value);
             }
@@ -1105,26 +1109,54 @@ exec function SetFHUDDynamicColors(String Value)
     switch (Locs(Value))
     {
         case "default":
-        case "static":
+        case "unset":
             DynamicColors = 0;
             break;
-        case "lerphealthonly":
+        case "static":
             DynamicColors = 1;
             break;
-        case "lerphealth":
+        case "lerp":
             DynamicColors = 2;
-            break;
-        case "lerpboth":
-            DynamicColors = 3;
             break;
         default:
             // Non-int values get parsed as 0
-            DynamicColors = Clamp(int(Value), 0, 3);
+            DynamicColors = Clamp(int(Value), 0, 2);
 
             // Invalid value
-            if (DynamicColors == 0 && Value != "0")
+            if (DynamicColors == 0 && Value != "0" || int(Value) != DynamicColors)
             {
                 ConsolePrint("Invalid dynamic colors strategy:" @ Value);
+            }
+            break;
+    }
+
+    SaveConfig();
+}
+
+exec function SetFHUDDynamicRegenColors(string Value)
+{
+    switch (Locs(Value))
+    {
+        case "default":
+        case "unset":
+            DynamicRegenColors = 0;
+        case "static":
+            DynamicRegenColors = 1;
+            break;
+        case "lerphealth":
+            DynamicRegenColors = 2;
+            break;
+        case "lerp":
+            DynamicRegenColors = 3;
+            break;
+        default:
+            // Non-int values get parsed as 0
+            DynamicRegenColors = Clamp(int(Value), 0, 3);
+
+            // Invalid value
+            if (DynamicRegenColors == 0 && Value != "0" || int(Value) != DynamicRegenColors)
+            {
+                ConsolePrint("Invalid dynamic regen colors strategy:" @ Value);
             }
             break;
     }

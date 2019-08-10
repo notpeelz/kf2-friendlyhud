@@ -415,20 +415,19 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     HealthColor = HUDConfig.HealthColor;
     HealthRegenColor = HUDConfig.HealthRegenColor;
 
-    // DynamicColors: not static
-    if (HUDConfig.DynamicColors >= 1)
+    if (HUDConfig.DynamicColors > 0)
     {
-        HealthColor = GethealthColor(HealthRatio, HUDConfig.HealthColor, HUDConfig.ColorThresholds);
+        HealthColor = GethealthColor(HealthRatio, HUDConfig.HealthColor, HUDConfig.ColorThresholds, HUDConfig.DynamicColors > 1);
+    }
 
-        // DynamicColors: lerp the health regen
-        if (HUDConfig.DynamicColors >= 2)
-        {
-            HealthRegenColor = HUDConfig.DynamicColors == 3
-                // DynamicColors: lerp the health regen based on the total regen ratio
-                ? GethealthColor(TotalRegenRatio, HUDConfig.HealthRegenColor, HUDConfig.RegenColorThresholds)
-                // DynamicColors: lerp the health regen based on the current health ratio
-                : GethealthColor(HealthRatio, HUDConfig.HealthRegenColor, HUDConfig.RegenColorThresholds);
-        }
+    // Lerp the health regen
+    if (HUDConfig.DynamicRegenColors > 0)
+    {
+        HealthRegenColor = HUDConfig.DynamicRegenColors != 2
+            // Lerp using the total regen ratio
+            ? GethealthColor(TotalRegenRatio, HUDConfig.HealthRegenColor, HUDConfig.RegenColorThresholds, HUDConfig.DynamicRegenColors > 1)
+            // Lerp using the current health ratio
+            : GethealthColor(HealthRatio, HUDConfig.HealthRegenColor, HUDConfig.RegenColorThresholds, HUDConfig.DynamicRegenColors > 1);
     }
 
     // Draw health bar
@@ -446,7 +445,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     return true;
 }
 
-simulated function Color GetHealthColor(float HealthRatio, Color BaseColor, array<FriendlyHUDConfig.ColorThreshold> ColorThresholds)
+simulated function Color GetHealthColor(float HealthRatio, Color BaseColor, array<FriendlyHUDConfig.ColorThreshold> ColorThresholds, bool Lerp)
 {
     local Color HealthColor;
     local FriendlyHUDConfig.ColorThreshold ColorThreshold;
@@ -466,17 +465,20 @@ simulated function Color GetHealthColor(float HealthRatio, Color BaseColor, arra
         }
     }
 
-    if (FoundThresholdColor)
+    if (Lerp)
     {
-        ColorThreshold = I > 0
-            ? ColorThresholds[I - 1]
-            : ColorThresholds[I];
-        HealthColor = LerpHealthColor(HealthColor, ColorThreshold.BarColor, HealthRatio, ColorThreshold.Value, ColorThresholds[I].Value);
-    }
-    else if (ColorThresholds.Length > 0)
-    {
-        ColorThreshold = ColorThresholds[ColorThresholds.Length - 1];
-        HealthColor = LerpHealthColor(HealthColor, ColorThreshold.BarColor, HealthRatio, ColorThreshold.Value, 1.f);
+        if (FoundThresholdColor)
+        {
+            ColorThreshold = I > 0
+                ? ColorThresholds[I - 1]
+                : ColorThresholds[I];
+            HealthColor = LerpHealthColor(HealthColor, ColorThreshold.BarColor, HealthRatio, ColorThreshold.Value, ColorThresholds[I].Value);
+        }
+        else if (ColorThresholds.Length > 0)
+        {
+            ColorThreshold = ColorThresholds[ColorThresholds.Length - 1];
+            HealthColor = LerpHealthColor(HealthColor, ColorThreshold.BarColor, HealthRatio, ColorThreshold.Value, 1.f);
+        }
     }
 
     return HealthColor;
