@@ -488,18 +488,7 @@ exec function LoadFHUDBarPreset(string Value)
             BlockCount = 8;
             BlockWidth = 13.f;
             break;
-        case "1080_barcode":
-            IconSize = 50.f;
-            IconMargin = -10.f;
-            BlockGap = 0.f;
-            BlockStyle = 3;
-            BlockCount = 50;
-            BlockWidth = 2.f;
-            BlockHeight = 10.f;
-            BarGap = 2.f;
-            BuffSize = 16.f;
-            BuffGap = 24.f;
-        case "1440_barcode":
+        case "barcode":
             IconSize = 50.f;
             IconMargin = -10.f;
             BlockGap = 0.f;
@@ -508,8 +497,10 @@ exec function LoadFHUDBarPreset(string Value)
             BlockWidth = 2.f;
             BlockHeight = 10.f;
             BarGap = 4.f;
-            BuffSize = 16.f;
-            BuffGap = 24.f;
+            BuffOffset = 5.f;
+            BuffSize = 11.f;
+            BuffGap = 5.f;
+            BarWidthMin = 210.f;
             break;
         default:
             ConsolePrint("Invalid bar preset:" @ Value);
