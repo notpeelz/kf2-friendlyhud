@@ -1177,6 +1177,13 @@ exec function SetFHUDUMCompatEnabled(bool Value)
     SaveConfig();
 }
 
+exec function SetFHUDUMColorSyncEnabled(bool Value)
+{
+    UMColorSyncEnabled = Value;
+    InitUMCompat();
+    SaveConfig();
+}
+
 exec function ResetFHUDConfig()
 {
     LoadDefaultFHUDConfig();
@@ -1189,10 +1196,13 @@ function ConsolePrint(coerce string Text)
 
 function InitUMCompat()
 {
-    if (UMCompatEnabled && FHUDMutator.IsUMLoaded())
+    if (FHUDMutator.IsUMLoaded())
     {
         // Forcefully disable UM's dart cooldowns
-        KFPlayerOwner.ConsoleCommand("UMHMTechChargeHUD 2");
+        if (UMCompatEnabled)
+        {
+            KFPlayerOwner.ConsoleCommand("UMHMTechChargeHUD 2");
+        }
 
         // Sync colors with UM
         if (UMColorSyncEnabled)
