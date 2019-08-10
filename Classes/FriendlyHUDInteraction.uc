@@ -358,8 +358,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
                 HUDConfig.DO_T0,
                 HUDConfig.DO_MinOpacity,
                 HUDConfig.DO_T1,
-                // If ForceShowBuffs is enabled and the player has buffs, force the opacity to its maximum
-                ForceShowBuffs ? 1.f : HealthRatio
+                HealthRatio
             ), 1.f
         ) * HUDConfig.Opacity;
 
