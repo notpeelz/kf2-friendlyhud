@@ -211,7 +211,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
             ScreenPosX += BuffPerkIconMargin + BuffIconSize;
         }
         // BuffLayout: Top
-        else if (HUDConfig.BuffLayout == 2)
+        else if (HUDConfig.BuffLayout == 3)
         {
             // This ensures that we stay aligned with the top of the playerstats UI
             ScreenPosY += BuffPerkIconMargin + BuffIconSize;
