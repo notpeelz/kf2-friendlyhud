@@ -383,7 +383,6 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("1080_block5, 1440_block5: 5 blocks of 20% HP each");
         ConsolePrint("1080_block10, 1440_block10: 10 blocks of 10% HP each");
         ConsolePrint("block2: 2 blocks of 50% HP");
-        ConsolePrint("block8: 8 blocks of ~13% HP");
         ConsolePrint("barcode: 50 blocks with no gap (resembling a barcode)");
 
         ConsolePrint(" ");
@@ -562,10 +561,6 @@ exec function LoadFHUDBarPreset(string Value)
             BlockCount = 2;
             BlockWidth = 100.f;
             BarGap = 4.f;
-            break;
-        case "block8":
-            BlockCount = 8;
-            BlockWidth = 13.f;
             break;
         case "barcode":
             IconSize = 50.f;
