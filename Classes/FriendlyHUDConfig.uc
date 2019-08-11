@@ -621,6 +621,7 @@ exec function SetFHUDLayout(string Value)
     {
         case "bottom":
             Layout = 0;
+            break;
         case "left":
             Layout = 1;
             break;
