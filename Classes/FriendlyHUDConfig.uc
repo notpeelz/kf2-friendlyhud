@@ -368,7 +368,7 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
     {
         ConsolePrint("'PrintFHUDHelp 1' will display advanced commands");
         ConsolePrint(" ");
-        ConsolePrint("Layout presets (1080_ for 1080p, 1440_ for 1440p, etc.)");
+        ConsolePrint("Layout presets (1080_ for 1080p, 1440_ for 1440p)");
         ConsolePrint("--------------------------");
         ConsolePrint("default: default settings");
         ConsolePrint("1080_l4d, 1440_l4d: Left 4 Dead-style health bars");
@@ -376,6 +376,15 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("1080_left, 1440_left: left-side layout (above chat)");
         ConsolePrint("1080_topright, 1440_topright: right-side layout (starting from the top)");
         ConsolePrint("1080_right, 1440_right: right-side layout (starting from the bottom)");
+
+        ConsolePrint(" ");
+        ConsolePrint("Bar presets");
+        ConsolePrint("--------------------------");
+        ConsolePrint("1080_block5, 1440_block5: 5 blocks of 20% HP each");
+        ConsolePrint("1080_block10, 1440_block10: 10 blocks of 10% HP each");
+        ConsolePrint("block2: 2 blocks of 50% HP");
+        ConsolePrint("block8: 8 blocks of ~13% HP");
+        ConsolePrint("barcode: 50 blocks with no gap (resembling a barcode)");
 
         ConsolePrint(" ");
         ConsolePrint("Color presets");
