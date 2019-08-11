@@ -837,6 +837,7 @@ exec function SetFHUDBuffLayout(string Value)
             break;
         case "left":
             BuffLayout = 1;
+            break;
         case "right":
             BuffLayout = 2;
             break;
