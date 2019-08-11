@@ -281,7 +281,7 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("Layout Settings");
         ConsolePrint("--------------------------");
         ConsolePrint("ResetFHUDLayout: resets the layout settings to their defaults");
-        ConsolePrint("SetFHUDScale <float>: controls the scale of the HUD (1.0 by default); use values between 0.6 and 1.4 for best results");
+        ConsolePrint("SetFHUDScale <float>: controls the scale of the HUD (1.0 by default); values between 0.6 and 1.4 is recommended");
         ConsolePrint("SetFHUDFlow <string>: controls the rendering direction of the health bars; possible values: row, column");
         ConsolePrint("SetFHUDLayout <string>: controls the HUD anchor point to render from (default is bottom); possible values: bottom, left, right");
         ConsolePrint("SetFHUDItemsPerColumn <int>: controls the number of health bars to render per column");
@@ -300,10 +300,10 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("SetFHUDHealthColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the health bar (default is 0,192,0,192)");
         ConsolePrint("SetFHUDHealthRegenColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the regen health buffer (default is 0,70,0,192)");
         ConsolePrint("SetFHUDBuffColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the medic buff icons (default is 255,255,255,192)");
-        ConsolePrint("SetFHUDArmorBGColor <byte R> <byte G> <byte B> <byte A = 192>: controls the background color of armor blocks");
-        ConsolePrint("SetFHUDHealthBGColor <byte R> <byte G> <byte B> <byte A = 192>: controls the background color of health blocks");
-        ConsolePrint("SetFHUDArmorEmptyBGColor <byte R> <byte G> <byte B> <byte A = 192>: controls the background color of empty armor blocks");
-        ConsolePrint("SetFHUDHealthEmptyBGColor <byte R> <byte G> <byte B> <byte A = 192>: controls the background color of empty health blocks");
+        ConsolePrint("SetFHUDArmorBGColor <byte R> <byte G> <byte B> <byte A = 192>: controls the background color of armor blocks (default is 16,16,16,192)");
+        ConsolePrint("SetFHUDHealthBGColor <byte R> <byte G> <byte B> <byte A = 192>: controls the background color of health blocks (default is 16,16,16,192)");
+        ConsolePrint("SetFHUDArmorEmptyBGColor <byte R> <byte G> <byte B> <byte A = 192>: controls the background color of empty armor blocks (default is 16,16,16,192)");
+        ConsolePrint("SetFHUDHealthEmptyBGColor <byte R> <byte G> <byte B> <byte A = 192>: controls the background color of empty health blocks (default is 16,16,16,192)");
 
         ConsolePrint(" ");
         ConsolePrint("Bar Settings");
@@ -314,12 +314,12 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("SetFHUDBlockCount <int>: controls the number of bar blocks (default is 1)");
         ConsolePrint("SetFHUDBlockGap <float>: controls the gap between the bar blocks (default is 2)");
         ConsolePrint("SetFHUDBlockStyle <string>: controls the bar block value rounding logic (default is default); possible values: default, round, ceil, floor");
-        ConsolePrint("SetFHUDIconSize <float>: controls the dimensions of the perk icon");
-        ConsolePrint("SetFHUDIconOffset <float>: controls the vertical offset of the perk icon");
-        ConsolePrint("SetFHUDIconGap <float>: controls the gap between the perk icon and the bars");
-        ConsolePrint("SetFHUDNameScale <float>: controls the scale of the player name");
-        ConsolePrint("SetFHUDNameMarginX <float>: controls the horizontal margin of the player name");
-        ConsolePrint("SetFHUDNameMarginY <float>: controls the vertical margin of the player name");
+        ConsolePrint("SetFHUDIconSize <float>: controls the dimensions of the perk icon (default is 32)");
+        ConsolePrint("SetFHUDIconOffset <float>: controls the vertical offset of the perk icon (default is 0)");
+        ConsolePrint("SetFHUDIconGap <float>: controls the gap between the perk icon and the bars (default is 4)");
+        ConsolePrint("SetFHUDNameScale <float>: controls the scale of the player name (default is 1)");
+        ConsolePrint("SetFHUDNameMarginX <float>: controls the horizontal margin of the player name (default is 0)");
+        ConsolePrint("SetFHUDNameMarginY <float>: controls the vertical margin of the player name (default is 0)");
         ConsolePrint("SetFHUDBarWidthMin <float>: forces healthbars to assume a minimum spacing between them, so to prevent names from overlapping (default is 202)");
 
         ConsolePrint(" ");
@@ -331,12 +331,12 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("SetFHUDBuffGap <float>: controls the gap between the buff icons (default is 3)");
         ConsolePrint("SetFHUDBuffOffset <float>: controls the offset of buff icons (default is 0)");
         ConsolePrint("SetFHUDBuffCountMax <int>: controls the maximum number of buffs to display (default is 3)");
-        ConsolePrint("SetFHUDForceShowBuffs <bool>: forces health bars to show up when the player gets buffed");
+        ConsolePrint("SetFHUDForceShowBuffs <bool>: forces health bars to show up when the player gets buffed (default is false)");
 
         ConsolePrint(" ");
         ConsolePrint("Position Settings");
         ConsolePrint("--------------------------");
-        ConsolePrint("SetFHUDItemMarginX <float>: controls the horizontal margin between health bars (default is 14; WARNING: doesn't account for medic buff icons!)");
+        ConsolePrint("SetFHUDItemMarginX <float>: controls the horizontal margin between health bars (default is 14)");
         ConsolePrint("SetFHUDItemMarginY <float>: controls the vertical margin between health bars (default is 5)");
         ConsolePrint("SetFHUDOffsetX <float>: controls the horizontal offset of the HUD, relative to the position of the anchor point (default is 0)");
         ConsolePrint("SetFHUDOffsetY <float>: controls the vertical offset of the HUD, relative to the position of the anchor point (default is 0)");
@@ -360,13 +360,13 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("DebugFHUDSetArmor <int Armor> <int MaxArmor = -1>: sets the armor value for your own character -- cheats only");
         ConsolePrint("DebugFHUDSetHealth <int Health> <int MaxHealth = -1>: sets the health value for your own character -- cheats only");
         ConsolePrint("SetFHUDUpdateInterval <float>: controls the interval (in seconds) between player list updates (default is 0.5)");
-        ConsolePrint("SetFHUDEmptyBlockThreshold <float>: the minimum block ratio to consider a block empty (used for EmptyBG colors)");
-        ConsolePrint("SetFHUDUMCompatEnabled <bool>: controls whether FHUD should override Unofficial Mod's HMTech cooldowns HUD to prevent layout conflicts");
-        ConsolePrint("SetFHUDUMColorSyncEnabled <bool>: controls whether FHUD should automatically synchronize Unofficial Mod's color scheme");
+        ConsolePrint("SetFHUDEmptyBlockThreshold <float>: the minimum block ratio to consider a block empty (default is 0); used for EmptyBG colors");
+        ConsolePrint("SetFHUDUMCompatEnabled <bool>: controls whether FHUD should override Unofficial Mod's HMTech cooldowns HUD to prevent layout conflicts (default is true)");
+        ConsolePrint("SetFHUDUMColorSyncEnabled <bool>: controls whether FHUD should automatically synchronize Unofficial Mod's color scheme (default is true)");
     }
     else
     {
-        ConsolePrint("'PrintFHUDHelp 1' will display advanced commands");
+        ConsolePrint("'PrintFHUDHelp 1' will display ALL commands");
         ConsolePrint(" ");
         ConsolePrint("Layout presets (1080_ for 1080p, 1440_ for 1440p)");
         ConsolePrint("--------------------------");
