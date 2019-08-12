@@ -288,6 +288,10 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("SetFHUDItemsPerRow <int>: controls the number of health bars to render per row");
         ConsolePrint("SetFHUDReverseX <bool>: renders health bars starting from the last column");
         ConsolePrint("SetFHUDReverseY <bool>: renders health bars starting from the last row");
+        ConsolePrint("SetFHUDItemMarginX <float>: controls the horizontal margin between health bars (default is 14)");
+        ConsolePrint("SetFHUDItemMarginY <float>: controls the vertical margin between health bars (default is 5)");
+        ConsolePrint("SetFHUDOffsetX <float>: controls the horizontal offset of the HUD, relative to the position of the anchor point (default is 0)");
+        ConsolePrint("SetFHUDOffsetY <float>: controls the vertical offset of the HUD, relative to the position of the anchor point (default is 0)");
 
         ConsolePrint(" ");
         ConsolePrint("Color Settings");
@@ -332,14 +336,6 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("SetFHUDBuffOffset <float>: controls the offset of buff icons (default is 0)");
         ConsolePrint("SetFHUDBuffCountMax <int>: controls the maximum number of buffs to display (default is 3)");
         ConsolePrint("SetFHUDForceShowBuffs <bool>: forces health bars to show up when the player gets buffed (default is false)");
-
-        ConsolePrint(" ");
-        ConsolePrint("Position Settings");
-        ConsolePrint("--------------------------");
-        ConsolePrint("SetFHUDItemMarginX <float>: controls the horizontal margin between health bars (default is 14)");
-        ConsolePrint("SetFHUDItemMarginY <float>: controls the vertical margin between health bars (default is 5)");
-        ConsolePrint("SetFHUDOffsetX <float>: controls the horizontal offset of the HUD, relative to the position of the anchor point (default is 0)");
-        ConsolePrint("SetFHUDOffsetY <float>: controls the vertical offset of the HUD, relative to the position of the anchor point (default is 0)");
 
         ConsolePrint(" ");
         ConsolePrint("Dynamic Colors");
