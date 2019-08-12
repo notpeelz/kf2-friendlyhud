@@ -173,7 +173,6 @@ simulated function LoadDefaultFHUDConfig()
     IgnoreSelf = true;
     IgnoreDeadTeammates = true;
     MinHealthThreshold = 1.f;
-    BuffCountMax = 3;
     DO_MinOpacity = 1.f;
     DO_MaxOpacity = 1.f;
     DO_T0 = 4.f;
@@ -216,6 +215,7 @@ exec function ResetFHUDBarSettings()
     BuffMargin = 2.f;
     BuffGap = 3.f;
     BuffOffset = 0.f;
+    BuffCountMax = 3;
     IconSize = 32.f;
     IconOffset = 0.f;
     IconGap = 4.f;
