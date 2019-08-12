@@ -185,7 +185,7 @@ simulated function LoadDefaultFHUDConfig()
     UMColorSyncEnabled = true;
 
     ResetFHUDLayout();
-    ResetFHUDBarSettings();
+    ResetFHUDBar();
     ResetFHUDColors();
 
     SaveConfig();
@@ -198,18 +198,18 @@ exec function ResetFHUDLayout()
     Layout = 0;
     ItemsPerColumn = 3;
     ItemsPerRow = 5;
-    OffsetX = 0.f;
-    OffsetY = 0.f;
     ReverseX = false;
     ReverseY = false;
+    OffsetX = 0.f;
+    OffsetY = 0.f;
+    ItemMarginX = 14.f;
+    ItemMarginY = 5.f;
 
     SaveConfig();
 }
 
-exec function ResetFHUDBarSettings()
+exec function ResetFHUDBar()
 {
-    ItemMarginX = 14.f;
-    ItemMarginY = 5.f;
     BuffLayout = 1;
     BuffSize = 8.f;
     BuffMargin = 2.f;
@@ -312,7 +312,7 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint(" ");
         ConsolePrint("Bar Settings");
         ConsolePrint("--------------------------");
-        ConsolePrint("ResetFHUDBarSettings: resets the bar settings (including buffs) to their defaults");
+        ConsolePrint("ResetFHUDBar: resets the bar settings (including buffs) to their defaults");
         ConsolePrint("SetFHUDBarGap <float>: controls the gap between the armor and the health bar (default is -1)");
         ConsolePrint("SetFHUDBlockSize <float Width = 200> <float Height = 10>: controls the dimensions of bar blocks (default is 200 x 10)");
         ConsolePrint("SetFHUDBlockCount <int>: controls the number of bar blocks (default is 1)");
@@ -519,7 +519,7 @@ exec function LoadFHUDPreset(string Value)
 
 exec function LoadFHUDBarPreset(string Value)
 {
-    ResetFHUDBarSettings();
+    ResetFHUDBar();
 
     switch (Locs(Value))
     {
