@@ -283,44 +283,51 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
         FHUDRepInfo = CurrentPRIEntry.RepInfo;
         KFPRI = CurrentPRIEntry.KFPRI;
 
+        // Skip empty entries
         if (KFPRI == None) continue;
 
-        // HasHadInitialSpawn() doesn't work on bots, so we use HUDConfig.Debug for testing
-        if ((KFPRI != KFPlayerOwner.PlayerReplicationInfo || !HUDConfig.IgnoreSelf) && (KFPRI.HasHadInitialSpawn() || HUDConfig.Debug))
+        // Don't render spectators
+        if (KFPRI.bOnlySpectator) continue;
+
+        // If enabled, don't render ourselves
+        if (HUDConfig.IgnoreSelf && KFPRI == KFPlayerOwner.PlayerReplicationInfo) continue;
+
+        // If the player hasn't spawned in yet, don't render (unless we're in debug mode)
+        // FIXME: HasHadInitialSpawn() doesn't work on bots, so we use HUDConfig.Debug for testing
+        if (!KFPRI.HasHadInitialSpawn() && !HUDConfig.Debug) continue;
+
+        // Layout: row first
+        if (HUDConfig.Flow == 1)
         {
-            // Layout: row first
-            if (HUDConfig.Flow == 1)
-            {
-                Column = ItemCount % HUDConfig.ItemsPerRow;
-                Row = ItemCount / HUDConfig.ItemsPerRow;
-            }
-            // Layout: column first
-            else
-            {
-                Column = ItemCount / HudConfig.ItemsPerColumn;
-                Row = ItemCount % HudConfig.ItemsPerColumn;
-            }
+            Column = ItemCount % HUDConfig.ItemsPerRow;
+            Row = ItemCount / HUDConfig.ItemsPerRow;
+        }
+        // Layout: column first
+        else
+        {
+            Column = ItemCount / HudConfig.ItemsPerColumn;
+            Row = ItemCount % HudConfig.ItemsPerColumn;
+        }
 
-            CurrentItemPosX = (HUDConfig.Layout == 3)
-                // Right layout flows right-to-left
-                ? (ScreenPosX - TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column))
-                // Everything else flows left-to-right
-                : (ScreenPosX + TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column));
-            CurrentItemPosY = (HUDConfig.Layout == 0)
-                // Bottom layout flows down
-                ? (ScreenPosY + TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row))
-                // Left/right layouts flow up
-                : (ScreenPosY - TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row));
+        CurrentItemPosX = (HUDConfig.Layout == 3)
+            // Right layout flows right-to-left
+            ? (ScreenPosX - TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column))
+            // Everything else flows left-to-right
+            : (ScreenPosX + TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column));
+        CurrentItemPosY = (HUDConfig.Layout == 0)
+            // Bottom layout flows down
+            ? (ScreenPosY + TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row))
+            // Left/right layouts flow up
+            : (ScreenPosY - TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row));
 
-            ItemInfo.KFPH = FHUDRepInfo.KFPHArray[CurrentPRIEntry.RepIndex];
-            ItemInfo.KFPRI = KFPRI;
-            ItemInfo.RepInfo = FHUDRepInfo;
-            ItemInfo.RepIndex = CurrentPRIEntry.RepIndex;
+        ItemInfo.KFPH = FHUDRepInfo.KFPHArray[CurrentPRIEntry.RepIndex];
+        ItemInfo.KFPRI = KFPRI;
+        ItemInfo.RepInfo = FHUDRepInfo;
+        ItemInfo.RepIndex = CurrentPRIEntry.RepIndex;
 
-            if (DrawHealthBarItem(Canvas, ItemInfo, CurrentItemPosX, CurrentItemPosY, FontScale))
-            {
-                ItemCount++;
-            }
+        if (DrawHealthBarItem(Canvas, ItemInfo, CurrentItemPosX, CurrentItemPosY, FontScale))
+        {
+            ItemCount++;
         }
     }
 }
