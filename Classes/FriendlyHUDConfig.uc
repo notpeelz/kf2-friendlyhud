@@ -84,8 +84,10 @@ var FriendlyHUDInteraction FHUDInteraction;
 var bool Debug;
 var bool DrawDebugLines;
 
-const DEPRECATED_ENTRY = "DEPRECATED";
+var int CurrentVersion;
 const LatestVersion = 2;
+
+const DEPRECATED_ENTRY = "DEPRECATED";
 
 simulated function Initialized()
 {
@@ -1292,4 +1294,9 @@ delegate int SortColorThresholds(ColorThreshold A, ColorThreshold B)
     if (A.Value < B.Value) return 1;
     if (A.Value > B.Value) return -1;
     return 0;
+}
+
+defaultproperties
+{
+    CurrentVersion = LatestVersion;
 }
