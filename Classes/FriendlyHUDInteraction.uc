@@ -32,9 +32,9 @@ var Color AxisYLineColor;
 
 var FriendlyHUDMutator FHUDMutator;
 var float BarHeight, BarWidth, BarGap, TextHeight, TotalItemWidth, TotalItemHeight;
-var float PerkIconSize, PerkIconGap, PerkIconOffset;
+var float PlayerIconSize, PlayerIconGap, PlayerIconOffset;
 var float BlockWidth, BlockGap, TotalBlockWidth;
-var float BuffOffset, BuffIconSize, BuffPerkIconMargin, BuffPerkIconGap;
+var float BuffOffset, BuffIconSize, BuffPlayerIconMargin, BuffPlayerIconGap;
 var float NameMarginX, NameMarginY;
 var float ItemMarginX, ItemMarginY;
 var float ScreenPosX, ScreenPosY;
@@ -73,7 +73,6 @@ function UpdatePRIArray()
     FHUDRepInfo = FHUDMutator.RepInfo;
     while (FHUDRepInfo != None)
     {
-
         for (I = 0; I < class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
         {
             if (FHUDRepInfo.KFPRIArray[I] == None) continue;
@@ -176,12 +175,12 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
 
     BuffOffset = HUDConfig.BuffOffset * ResScale;
     BuffIconSize = HUDConfig.BuffSize * ResScale;
-    BuffPerkIconMargin = HUDConfig.BuffMargin * ResScale;
-    BuffPerkIconGap = HUDConfig.BuffGap * ResScale;
+    BuffPlayerIconMargin = HUDConfig.BuffMargin * ResScale;
+    BuffPlayerIconGap = HUDConfig.BuffGap * ResScale;
 
-    PerkIconSize = HUDConfig.IconSize * ResScale;
-    PerkIconGap = HUDConfig.IconGap * ResScale;
-    PerkIconOffset = HUDConfig.IconOffset * ResScale;
+    PlayerIconSize = HUDConfig.IconSize * ResScale;
+    PlayerIconGap = HUDConfig.IconGap * ResScale;
+    PlayerIconOffset = HUDConfig.IconOffset * ResScale;
 
     BlockWidth = HUDConfig.BlockWidth * ResScale;
     BlockGap = HUDConfig.BlockGap * ResScale;
@@ -194,17 +193,17 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
     NameMarginY = HUDConfig.NameMarginY * ResScale;
     ItemMarginX = HUDConfig.ItemMarginX * ResScale;
     ItemMarginY = HUDConfig.ItemMarginY * ResScale;
-    TotalItemWidth = PerkIconSize + PerkIconGap + FMax(TotalBlockWidth * HUDConfig.BlockCount - BlockGap, HUDConfig.BarWidthMin) + ItemMarginX;
-    TotalItemHeight = FMax(BarHeight * 2.f + TextHeight + BarGap + NameMarginY, PerkIconSize + PerkIconOffset) + ItemMarginY;
+    TotalItemWidth = PlayerIconSize + PlayerIconGap + FMax(TotalBlockWidth * HUDConfig.BlockCount - BlockGap, HUDConfig.BarWidthMin) + ItemMarginX;
+    TotalItemHeight = FMax(BarHeight * 2.f + TextHeight + BarGap + NameMarginY, PlayerIconSize + PlayerIconOffset) + ItemMarginY;
 
     // BuffLayout: Left or Right
     if (HUDConfig.BuffLayout == 1 || HUDConfig.BuffLayout == 2)
     {
-        TotalItemWidth += BuffPerkIconMargin + BuffIconSize;
+        TotalItemWidth += BuffPlayerIconMargin + BuffIconSize;
     }
     else if (HUDConfig.BuffLayout == 3 || HUDConfig.BuffLayout == 4)
     {
-        TotalItemHeight += BuffPerkIconMargin + BuffIconSize;
+        TotalItemHeight += BuffPlayerIconMargin + BuffIconSize;
     }
 
     // Layout: Bottom
@@ -221,13 +220,13 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
         if (HUDConfig.BuffLayout == 1)
         {
             // This ensures that we don't overlap (however unlikely) with the playerstats UI
-            ScreenPosX += BuffPerkIconMargin + BuffIconSize;
+            ScreenPosX += BuffPlayerIconMargin + BuffIconSize;
         }
         // BuffLayout: Top
         else if (HUDConfig.BuffLayout == 3)
         {
             // This ensures that we stay aligned with the top of the playerstats UI
-            ScreenPosY += BuffPerkIconMargin + BuffIconSize;
+            ScreenPosY += BuffPlayerIconMargin + BuffIconSize;
         }
     }
     // Layout: Left
@@ -242,7 +241,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
         if (HUDConfig.BuffLayout == 1)
         {
             // This ensures that we don't render off-bounds (too far left)
-            ScreenPosX += BuffPerkIconMargin + BuffIconSize;
+            ScreenPosX += BuffPlayerIconMargin + BuffIconSize;
         }
     }
     // Layout: Right
@@ -257,7 +256,7 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
         if (HUDConfig.BuffLayout == 1)
         {
             // This ensures that we don't render off-bounds (too far right)
-            ScreenPosX -= BuffPerkIconMargin + BuffIconSize;
+            ScreenPosX -= BuffPlayerIconMargin + BuffIconSize;
         }
     }
 
@@ -328,15 +327,12 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
 
 simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo, float PosX, float PosY, float FontScale)
 {
-    local float PerkIconPosX, PerkIconPosY;
+    local float PlayerIconPosX, PlayerIconPosY;
     local FontRenderInfo TextFontRenderInfo;
     local KFPlayerReplicationInfo KFPRI;
-    local Texture2D PlayerIcon;
-    local bool DrawPrestigeBorder;
     local float ArmorRatio, HealthRatio, RegenRatio, TotalRegenRatio;
     local FriendlyHUDReplicationInfo.BarInfo ArmorInfo, HealthInfo;
     local Color HealthColor, HealthRegenColor;
-    local EVoiceCommsType VoiceReq;
     local int HealthToRegen;
     local MedBuffInfo BuffInfo;
     local bool ForceShowBuffs;
@@ -344,7 +340,6 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
 
     KFPRI = ItemInfo.KFPRI;
     ItemInfo.RepInfo.GetPlayerInfo(ItemInfo.RepIndex, ArmorInfo, HealthInfo, HealthToRegen, BuffInfo);
-    VoiceReq = KFPRI.CurrentVoiceCommsRequest;
 
     TotalRegenRatio = HealthInfo.MaxValue > 0 ? FMin(FMax(float(HealthToRegen) / float(HealthInfo.MaxValue), 0.f), 1.f) : 0.f;
     HealthToRegen = HealthToRegen > 0 ? Max(HealthToRegen - HealthInfo.Value, 0) : 0;
@@ -375,33 +370,30 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
             ), 1.f
         ) * HUDConfig.Opacity;
 
-    PlayerIcon = GetPlayerIcon(KFPRI, VoiceReq);
-    DrawPrestigeBorder = VoiceReq == VCT_NONE;
-
-    // Draw drop shadow behind the perk icon
+    // Draw drop shadow behind the player icon
     SetCanvasColor(Canvas, HUDConfig.ShadowColor);
-    PerkIconPosX = PosX;
-    PerkIconPosY = PosY + PerkIconOffset + (TextHeight + NameMarginY) / 2.f;
-    DrawPerkIcon(Canvas, KFPRI, PlayerIcon, DrawPrestigeBorder, PerkIconPosX + 1, PerkIconPosY);
+    PlayerIconPosX = PosX;
+    PlayerIconPosY = PosY + PlayerIconOffset + (TextHeight + NameMarginY) / 2.f;
+    DrawPlayerIcon(Canvas, ItemInfo, PlayerIconPosX + 1, PlayerIconPosY);
 
-    // Draw perk icon
+    // Draw player icon
     SetCanvasColor(Canvas, HUDConfig.IconColor);
-    DrawPerkIcon(Canvas, KFPRI, PlayerIcon, DrawPrestigeBorder, PerkIconPosX, PerkIconPosY);
+    DrawPlayerIcon(Canvas, ItemInfo, PlayerIconPosX, PlayerIconPosY);
 
     // Draw buffs
-    DrawBuffs(Canvas, BuffLevel, PerkIconPosX, PerkIconPosY);
+    DrawBuffs(Canvas, BuffLevel, PlayerIconPosX, PlayerIconPosY);
 
     // BuffLayout: Right
     if (HUDConfig.BuffLayout == 2)
     {
         // This ensures that we don't render over the player name (and bars)
-        PosX += BuffPerkIconMargin + BuffIconSize;
+        PosX += BuffPlayerIconMargin + BuffIconSize;
     }
 
     // Draw drop shadow behind the player name
     SetCanvasColor(Canvas, HUDConfig.ShadowColor);
     Canvas.SetPos(
-        PosX + PerkIconSize + PerkIconGap + NameMarginX,
+        PosX + PlayerIconSize + PlayerIconGap + NameMarginX,
         PosY + 1
     );
     Canvas.DrawText(KFPRI.PlayerName, , FontScale, FontScale, TextFontRenderInfo);
@@ -409,7 +401,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     // Draw player name
     SetCanvasColor(Canvas, HUDConfig.TextColor);
     Canvas.SetPos(
-        PosX + PerkIconSize + PerkIconGap + NameMarginX,
+        PosX + PlayerIconSize + PlayerIconGap + NameMarginX,
         PosY
     );
     Canvas.DrawText(KFPRI.PlayerName, , FontScale, FontScale, TextFontRenderInfo);
@@ -418,7 +410,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     DrawBar(Canvas,
         ArmorRatio,
         0.f,
-        PosX + PerkIconSize + PerkIconGap,
+        PosX + PlayerIconSize + PlayerIconGap,
         PosY + TextHeight + NameMarginY,
         HUDConfig.ArmorColor,
         HUDConfig.ArmorBGColor,
@@ -447,7 +439,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     DrawBar(Canvas,
         HealthRatio,
         RegenRatio,
-        PosX + PerkIconSize + PerkIconGap,
+        PosX + PlayerIconSize + PlayerIconGap,
         PosY + BarHeight + BarGap + TextHeight + NameMarginY,
         HealthColor,
         HUDConfig.HealthBGColor,
@@ -518,35 +510,35 @@ simulated function DrawBuffs(Canvas Canvas, int BuffLevel, float PosX, float Pos
         // BuffLayout: Left
         if (HUDConfig.BuffLayout == 1)
         {
-            CurrentPosX = PosX - BuffPerkIconMargin - BuffIconSize;
-            CurrentPosY = PosY + BuffOffset + (BuffPerkIconGap + BuffIconSize) * I;
+            CurrentPosX = PosX - BuffPlayerIconMargin - BuffIconSize;
+            CurrentPosY = PosY + BuffOffset + (BuffPlayerIconGap + BuffIconSize) * I;
         }
         // BuffLayout: Right
         else if (HUDConfig.BuffLayout == 2)
         {
-            CurrentPosX = PosX + PerkIconSize + BuffPerkIconMargin;
-            CurrentPosY = PosY + BuffOffset + (BuffPerkIconGap + BuffIconSize) * I;
+            CurrentPosX = PosX + PlayerIconSize + BuffPlayerIconMargin;
+            CurrentPosY = PosY + BuffOffset + (BuffPlayerIconGap + BuffIconSize) * I;
         }
         // BuffLayout: Top
         else if (HUDConfig.BuffLayout == 3)
         {
-            CurrentPosX = PosX + BuffOffset + (BuffPerkIconGap + BuffIconSize) * I;
-            CurrentPosY = PosY - BuffPerkIconMargin - BuffIconSize;
+            CurrentPosX = PosX + BuffOffset + (BuffPlayerIconGap + BuffIconSize) * I;
+            CurrentPosY = PosY - BuffPlayerIconMargin - BuffIconSize;
         }
         // BuffLayout: Bottom
         else if (HUDConfig.BuffLayout == 4)
         {
-            CurrentPosX = PosX + BuffOffset + (BuffPerkIconGap + BuffIconSize) * I;
-            CurrentPosY = PosY + PerkIconSize + BuffPerkIconMargin;
+            CurrentPosX = PosX + BuffOffset + (BuffPlayerIconGap + BuffIconSize) * I;
+            CurrentPosY = PosY + PlayerIconSize + BuffPlayerIconMargin;
         }
 
         SetCanvasColor(Canvas, HUDConfig.ShadowColor);
         Canvas.SetPos(CurrentPosX + 1, CurrentPosY);
-        Canvas.DrawTile(BuffIconTexture, BuffIconSize, BuffIconSize, 0, 0, 256, 256);
+        Canvas.DrawTile(default.BuffIconTexture, BuffIconSize, BuffIconSize, 0, 0, 256, 256);
 
         SetCanvasColor(Canvas, HUDConfig.BuffColor);
         Canvas.SetPos(CurrentPosX, CurrentPosY);
-        Canvas.DrawTile(BuffIconTexture, BuffIconSize, BuffIconSize, 0, 0, 256, 256);
+        Canvas.DrawTile(default.BuffIconTexture, BuffIconSize, BuffIconSize, 0, 0, 256, 256);
     }
 }
 
@@ -599,14 +591,14 @@ simulated function DrawBar(Canvas Canvas, float BarPercentage, float BufferPerce
         // Draw background
         SetCanvasColor(Canvas, ((BarBlockWidth + BufferBlockWidth) / BlockWidth) <= HUDConfig.EmptyBlockThreshold ? EmptyBGColor : BGColor);
         Canvas.SetPos(CurrentBlockPosX - 1.f, PosY - 1.f);
-        Canvas.DrawTile(BarBGTexture, BlockWidth + 2.f, BarHeight, 0, 0, 32, 32);
+        Canvas.DrawTile(default.BarBGTexture, BlockWidth + 2.f, BarHeight, 0, 0, 32, 32);
 
         // Draw main bar
         if (BarBlockWidth > 0.f)
         {
             SetCanvasColor(Canvas, BarColor);
             Canvas.SetPos(CurrentBlockPosX, PosY);
-            Canvas.DrawTile(BarBGTexture, BarBlockWidth, BarHeight - 2.f, 0, 0, 32, 32);
+            Canvas.DrawTile(default.BarBGTexture, BarBlockWidth, BarHeight - 2.f, 0, 0, 32, 32);
         }
 
         // Draw the buffer after the main bar
@@ -614,42 +606,50 @@ simulated function DrawBar(Canvas Canvas, float BarPercentage, float BufferPerce
         {
             SetCanvasColor(Canvas, BufferColor);
             Canvas.SetPos(CurrentBlockPosX + BarBlockWidth, PosY);
-            Canvas.DrawTile(BarBGTexture, BufferBlockWidth, BarHeight - 2.f, 0, 0, 32, 32);
+            Canvas.DrawTile(default.BarBGTexture, BufferBlockWidth, BarHeight - 2.f, 0, 0, 32, 32);
         }
     }
 }
 
-simulated function DrawPerkIcon(Canvas Canvas, KFPlayerReplicationInfo KFPRI, Texture2D PlayerIcon, bool DrawPrestigeBorder, float PerkIconPosX, float PerkIconPosY)
+simulated function DrawPlayerIcon(Canvas Canvas, const out PlayerItemInfo ItemInfo, float PlayerIconPosX, float PlayerIconPosY)
 {
+    local KFPlayerReplicationInfo KFPRI;
+    local Texture2D PlayerIcon;
+    local EVoiceCommsType VoiceReq;
     local byte PrestigeLevel;
+    local byte IsPlayerIcon;
+
+    KFPRI = ItemInfo.KFPRI;
 
     PrestigeLevel = KFPRI.GetActivePerkPrestigeLevel();
 
-    if (DrawPrestigeBorder && KFPRI.CurrentPerkClass != None && PrestigeLevel > 0)
-    {
-        Canvas.SetPos(PerkIconPosX, PerkIconPosY);
-        Canvas.DrawTile(KFPRI.CurrentPerkClass.default.PrestigeIcons[PrestigeLevel - 1], PerkIconSize, PerkIconSize, 0, 0, 256, 256);
-    }
+    VoiceReq = KFPRI.CurrentVoiceCommsRequest;
+    PlayerIcon = GetPlayerIcon(KFPRI, VoiceReq, IsPlayerIcon);
 
-    if (PrestigeLevel > 0)
+    if (IsPlayerIcon == 1 && PrestigeLevel > 0)
     {
-        Canvas.SetPos(PerkIconPosX + (PerkIconSize * (1 - PrestigeIconScale)) / 2.f, PerkIconPosY + PerkIconSize * 0.05f);
-        Canvas.DrawTile(PlayerIcon, PerkIconSize * PrestigeIconScale, PerkIconSize * PrestigeIconScale, 0, 0, 256, 256);
+        Canvas.SetPos(PlayerIconPosX, PlayerIconPosY);
+        Canvas.DrawTile(KFPRI.CurrentPerkClass.default.PrestigeIcons[PrestigeLevel - 1], PlayerIconSize, PlayerIconSize, 0, 0, 256, 256);
+        Canvas.SetPos(PlayerIconPosX + (PlayerIconSize * (1 - PrestigeIconScale)) / 2.f, PlayerIconPosY + PlayerIconSize * 0.05f);
+        Canvas.DrawTile(PlayerIcon, PlayerIconSize * PrestigeIconScale, PlayerIconSize * PrestigeIconScale, 0, 0, 256, 256);
     }
     else
     {
-        Canvas.SetPos(PerkIconPosX, PerkIconPosY);
-        Canvas.DrawTile(PlayerIcon, PerkIconSize, PerkIconSize, 0, 0, 256, 256);
+        Canvas.SetPos(PlayerIconPosX, PlayerIconPosY);
+        Canvas.DrawTile(PlayerIcon, PlayerIconSize, PlayerIconSize, 0, 0, 256, 256);
     }
 }
 
-simulated function Texture2D GetPlayerIcon(KFPlayerReplicationInfo KFPRI, EVoiceCommsType VoiceReq)
+// Note: out bool params aren't supported for whatever reason, so we have to use a byte instead
+simulated function Texture2D GetPlayerIcon(KFPlayerReplicationInfo KFPRI, EVoiceCommsType VoiceReq, out byte IsPlayerIcon)
 {
     if (VoiceReq == VCT_NONE && KFPRI.CurrentPerkClass != none)
     {
+        IsPlayerIcon = 1;
         return KFPRI.CurrentPerkClass.default.PerkIcon;
     }
 
+    IsPlayerIcon = 0;
     return class'KFLocalMessage_VoiceComms'.default.VoiceCommsIcons[VoiceReq];
 }
 
