@@ -1276,15 +1276,15 @@ function InitUMCompat()
         // Forcefully disable UM's dart cooldowns
         if (UMCompatEnabled)
         {
-            KFPlayerOwner.ConsoleCommand("UMHMTechChargeHUD 2");
+            KFPlayerOwner.ConsoleCommand("UMHMTechChargeHUD 2", false);
         }
 
         // Sync colors with UM
         if (UMColorSyncEnabled)
         {
-            KFPlayerOwner.ConsoleCommand("UMHealthColor" @ HealthColor.R @ HealthColor.G @ HealthColor.B @ HealthColor.A);
-            KFPlayerOwner.ConsoleCommand("UMArmorColor" @ ArmorColor.R @ ArmorColor.G @ ArmorColor.B @ ArmorColor.A);
-            KFPlayerOwner.ConsoleCommand("UMRegenHealthColor" @ HealthRegenColor.R @ HealthRegenColor.G @ HealthRegenColor.B @ HealthRegenColor.A);
+            KFPlayerOwner.ConsoleCommand("UMHealthColor" @ HealthColor.R @ HealthColor.G @ HealthColor.B @ HealthColor.A, false);
+            KFPlayerOwner.ConsoleCommand("UMArmorColor" @ ArmorColor.R @ ArmorColor.G @ ArmorColor.B @ ArmorColor.A, false);
+            KFPlayerOwner.ConsoleCommand("UMRegenHealthColor" @ HealthRegenColor.R @ HealthRegenColor.G @ HealthRegenColor.B @ HealthRegenColor.A, false);
         }
     }
 }
