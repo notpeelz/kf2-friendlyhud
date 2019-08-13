@@ -15,6 +15,13 @@ struct MedBuffInfo
     var byte SpeedBoost;
 };
 
+enum EPlayerReadyState
+{
+    PRS_Default,
+    PRS_NotReady,
+    PRS_Ready,
+};
+
 var BarInfo EMPTY_BAR_INFO;
 var MedBuffInfo EMPTY_BUFF_INFO;
 
@@ -30,6 +37,10 @@ var int RegenHealthArray[REP_INFO_COUNT];
 var MedBuffInfo MedBuffArray[REP_INFO_COUNT];
 var float SpeedBoostTimerArray[REP_INFO_COUNT];
 
+var EPlayerReadyState PlayerStateArray[REP_INFO_COUNT];
+var byte CDPlayerReadyArray[REP_INFO_COUNT];
+
+var FriendlyHUDMutator FHUDMutator;
 var FriendlyHUDConfig HUDConfig;
 var FriendlyHUDReplicationInfo NextRepInfo;
 
@@ -39,7 +50,7 @@ replication
 {
     // We don't need to replicate PCArray
     if (bNetDirty)
-        KFPHArray, KFPRIArray, HealthInfoArray, ArmorInfoArray, RegenHealthArray, MedBuffArray, NextRepInfo;
+        KFPHArray, KFPRIArray, HealthInfoArray, ArmorInfoArray, RegenHealthArray, MedBuffArray, PlayerStateArray, NextRepInfo;
 }
 
 simulated event PostBeginPlay()
@@ -79,6 +90,7 @@ function NotifyLogin(Controller C)
     if (NextRepInfo == None)
     {
         NextRepInfo = Spawn(class'FriendlyHUD.FriendlyHUDReplicationInfo', Owner);
+        NextRepInfo.FHUDMutator = FHUDMutator;
         NextRepInfo.LocalPC = LocalPC;
         NextRepInfo.HUDConfig = HUDConfig;
     }
@@ -108,6 +120,7 @@ function NotifyLogout(Controller C)
             RegenHealthArray[I] = 0;
             MedBuffArray[I] = EMPTY_BUFF_INFO;
             SpeedBoostTimerArray[I] = TIMER_RESET_VALUE;
+            PlayerStateArray[I] = PRS_Default;
             return;
         }
     }
@@ -121,10 +134,17 @@ function NotifyLogout(Controller C)
 
 function UpdateInfo()
 {
+    local name GameStateName;
     local KFPawn_Human KFPH;
     local KFPlayerReplicationInfo KFPRI;
     local float DmgBoostModifier, DmgResistanceModifier;
     local int I;
+
+    // Make sure our mutator was initialized
+    if (FHUDMutator.MyKFGI != None)
+    {
+        GameStateName = FHUDMutator.MYKFGI.GetStateName();
+    }
 
     for (I = 0; I < REP_INFO_COUNT; I++)
     {
@@ -135,6 +155,19 @@ function UpdateInfo()
 
         KFPHArray[I] = KFPH;
         KFPRIArray[I] = KFPRI;
+
+        if (GameStateName == 'PendingMatch')
+        {
+            PlayerStateArray[I] = KFPRI.bReadyToPlay ? PRS_Ready : PRS_NotReady;
+        }
+        else if (GameStateName == 'TraderOpen')
+        {
+            PlayerStateArray[I] = CDPlayerReadyArray[I] != 0 ? PRS_Ready : PRS_NotReady;
+        }
+        else
+        {
+            PlayerStateArray[I] = PRS_Default;
+        }
 
         if (KFPH != None)
         {

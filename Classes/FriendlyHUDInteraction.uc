@@ -27,6 +27,8 @@ var array<PRIEntry> SortedKFPRIArray;
 
 var Texture2d BarBGTexture;
 var Texture2d BuffIconTexture;
+var Texture2d CDNotReadyIconTexture;
+var Texture2d CDReadyIconTexture;
 var Color AxisXLineColor;
 var Color AxisYLineColor;
 
@@ -628,6 +630,26 @@ simulated function DrawPlayerIcon(Canvas Canvas, const out PlayerItemInfo ItemIn
 
     KFPRI = ItemInfo.KFPRI;
 
+    Canvas.SetPos(PlayerIconPosX, PlayerIconPosY);
+
+    if (HUDConfig.CDCompatEnabled)
+    {
+        switch (ItemInfo.RepInfo.PlayerStateArray[ItemInfo.RepIndex])
+        {
+            case PRS_Ready:
+                SetCanvasColor(Canvas, HUDConfig.CDReadyIconColor);
+                Canvas.DrawTile(CDReadyIconTexture, PlayerIconSize, PlayerIconSize, 0, 0, 256, 256);
+                return;
+            case PRS_NotReady:
+                SetCanvasColor(Canvas, HUDConfig.CDNotReadyIconColor);
+                Canvas.DrawTile(CDNotReadyIconTexture, PlayerIconSize, PlayerIconSize, 0, 0, 256, 256);
+                return;
+            case PRS_Default:
+            default:
+                break;
+        }
+    }
+
     PrestigeLevel = KFPRI.GetActivePerkPrestigeLevel();
 
     VoiceReq = KFPRI.CurrentVoiceCommsRequest;
@@ -635,14 +657,12 @@ simulated function DrawPlayerIcon(Canvas Canvas, const out PlayerItemInfo ItemIn
 
     if (IsPlayerIcon == 1 && PrestigeLevel > 0)
     {
-        Canvas.SetPos(PlayerIconPosX, PlayerIconPosY);
         Canvas.DrawTile(KFPRI.CurrentPerkClass.default.PrestigeIcons[PrestigeLevel - 1], PlayerIconSize, PlayerIconSize, 0, 0, 256, 256);
         Canvas.SetPos(PlayerIconPosX + (PlayerIconSize * (1 - PrestigeIconScale)) / 2.f, PlayerIconPosY + PlayerIconSize * 0.05f);
         Canvas.DrawTile(PlayerIcon, PlayerIconSize * PrestigeIconScale, PlayerIconSize * PrestigeIconScale, 0, 0, 256, 256);
     }
     else
     {
-        Canvas.SetPos(PlayerIconPosX, PlayerIconPosY);
         Canvas.DrawTile(PlayerIcon, PlayerIconSize, PlayerIconSize, 0, 0, 256, 256);
     }
 }
@@ -814,4 +834,6 @@ defaultproperties
     AxisYLineColor = (R=0, G=100, B=210, A=192);
     BarBGTexture = Texture2D'EngineResources.WhiteSquareTexture';
     BuffIconTexture = Texture2D'UI_VoiceComms_TEX.UI_VoiceCommand_Icon_Heal';
+    CDNotReadyIconTexture = Texture2D'UI_VoiceComms_TEX.UI_VoiceCommand_Icon_Negative';
+    CDReadyIconTexture = Texture2D'UI_VoiceComms_TEX.UI_VoiceCommand_Icon_Affirmative';
 }

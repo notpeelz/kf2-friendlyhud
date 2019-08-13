@@ -6,6 +6,9 @@ var KFGFxHudWrapper HUD;
 var FriendlyHUDConfig HUDConfig;
 var FriendlyHUDReplicationInfo RepInfo;
 
+var FriendlyHUDCDCompatController CDCompat;
+
+
 var GFxClikWidget ChatInputField, PartyChatInputField;
 
 const HelpURL = "https://steamcommunity.com/sharedfiles/filedetails/?id=1827646464";
@@ -26,8 +29,13 @@ simulated function PostBeginPlay()
     if (Role == ROLE_Authority)
     {
         RepInfo = Spawn(class'FriendlyHUD.FriendlyHUDReplicationInfo', Self);
+        RepInfo.FHUDMutator = Self;
         RepInfo.LocalPC = KFPC;
         RepInfo.HUDConfig = HUDConfig;
+
+        CDCompat = new class'FriendlyHUD.FriendlyHUDCDCompatController';
+        CDCompat.FHUDMutator = Self;
+
         SetTimer(2.f, true, nameof(CheckBots));
     }
 
@@ -80,8 +88,8 @@ simulated function InitializeHUD()
 
     // Initialize the HUD configuration
     HUDConfig = new (KFPC) class'FriendlyHUD.FriendlyHUDConfig';
-    HUDConfig.KFPlayerOwner = KFPC;
     HUDConfig.FHUDMutator = Self;
+    HUDConfig.KFPlayerOwner = KFPC;
     KFPC.Interactions.AddItem(HUDConfig);
     HUDConfig.Initialized();
 

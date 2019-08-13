@@ -71,6 +71,9 @@ var config bool ForceShowBuffs;
 var config bool UMCompatEnabled;
 var config bool UMColorSyncEnabled;
 var config int UMDisableHMTechChargeHUD;
+var config bool CDCompatEnabled;
+var config Color CDReadyIconColor;
+var config Color CDNotReadyIconColor;
 
 // Removed/renamed/deprecated settings
 var config string BGColor;
@@ -132,6 +135,9 @@ simulated function Initialized()
             ForceShowBuffs = false;
             UMDisableHMTechChargeHUD = 0;
             UMColorSyncEnabled = true;
+            CDCompatEnabled = true;
+            CDReadyIconColor = MakeColor(0, 210, 120, 192);
+            CDNotReadyIconColor = MakeColor(255, 0, 0, 192);
 
             OldBGColor = class'FriendlyHUD.FriendlyHUDHelper'.static.ColorFromString(BGColor);
             ArmorBGColor = OldBGColor;
@@ -185,6 +191,7 @@ simulated function LoadDefaultFHUDConfig()
     ForceShowBuffs = false;
     UMCompatEnabled = true;
     UMColorSyncEnabled = true;
+    CDCompatEnabled = true;
 
     ResetFHUDLayout();
     ResetFHUDBar();
@@ -249,6 +256,8 @@ exec function ResetFHUDColors()
     HealthColor = MakeColor(0, 192, 0, 192);
     HealthRegenColor = MakeColor(0, 70, 0, 192);
     BuffColor = MakeColor(255, 255, 255, 192);
+    CDReadyIconColor = MakeColor(0, 192, 0, 192);
+    CDNotReadyIconColor = MakeColor(192, 0, 0, 192);
 }
 
 exec function FHUDHelp(optional bool ShowAdvancedCommands = false) { PrintFHUDHelp(ShowAdvancedCommands); }
@@ -407,6 +416,7 @@ exec function LoadFHUDColorPreset(string Value)
             ArmorColor = MakeColor(0, 0, 255, 192);
             HealthColor = MakeColor(95, 210, 255, 192);
             HealthRegenColor = MakeColor(255, 255, 255, 192);
+            CDReadyIconColor = MakeColor(15, 191, 255, 192);
             break;
         case "redregen":
             HealthRegenColor = MakeColor(255, 40, 40, 220);
@@ -420,6 +430,7 @@ exec function LoadFHUDColorPreset(string Value)
             ArmorColor = MakeColor(186, 220, 255, 192);
             HealthColor = MakeColor(85, 26, 139, 192);
             HealthRegenColor = MakeColor(204, 186, 220, 192);
+            CDReadyIconColor = MakeColor(85, 26, 139, 192);
             break;
         case "gradient":
             DynamicColors = 2;
@@ -1256,6 +1267,24 @@ exec function SetFHUDUMColorSyncEnabled(bool Value)
 {
     UMColorSyncEnabled = Value;
     InitUMCompat();
+    SaveConfig();
+}
+
+exec function SetFHUDCDCompatEnabled(bool Value)
+{
+    CDCompatEnabled = Value;
+    SaveConfig();
+}
+
+exec function SetFHUDCDReadyIconColor(byte R, byte G, byte B, optional byte A = 192)
+{
+    CDReadyIconColor = MakeColor(R, G, B, A);
+    SaveConfig();
+}
+
+exec function SetFHUDCDNotReadyIconColor(byte R, byte G, byte B, optional byte A = 192)
+{
+    CDNotReadyIconColor = MakeColor(R, G, B, A);
     SaveConfig();
 }
 
