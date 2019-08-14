@@ -28,6 +28,9 @@ var MedBuffInfo EMPTY_BUFF_INFO;
 var KFPlayerController LocalPC;
 
 var Controller PCArray[REP_INFO_COUNT];
+var CDPlayerControllerProxy CDPCArray[REP_INFO_COUNT];
+var float SpeedBoostTimerArray[REP_INFO_COUNT];
+
 var KFPawn_Human KFPHArray[REP_INFO_COUNT];
 var KFPlayerReplicationInfo KFPRIArray[REP_INFO_COUNT];
 
@@ -35,10 +38,8 @@ var BarInfo HealthInfoArray[REP_INFO_COUNT];
 var BarInfo ArmorInfoArray[REP_INFO_COUNT];
 var int RegenHealthArray[REP_INFO_COUNT];
 var MedBuffInfo MedBuffArray[REP_INFO_COUNT];
-var float SpeedBoostTimerArray[REP_INFO_COUNT];
 
 var EPlayerReadyState PlayerStateArray[REP_INFO_COUNT];
-var byte CDPlayerReadyArray[REP_INFO_COUNT];
 
 var FriendlyHUDMutator FHUDMutator;
 var FriendlyHUDConfig HUDConfig;
@@ -65,6 +66,8 @@ simulated event PostBeginPlay()
     }
 }
 
+`ForcedObjectTypecastFunction(CDPlayerControllerProxy, CastCDPCProxy)
+
 function NotifyLogin(Controller C)
 {
     local int I;
@@ -81,6 +84,7 @@ function NotifyLogin(Controller C)
         if (PCArray[I] == None)
         {
             PCArray[I] = C;
+            CDPCArray[I] = CastCDPCProxy(C);
             SpeedBoostTimerArray[I] = TIMER_RESET_VALUE;
             return;
         }
@@ -113,6 +117,7 @@ function NotifyLogout(Controller C)
         if (PCArray[I] == C)
         {
             PCArray[I] = None;
+            CDPCArray[I] = None;
             KFPHArray[I] = None;
             KFPRIArray[I] = None;
             HealthInfoArray[I] = EMPTY_BAR_INFO;
@@ -160,9 +165,11 @@ function UpdateInfo()
         {
             PlayerStateArray[I] = KFPRI.bReadyToPlay ? PRS_Ready : PRS_NotReady;
         }
-        else if (GameStateName == 'TraderOpen')
+        else if (GameStateName == 'TraderOpen' && CDPCArray[I] != None)
         {
-            PlayerStateArray[I] = CDPlayerReadyArray[I] != 0 ? PRS_Ready : PRS_NotReady;
+            `Log("AAA:" @ CDPCArray[I].ChatLineThreshold);
+            `Log("BBB:" @ CDPCArray[I].bIsReadyForNextWave);
+            PlayerStateArray[I] = CDPCArray[I].bIsReadyForNextWave ? PRS_Ready : PRS_NotReady;
         }
         else
         {
