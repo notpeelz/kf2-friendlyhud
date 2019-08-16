@@ -30,7 +30,6 @@ simulated function PostBeginPlay()
     {
         RepInfo = Spawn(class'FriendlyHUD.FriendlyHUDReplicationInfo', Self);
         RepInfo.FHUDMutator = Self;
-        RepInfo.LocalPC = KFPC;
         RepInfo.HUDConfig = HUDConfig;
 
         CDCompat = new class'FriendlyHUD.FriendlyHUDCDCompatController';
@@ -39,7 +38,10 @@ simulated function PostBeginPlay()
         SetTimer(2.f, true, nameof(CheckBots));
     }
 
-    InitializeHUD();
+    if (WorldInfo.NetMode != NM_DedicatedServer)
+    {
+        InitializeHUD();
+    }
 }
 
 // Used for HUD testing
@@ -74,17 +76,17 @@ simulated function InitializeHUD()
 {
     `Log("[FriendlyHUD] Initializing");
 
-    if (WorldInfo.NetMode == NM_DedicatedServer) return;
-
     KFPC = KFPlayerController(GetALocalPlayerController());
 
-    if (KFPC == None)
+    if (KFPC == None || RepInfo == None)
     {
-        SetTimer(1.f, false, nameof(InitializeHUD));
+        SetTimer(0.5f, false, nameof(InitializeHUD));
         return;
     }
 
     `Log("[FriendlyHUD] Found KFPC");
+
+    InitializeClientReplication();
 
     // Initialize the HUD configuration
     HUDConfig = new (KFPC) class'FriendlyHUD.FriendlyHUDConfig';
@@ -95,6 +97,18 @@ simulated function InitializeHUD()
 
     // Give a chance for other mutators to initialize
     SetTimer(2.f, false, nameof(InitializeDeferred));
+}
+
+simulated function InitializeClientReplication()
+{
+    local FriendlyHUDReplicationInfo FHUDRepInfo;
+
+    FHUDRepInfo = RepInfo;
+    while (FHUDRepInfo != None)
+    {
+        FHUDRepInfo.LocalPC = KFPC;
+        FHUDRepInfo = FHUDRepInfo.NextRepInfo;
+    }
 }
 
 simulated function InitializeDeferred()

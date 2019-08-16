@@ -41,6 +41,7 @@ var config float OffsetX;
 var config float OffsetY;
 var config Color ShadowColor;
 var config Color NameColor;
+var config Color FriendNameColor;
 var config Color IconColor;
 var config Color ArmorBGColor;
 var config Color ArmorEmptyBGColor;
@@ -139,6 +140,7 @@ simulated function Initialized()
             CDCompatEnabled = true;
             CDReadyIconColor = MakeColor(0, 210, 120, 192);
             CDNotReadyIconColor = MakeColor(255, 0, 0, 192);
+            FriendNameColor = MakeColor(51, 222, 44, 255);
 
             OldBGColor = class'FriendlyHUD.FriendlyHUDHelper'.static.ColorFromString(BGColor);
             ArmorBGColor = OldBGColor;
@@ -252,6 +254,7 @@ exec function ResetFHUDColors()
     ResetFHUDColorThresholds();
     ShadowColor = MakeColor(0, 0, 0, 255);
     NameColor = MakeColor(255, 255, 255, 192);
+    FriendNameColor = MakeColor(51, 222, 44, 255);
     IconColor = MakeColor(255, 255, 255, 192);
     ArmorBGColor = MakeColor(16, 16, 16, 192);
     HealthBGColor = MakeColor(16, 16, 16, 192);
@@ -316,6 +319,7 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("SetFHUDShadowColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the HUD shadows (1-pixel outline below; default is 0,0,0,192)");
         ConsolePrint("SetFHUDIconColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the perk icon (default is 255,255,255,192)");
         ConsolePrint("SetFHUDNameColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the player names (default is 255,255,255,192)");
+        ConsolePrint("SetFHUDFriendNameColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of your friends' names (default is 51,222,44,255)");
         ConsolePrint("SetFHUDArmorColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the armor bar (default is 0,100,210,192)");
         ConsolePrint("SetFHUDHealthColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the health bar (default is 0,192,0,192)");
         ConsolePrint("SetFHUDHealthRegenColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the regen health buffer (default is 0,70,0,192)");
@@ -761,6 +765,17 @@ exec function SetFHUDIconColor(byte R, byte G, byte B, optional byte A = 192)
 exec function SetFHUDNameColor(byte R, byte G, byte B, optional byte A = 192)
 {
     NameColor = MakeColor(R, G, B, A);
+    // If the FriendNameColor is the same as the NameColor, we synchronize both
+    if (FriendNameColor.R == NameColor.R && FriendNameColor.G == NameColor.G && FriendNameColor.B == NameColor.B)
+    {
+        FriendNameColor = MakeColor(R, G, B, FriendNameColor.A == NameColor.A ? A : FriendNameColor.A);
+    }
+    SaveConfig();
+}
+
+exec function SetFHUDFriendNameColor(byte R, byte G, byte B, optional byte A = 192)
+{
+    FriendNameColor = MakeColor(R, G, B, A);
     SaveConfig();
 }
 

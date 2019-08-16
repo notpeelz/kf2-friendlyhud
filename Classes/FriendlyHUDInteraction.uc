@@ -346,9 +346,10 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     local MedBuffInfo BuffInfo;
     local bool ForceShowBuffs;
     local int BuffLevel;
+    local byte IsFriend;
 
     KFPRI = ItemInfo.KFPRI;
-    ItemInfo.RepInfo.GetPlayerInfo(ItemInfo.RepIndex, ArmorInfo, HealthInfo, HealthToRegen, BuffInfo);
+    ItemInfo.RepInfo.GetPlayerInfo(ItemInfo.RepIndex, ArmorInfo, HealthInfo, HealthToRegen, BuffInfo, IsFriend);
 
     TotalRegenRatio = HealthInfo.MaxValue > 0 ? FMin(FMax(float(HealthToRegen) / float(HealthInfo.MaxValue), 0.f), 1.f) : 0.f;
     HealthToRegen = HealthToRegen > 0 ? Max(HealthToRegen - HealthInfo.Value, 0) : 0;
@@ -408,7 +409,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     Canvas.DrawText(KFPRI.PlayerName, , FontScale, FontScale, TextFontRenderInfo);
 
     // Draw player name
-    SetCanvasColor(Canvas, HUDConfig.NameColor);
+    SetCanvasColor(Canvas, IsFriend != 0 ? HUDConfig.FriendNameColor : HUDConfig.NameColor);
     Canvas.SetPos(
         PosX + PlayerIconSize + PlayerIconGap + NameMarginX,
         PosY

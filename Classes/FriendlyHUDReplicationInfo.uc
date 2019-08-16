@@ -27,18 +27,22 @@ var MedBuffInfo EMPTY_BUFF_INFO;
 
 var KFPlayerController LocalPC;
 
+// Server-only arrays
 var Controller PCArray[REP_INFO_COUNT];
-var KFPawn_Human KFPHArray[REP_INFO_COUNT];
-var KFPlayerReplicationInfo KFPRIArray[REP_INFO_COUNT];
+var float SpeedBoostTimerArray[REP_INFO_COUNT];
+var byte CDPlayerReadyArray[REP_INFO_COUNT];
 
+// Client-only arrays
+var byte IsFriendArray[REP_INFO_COUNT];
+
+// Replicated arrays
+var KFPawn_Human KFPHArray[REP_INFO_COUNT];
+var repnotify KFPlayerReplicationInfo KFPRIArray[REP_INFO_COUNT];
 var BarInfo HealthInfoArray[REP_INFO_COUNT];
 var BarInfo ArmorInfoArray[REP_INFO_COUNT];
 var int RegenHealthArray[REP_INFO_COUNT];
 var MedBuffInfo MedBuffArray[REP_INFO_COUNT];
-var float SpeedBoostTimerArray[REP_INFO_COUNT];
-
 var EPlayerReadyState PlayerStateArray[REP_INFO_COUNT];
-var byte CDPlayerReadyArray[REP_INFO_COUNT];
 
 var FriendlyHUDMutator FHUDMutator;
 var FriendlyHUDConfig HUDConfig;
@@ -53,13 +57,21 @@ replication
         KFPHArray, KFPRIArray, HealthInfoArray, ArmorInfoArray, RegenHealthArray, MedBuffArray, PlayerStateArray, NextRepInfo;
 }
 
+simulated event ReplicatedEvent(name VarName)
+{
+    if (VarName == nameof(KFPRIArray))
+    {
+        UpdateFriends();
+    }
+}
+
 simulated event PostBeginPlay()
 {
     super.PostBeginPlay();
 
     if (bDeleteMe) return;
 
-    if (WorldInfo.NetMode != NM_Client)
+    if (Role == ROLE_Authority)
     {
         SetTimer(0.1f, true, nameof(UpdateInfo));
     }
@@ -229,12 +241,35 @@ function UpdateSpeedBoost(int Index)
     }
 }
 
-simulated function GetPlayerInfo(int Index, out BarInfo ArmorInfo, out BarInfo HealthInfo, out int RegenHealth, out MedBuffInfo BuffInfo)
+simulated function UpdateFriends()
+{
+    local OnlineSubsystem OS;
+    local LocalPlayer LP;
+    local int I;
+
+    OS = class'GameEngine'.static.GetOnlineSubsystem();
+
+    if (LocalPC == None) return;
+
+    LP = LocalPlayer(LocalPC.Player);
+    if (LP == None) return;
+
+    for (I = 0; I < REP_INFO_COUNT; I++)
+    {
+        if (KFPRIArray[I] != LocalPC.PlayerReplicationInfo)
+        {
+            IsFriendArray[I] = OS.IsFriend(LP.ControllerId, KFPRIArray[I].UniqueId) ? 1 : 0;
+        }
+    }
+}
+
+simulated function GetPlayerInfo(int Index, out BarInfo ArmorInfo, out BarInfo HealthInfo, out int RegenHealth, out MedBuffInfo BuffInfo, out byte IsFriend)
 {
     ArmorInfo = ArmorInfoArray[Index];
     HealthInfo = HealthInfoArray[Index];
     RegenHealth = RegenHealthArray[Index];
     BuffInfo = MedBuffArray[Index];
+    IsFriend = IsFriendArray[Index];
 }
 
 function bool IsPlayerRegistered(Controller C)
