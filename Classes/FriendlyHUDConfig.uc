@@ -324,6 +324,8 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("SetFHUDHealthBGColor <byte R> <byte G> <byte B> <byte A = 192>: controls the background color of health blocks (default is 16,16,16,192)");
         ConsolePrint("SetFHUDArmorEmptyBGColor <byte R> <byte G> <byte B> <byte A = 192>: controls the background color of empty armor blocks (default is 16,16,16,192)");
         ConsolePrint("SetFHUDHealthEmptyBGColor <byte R> <byte G> <byte B> <byte A = 192>: controls the background color of empty health blocks (default is 16,16,16,192)");
+        ConsolePrint("SetFHUDCDReadyIconColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the Controlled Difficulty ready icon (default is 0,210,120,192)");
+        ConsolePrint("SetFHUDCDNotReadyIconColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the Controlled Difficulty not-ready icon (default is 255,0,0,192)");
 
         ConsolePrint(" ");
         ConsolePrint("Bar Settings");
@@ -375,6 +377,7 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("SetFHUDEmptyBlockThreshold <float>: the minimum block ratio to consider a block empty (default is 0); used for EmptyBG colors");
         ConsolePrint("SetFHUDUMCompatEnabled <bool>: controls whether FHUD should override Unofficial Mod's HMTech cooldowns HUD to prevent layout conflicts (default is true)");
         ConsolePrint("SetFHUDUMColorSyncEnabled <bool>: controls whether FHUD should automatically synchronize Unofficial Mod's color scheme (default is true)");
+        ConsolePrint("SetFHUDCDCompatEnabled <bool>: controls whether FHUD should display the ready status for Controlled Difficulty");
     }
     else
     {
