@@ -5,9 +5,9 @@ var KFPlayerController KFPC;
 var KFGFxHudWrapper HUD;
 var FriendlyHUDConfig HUDConfig;
 var FriendlyHUDReplicationInfo RepInfo;
+var bool UMLoaded;
 
 var FriendlyHUDCDCompatController CDCompat;
-
 
 var GFxClikWidget ChatInputField, PartyChatInputField;
 
@@ -17,7 +17,7 @@ const WhatsNewURL = "https://steamcommunity.com/sharedfiles/filedetails/?id=1827
 replication
 {
     if (bNetDirty)
-        RepInfo;
+        RepInfo, UMLoaded;
 }
 
 simulated function PostBeginPlay()
@@ -28,6 +28,8 @@ simulated function PostBeginPlay()
 
     if (Role == ROLE_Authority)
     {
+        UMLoaded = IsUMLoaded();
+
         RepInfo = Spawn(class'FriendlyHUD.FriendlyHUDReplicationInfo', Self);
         RepInfo.FHUDMutator = Self;
         RepInfo.HUDConfig = HUDConfig;
@@ -145,9 +147,14 @@ simulated function bool IsUMLoaded()
 {
     local Mutator Mut;
 
+    if (Role != ROLE_Authority)
+    {
+        return UMLoaded;
+    }
+
     for (Mut = WorldInfo.Game.BaseMutator; Mut != None; Mut = Mut.NextMutator)
     {
-        if (Mut.IsA('UnofficialModMut')) return true;
+        if (PathName(Mut.class) == "UnofficialMod.UnofficialModMut") return true;
     }
 
     return false;
