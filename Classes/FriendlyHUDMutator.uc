@@ -216,6 +216,7 @@ simulated function OnChatKeyDown(GFxClikWidget InputField, GFxClikWidget.EventDa
                 if (OS == None) return;
                 OS.OpenURL(HelpURL);
                 break;
+            case "!fhudnews":
             case "!fhudwhatsnew":
             case "!fhudchangelog":
                 if (OS == None) return;
@@ -277,7 +278,7 @@ simulated function PrintNotification()
     WriteToChat("[FriendlyHUD] type !FHUDHelp to open the command list.", "B986E9");
     if (HUDConfig.LastChangeLogVersion < class'FriendlyHUD.FriendlyHUDConfig'.const.LatestVersion)
     {
-        WriteToChat("[FriendlyHUD] was updated, type !FHUDWhatsNew to see the changelog.", "FFFF00");
+        WriteToChat("[FriendlyHUD] was updated, type !FHUDNews to see the changelog.", "FFFF00");
     }
 }
 
