@@ -172,7 +172,7 @@ function UpdateInfo()
         {
             PlayerStateArray[I] = KFPRI.bReadyToPlay ? PRS_Ready : PRS_NotReady;
         }
-        else if (GameStateName == 'TraderOpen')
+        else if (GameStateName == 'TraderOpen' && FHUDMutator.CDLoaded)
         {
             PlayerStateArray[I] = CDPlayerReadyArray[I] != 0 ? PRS_Ready : PRS_NotReady;
         }

@@ -5,7 +5,7 @@ var KFPlayerController KFPC;
 var KFGFxHudWrapper HUD;
 var FriendlyHUDConfig HUDConfig;
 var FriendlyHUDReplicationInfo RepInfo;
-var bool UMLoaded;
+var bool UMLoaded, CDLoaded;
 
 var FriendlyHUDCDCompatController CDCompat;
 
@@ -18,7 +18,7 @@ const GFXListenerPriority = 80000;
 replication
 {
     if (bNetDirty)
-        RepInfo, UMLoaded;
+        RepInfo, UMLoaded, CDLoaded;
 }
 
 simulated function PostBeginPlay()

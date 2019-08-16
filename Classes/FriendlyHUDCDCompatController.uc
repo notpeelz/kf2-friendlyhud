@@ -16,6 +16,7 @@ event int Main(string Value)
     switch (CommandName)
     {
         case "FHUDSetCDStateReady":
+            FHUDMutator.CDLoaded = true;
             FHUDSetCDStateReady(Params);
             break;
         default:
