@@ -13,6 +13,7 @@ var GFxClikWidget ChatInputField, PartyChatInputField;
 
 const HelpURL = "https://steamcommunity.com/sharedfiles/filedetails/?id=1827646464";
 const WhatsNewURL = "https://steamcommunity.com/sharedfiles/filedetails/?id=1827646464#3177485";
+const GFXListenerPriority = 80000;
 
 replication
 {
@@ -178,12 +179,12 @@ simulated function InitializeCompat()
     UMInteraction.Initialized();
 }
 
-delegate OnChatInputKeyDown(GFxClikWidget.EventData Data)
+simulated delegate OnChatInputKeyDown(GFxClikWidget.EventData Data)
 {
     OnChatKeyDown(ChatInputField, Data);
 }
 
-delegate OnPartyChatInputKeyDown(GFxClikWidget.EventData Data)
+simulated delegate OnPartyChatInputKeyDown(GFxClikWidget.EventData Data)
 {
     OnChatKeyDown(PartyChatInputField, Data);
 }
@@ -243,6 +244,7 @@ simulated function InitializeChatHook()
         || KFPC.MYGFxManager.PartyWidget.PartyChatWidget == None
         || HUD.HUDMovie == None
         || HUD.HUDMovie.KFGXHUDManager == None
+        || HUD.HUDMovie.KFGXHUDManager.GetObject("ChatBoxWidget") == None
     )
 	{
         `Log("[FriendlyHUD] Failed initializing chat hook; retrying.");
@@ -255,8 +257,8 @@ simulated function InitializeChatHook()
 
     ChatInputField = GFxClikWidget(HUD.HUDMovie.KFGXHUDManager.GetObject("ChatBoxWidget").GetObject("ChatInputField", class'GFxClikWidget'));
     PartyChatInputField = GFxClikWidget(KFPC.MyGFxManager.PartyWidget.PartyChatWidget.GetObject("ChatInputField", class'GFxClikWidget'));
-    ChatInputField.AddEventListener('CLIK_keyDown', OnChatInputKeyDown, false, 0, true);
-    PartyChatInputField.AddEventListener('CLIK_keyDown', OnPartyChatInputKeyDown, false, 0, true);
+    ChatInputField.AddEventListener('CLIK_keyDown', OnChatInputKeyDown, false, GFXListenerPriority, false);
+    PartyChatInputField.AddEventListener('CLIK_keyDown', OnPartyChatInputKeyDown, false, GFXListenerPriority, false);
 
     `Log("[FriendlyHUD] Initialized chat hook");
 }
