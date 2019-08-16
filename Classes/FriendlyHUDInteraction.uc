@@ -408,7 +408,7 @@ simulated function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInf
     Canvas.DrawText(KFPRI.PlayerName, , FontScale, FontScale, TextFontRenderInfo);
 
     // Draw player name
-    SetCanvasColor(Canvas, HUDConfig.TextColor);
+    SetCanvasColor(Canvas, HUDConfig.NameColor);
     Canvas.SetPos(
         PosX + PlayerIconSize + PlayerIconGap + NameMarginX,
         PosY

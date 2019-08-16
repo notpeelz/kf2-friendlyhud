@@ -40,7 +40,7 @@ var config float NameScale;
 var config float OffsetX;
 var config float OffsetY;
 var config Color ShadowColor;
-var config Color TextColor;
+var config Color NameColor;
 var config Color IconColor;
 var config Color ArmorBGColor;
 var config Color ArmorEmptyBGColor;
@@ -76,6 +76,7 @@ var config Color CDReadyIconColor;
 var config Color CDNotReadyIconColor;
 
 // Removed/renamed/deprecated settings
+var config string TextColor;
 var config string BGColor;
 var config string BuffMarginX;
 var config string BuffMarginY;
@@ -146,6 +147,10 @@ simulated function Initialized()
 
             ArmorEmptyBGColor = OldBGColor;
             HealthEmptyBGColor = OldBGColor;
+
+            // Rename NameColor to TextColor
+            NameColor = class'FriendlyHUD.FriendlyHUDHelper'.static.ColorFromString(TextColor);
+            TextColor = DEPRECATED_ENTRY;
 
             // Rename BuffMarginX to BuffMargin
             BuffMargin = float(BuffMarginX);
@@ -246,7 +251,7 @@ exec function ResetFHUDColors()
 {
     ResetFHUDColorThresholds();
     ShadowColor = MakeColor(0, 0, 0, 255);
-    TextColor = MakeColor(255, 255, 255, 192);
+    NameColor = MakeColor(255, 255, 255, 192);
     IconColor = MakeColor(255, 255, 255, 192);
     ArmorBGColor = MakeColor(16, 16, 16, 192);
     HealthBGColor = MakeColor(16, 16, 16, 192);
@@ -752,7 +757,7 @@ exec function SetFHUDIconColor(byte R, byte G, byte B, optional byte A = 192)
 
 exec function SetFHUDNameColor(byte R, byte G, byte B, optional byte A = 192)
 {
-    IconColor = MakeColor(R, G, B, A);
+    NameColor = MakeColor(R, G, B, A);
     SaveConfig();
 }
 
