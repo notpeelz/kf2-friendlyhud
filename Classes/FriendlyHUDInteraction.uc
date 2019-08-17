@@ -36,6 +36,7 @@ var FriendlyHUDMutator FHUDMutator;
 
 struct UI_RuntimeVars
 {
+    var float ResScale, Scale, FontScale;
     var float BarHeight, BarWidth, BarGap, TextHeight, TotalItemWidth, TotalItemHeight;
     var float PlayerIconSize, PlayerIconGap, PlayerIconOffset;
     var float BlockWidth, BlockGap, TotalBlockWidth;
@@ -45,8 +46,11 @@ struct UI_RuntimeVars
     var float ScreenPosX, ScreenPosY;
     var float Opacity;
 };
+var bool RuntimeInitialized;
+var float CachedScreenWidth, CachedScreenHeight;
 var UI_RuntimeVars R;
 
+const ASCIICharacters = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{_}~";
 const FLOAT_EPSILON = 0.0001f;
 const PrestigeIconScale = 0.75f;
 
@@ -138,6 +142,12 @@ event PostRender(Canvas Canvas)
     // Don't render when HUD is hidden
     if (!HUD.bShowHUD) return;
 
+    // Cache runtime vars and refresh them whenever the resolution changes
+    if (!RuntimeInitialized || (CachedScreenWidth != Canvas.SizeX || CachedScreenHeight != Canvas.SizeY))
+    {
+        UpdateRuntimeVars(Canvas);
+    }
+
     // Only render the HUD if we're not a Zed (Versus)
     if (KFPlayerOwner.GetTeamNum() != 255)
     {
@@ -151,13 +161,58 @@ function SetCanvasColor(Canvas Canvas, Color C)
     Canvas.DrawColor = C;
 }
 
+function UpdateRuntimeVars(optional Canvas Canvas)
+{
+    local float TempTextWidth;
+
+    // If no canvas is passed, we schedule the update for the next render
+    if (Canvas == None)
+    {
+        RuntimeInitialized = false;
+        return;
+    }
+
+    RuntimeInitialized = true;
+
+    CachedScreenWidth = Canvas.SizeX;
+    CachedScreenHeight = Canvas.SizeY;
+
+    Canvas.Font = class'KFGameEngine'.static.GetKFCanvasFont();
+    R.ResScale = class'FriendlyHUD.FriendlyHUDHelper'.static.GetResolutionScale(Canvas);
+    R.Scale = R.ResScale * HUDConfig.Scale;
+
+    R.FontScale = class'KFGameEngine'.static.GetKFFontScale() * HUDConfig.NameScale * R.Scale;
+    Canvas.TextSize(ASCIICharacters, TempTextWidth, R.TextHeight, R.FontScale, R.FontScale);
+
+    R.BuffOffset = HUDConfig.BuffOffset * R.Scale;
+    R.BuffIconSize = HUDConfig.BuffSize * R.Scale;
+    R.BuffPlayerIconMargin = HUDConfig.BuffMargin * R.Scale;
+    R.BuffPlayerIconGap = HUDConfig.BuffGap * R.Scale;
+
+    R.PlayerIconSize = HUDConfig.IconSize * R.Scale;
+    R.PlayerIconGap = HUDConfig.IconGap * R.Scale;
+    R.PlayerIconOffset = HUDConfig.IconOffset * R.Scale;
+
+    R.BlockWidth = HUDConfig.BlockWidth * R.Scale;
+    R.BlockGap = HUDConfig.BlockGap * R.Scale;
+    R.TotalBlockWidth = R.BlockWidth + R.BlockGap + 2.f;
+    R.BarHeight = HUDConfig.BlockHeight * R.Scale;
+    R.BarGap = HUDConfig.BarGap * R.Scale;
+
+    R.NameMarginX = HUDConfig.NameMarginX * R.Scale;
+    R.NameMarginY = HUDConfig.NameMarginY * R.Scale;
+    R.ItemMarginX = HUDConfig.ItemMarginX * R.Scale;
+    R.ItemMarginY = HUDConfig.ItemMarginY * R.Scale;
+
+    R.TotalItemWidth = R.PlayerIconSize + R.PlayerIconGap + FMax(R.TotalBlockWidth * HUDConfig.BlockCount - R.BlockGap, HUDConfig.BarWidthMin) + R.ItemMarginX;
+    R.TotalItemHeight = FMax(R.BarHeight * 2.f + R.TextHeight + R.BarGap + R.NameMarginY, R.PlayerIconSize + R.PlayerIconOffset) + R.ItemMarginY;
+}
+
 function DrawTeamHealthBars(Canvas Canvas)
 {
     local FriendlyHUDReplicationInfo FHUDRepInfo;
     local PRIEntry CurrentPRIEntry;
     local KFPlayerReplicationInfo KFPRI;
-    local float TextWidth;
-    local float BaseResScale, ResScale, FontScale;
     local ASDisplayInfo StatsDI, GearDI;
     local float CurrentItemPosX, CurrentItemPosY;
     local int ItemCount, Column, Row;
@@ -174,34 +229,7 @@ function DrawTeamHealthBars(Canvas Canvas)
     StatsDI = HUD.HUDMovie.PlayerStatusContainer.GetDisplayInfo();
     GearDI = HUD.HUDMovie.PlayerBackpackContainer.GetDisplayInfo();
 
-    BaseResScale = class'FriendlyHUD.FriendlyHUDHelper'.static.GetResolutionScale(Canvas);
-    ResScale = BaseResScale * HUDConfig.Scale;
-
     Canvas.Font = class'KFGameEngine'.static.GetKFCanvasFont();
-    FontScale = class'KFGameEngine'.static.GetKFFontScale() * HUDConfig.NameScale * ResScale;
-
-    R.BuffOffset = HUDConfig.BuffOffset * ResScale;
-    R.BuffIconSize = HUDConfig.BuffSize * ResScale;
-    R.BuffPlayerIconMargin = HUDConfig.BuffMargin * ResScale;
-    R.BuffPlayerIconGap = HUDConfig.BuffGap * ResScale;
-
-    R.PlayerIconSize = HUDConfig.IconSize * ResScale;
-    R.PlayerIconGap = HUDConfig.IconGap * ResScale;
-    R.PlayerIconOffset = HUDConfig.IconOffset * ResScale;
-
-    R.BlockWidth = HUDConfig.BlockWidth * ResScale;
-    R.BlockGap = HUDConfig.BlockGap * ResScale;
-    R.TotalBlockWidth = R.BlockWidth + R.BlockGap + 2.f;
-    R.BarHeight = HUDConfig.BlockHeight * ResScale;
-    R.BarGap = HUDConfig.BarGap * ResScale;
-    Canvas.TextSize("pqy", TextWidth, R.TextHeight, FontScale, FontScale);
-
-    R.NameMarginX = HUDConfig.NameMarginX * ResScale;
-    R.NameMarginY = HUDConfig.NameMarginY * ResScale;
-    R.ItemMarginX = HUDConfig.ItemMarginX * ResScale;
-    R.ItemMarginY = HUDConfig.ItemMarginY * ResScale;
-    R.TotalItemWidth = R.PlayerIconSize + R.PlayerIconGap + FMax(R.TotalBlockWidth * HUDConfig.BlockCount - R.BlockGap, HUDConfig.BarWidthMin) + R.ItemMarginX;
-    R.TotalItemHeight = FMax(R.BarHeight * 2.f + R.TextHeight + R.BarGap + R.NameMarginY, R.PlayerIconSize + R.PlayerIconOffset) + R.ItemMarginY;
 
     // BuffLayout: Left or Right
     if (HUDConfig.BuffLayout == 1 || HUDConfig.BuffLayout == 2)
@@ -267,8 +295,8 @@ function DrawTeamHealthBars(Canvas Canvas)
         }
     }
 
-    R.ScreenPosX += HUDConfig.OffsetX * BaseResScale;
-    R.ScreenPosY += HUDConfig.OffsetY * BaseResScale;
+    R.ScreenPosX += HUDConfig.OffsetX * R.ResScale;
+    R.ScreenPosY += HUDConfig.OffsetY * R.ResScale;
 
     if (HUDConfig.DrawDebugLines)
     {
@@ -331,14 +359,14 @@ function DrawTeamHealthBars(Canvas Canvas)
         ItemInfo.RepInfo = FHUDRepInfo;
         ItemInfo.RepIndex = CurrentPRIEntry.RepIndex;
 
-        if (DrawHealthBarItem(Canvas, ItemInfo, CurrentItemPosX, CurrentItemPosY, FontScale))
+        if (DrawHealthBarItem(Canvas, ItemInfo, CurrentItemPosX, CurrentItemPosY))
         {
             ItemCount++;
         }
     }
 }
 
-function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo, float PosX, float PosY, float FontScale)
+function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo, float PosX, float PosY)
 {
     local float PlayerIconPosX, PlayerIconPosY;
     local FontRenderInfo TextFontRenderInfo;
@@ -410,7 +438,7 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
         PosX + R.PlayerIconSize + R.PlayerIconGap + R.NameMarginX,
         PosY + 1
     );
-    Canvas.DrawText(KFPRI.PlayerName, , FontScale, FontScale, TextFontRenderInfo);
+    Canvas.DrawText(KFPRI.PlayerName, , R.FontScale, R.FontScale, TextFontRenderInfo);
 
     // Draw player name
     SetCanvasColor(Canvas, IsFriend != 0 ? HUDConfig.FriendNameColor : HUDConfig.NameColor);
@@ -418,7 +446,7 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
         PosX + R.PlayerIconSize + R.PlayerIconGap + R.NameMarginX,
         PosY
     );
-    Canvas.DrawText(KFPRI.PlayerName, , FontScale, FontScale, TextFontRenderInfo);
+    Canvas.DrawText(KFPRI.PlayerName, , R.FontScale, R.FontScale, TextFontRenderInfo);
 
     // Draw armor bar
     DrawBar(Canvas,

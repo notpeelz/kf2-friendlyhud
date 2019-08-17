@@ -162,7 +162,7 @@ function Initialized()
             BuffMarginY = DEPRECATED_ENTRY;
         }
 
-        SaveConfig();
+        SaveAndUpdate();
     }
 
     ColorThresholds.Sort(SortColorThresholds);
@@ -173,7 +173,7 @@ function Initialized()
 function UpdateChangeLogVersion()
 {
     LastChangeLogVersion = LatestVersion;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 function LoadDefaultFHUDConfig()
@@ -203,7 +203,7 @@ function LoadDefaultFHUDConfig()
     ResetFHUDBar();
     ResetFHUDColors();
 
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function ResetFHUDLayout()
@@ -220,7 +220,7 @@ exec function ResetFHUDLayout()
     ItemMarginX = 14.f;
     ItemMarginY = 5.f;
 
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function ResetFHUDBar()
@@ -245,7 +245,7 @@ exec function ResetFHUDBar()
     BlockCount = 1;
     BlockStyle = 0;
 
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function ResetFHUDColors()
@@ -457,7 +457,7 @@ exec function LoadFHUDColorPreset(string Value)
 
     InitUMCompat();
 
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function LoadFHUDPreset(string Value)
@@ -537,7 +537,7 @@ exec function LoadFHUDPreset(string Value)
             break;
     }
 
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function LoadFHUDBarPreset(string Value)
@@ -600,13 +600,13 @@ exec function LoadFHUDBarPreset(string Value)
             break;
     }
 
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDScale(float Value)
 {
     Scale = FMax(Value, 0.f);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDFlow(string Value)
@@ -631,7 +631,7 @@ exec function SetFHUDFlow(string Value)
             break;
     }
 
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDLayout(string Value)
@@ -659,7 +659,7 @@ exec function SetFHUDLayout(string Value)
             break;
     }
 
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDBarWidthMin(float Value)
@@ -670,26 +670,26 @@ exec function SetFHUDBarWidthMin(float Value)
 exec function SetFHUDBarGap(float Value)
 {
     BarGap = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDBlockSize(optional float Width = 200.f, optional float Height = 10.f)
 {
     BlockWidth = FMax(Width, 1.f);
     BlockHeight = FMax(Height, 1.f);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDBlockCount(int Value)
 {
     BlockCount = Max(Value, 1);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDBlockGap(float Value)
 {
     BlockGap = FMax(Value, 0.f);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDBlockStyle(string Value)
@@ -721,43 +721,43 @@ exec function SetFHUDBlockStyle(string Value)
             break;
     }
 
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDItemsPerColumn(int Value)
 {
     ItemsPerColumn = Max(Value, 1);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDItemsPerRow(int Value)
 {
     ItemsPerRow = Max(Value, 1);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDReverseX(bool Value)
 {
     ReverseX = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDReverseY(bool Value)
 {
     ReverseY = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDShadowColor(byte R, byte G, byte B, optional byte A = 192)
 {
     ShadowColor = MakeColor(R, G, B, A);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDIconColor(byte R, byte G, byte B, optional byte A = 192)
 {
     IconColor = MakeColor(R, G, B, A);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDNameColor(byte R, byte G, byte B, optional byte A = 192)
@@ -768,27 +768,27 @@ exec function SetFHUDNameColor(byte R, byte G, byte B, optional byte A = 192)
     {
         FriendNameColor = MakeColor(R, G, B, FriendNameColor.A == NameColor.A ? A : FriendNameColor.A);
     }
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDFriendNameColor(byte R, byte G, byte B, optional byte A = 192)
 {
     FriendNameColor = MakeColor(R, G, B, A);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDArmorColor(byte R, byte G, byte B, optional byte A = 192)
 {
     ArmorColor = MakeColor(R, G, B, A);
     InitUMCompat();
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDHealthColor(byte R, byte G, byte B, optional byte A = 192)
 {
     HealthColor = MakeColor(R, G, B, A);
     InitUMCompat();
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDArmorBGColor(byte R, byte G, byte B, optional byte A = 192)
@@ -800,7 +800,7 @@ exec function SetFHUDArmorBGColor(byte R, byte G, byte B, optional byte A = 192)
         ArmorEmptyBGColor = MakeColor(R, G, B, ArmorEmptyBGColor.A == ArmorBGColor.A ? A : ArmorEmptyBGColor.A);
     }
     ArmorBGColor = MakeColor(R, G, B, A);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDHealthBGColor(byte R, byte G, byte B, optional byte A = 192)
@@ -812,50 +812,50 @@ exec function SetFHUDHealthBGColor(byte R, byte G, byte B, optional byte A = 192
         HealthEmptyBGColor = MakeColor(R, G, B, HealthEmptyBGColor.A == HealthBGColor.A ? A : HealthEmptyBGColor.A);
     }
     HealthBGColor = MakeColor(R, G, B, A);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDArmorEmptyBGColor(byte R, byte G, byte B, optional byte A = 192)
 {
     ArmorEmptyBGColor = MakeColor(R, G, B, A);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDHealthEmptyBGColor(byte R, byte G, byte B, optional byte A = 192)
 {
     HealthEmptyBGColor = MakeColor(R, G, B, A);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDHealthRegenColor(byte R, byte G, byte B, optional byte A = 192)
 {
     HealthRegenColor = MakeColor(R, G, B, A);
     InitUMCompat();
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDEmptyBlockThreshold(float Value)
 {
     EmptyBlockThreshold = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDBuffColor(byte R, byte G, byte B, optional byte A = 192)
 {
     BuffColor = MakeColor(R, G, B, A);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDItemMarginX(float Value)
 {
     ItemMarginX = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDItemMarginY(float Value)
 {
     ItemMarginY = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDBuffLayout(string Value)
@@ -890,85 +890,85 @@ exec function SetFHUDBuffLayout(string Value)
             break;
     }
 
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDBuffSize(float Value)
 {
     BuffSize = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDBuffMargin(float Value)
 {
     BuffMargin = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDBuffGap(float Value)
 {
     BuffGap = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDBuffOffset(float Value)
 {
     BuffOffset = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDBuffCountMax(int Value)
 {
     BuffCountMax = Max(Value, 0);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDIconSize(float Value)
 {
     IconSize = FMax(Value, 0.f);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDIconOffset(float Value)
 {
     IconOffset = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDIconGap(float Value)
 {
     IconGap = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDNameMarginX(float Value)
 {
     NameMarginX = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDNameMarginY(float Value)
 {
     NameMarginY = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDOffsetX(float Value)
 {
     OffsetX = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDNameScale(float Value)
 {
     NameScale = FMax(Value, 0.f);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDOffsetY(float Value)
 {
     OffsetY = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDDrawDebugLines(bool Value)
@@ -979,31 +979,31 @@ exec function SetFHUDDrawDebugLines(bool Value)
 exec function SetFHUDEnabled(bool Value)
 {
     DisableHUD = !Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDOnlyForMedic(bool Value)
 {
     OnlyForMedic = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDIgnoreSelf(bool Value)
 {
     IgnoreSelf = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDIgnoreDeadTeammates(bool Value)
 {
     IgnoreDeadTeammates = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDMinHealthThreshold(float Value)
 {
     MinHealthThreshold = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDUpdateInterval(float Value)
@@ -1014,7 +1014,7 @@ exec function SetFHUDUpdateInterval(float Value)
         FHUDInteraction.ResetUpdateTimer();
     }
 
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDSortStrategy(string Strategy, optional bool Descending = false)
@@ -1038,7 +1038,7 @@ exec function SetFHUDSortStrategy(string Strategy, optional bool Descending = fa
             break;
     }
 
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDDynamicOpacity(float Min, optional float Max = 1.f, optional float T0 = 4.f, float T1 = 0.f)
@@ -1047,20 +1047,20 @@ exec function SetFHUDDynamicOpacity(float Min, optional float Max = 1.f, optiona
     DO_MaxOpacity = Max;
     DO_T0 = T0;
     DO_T1 = T1;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDOpacity(float Value)
 {
     Opacity = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function ResetFHUDColorThresholds()
 {
     ColorThresholds.Length = 0;
 
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function RemoveFHUDColorThreshold(float Threshold)
@@ -1088,7 +1088,7 @@ exec function RemoveFHUDColorThreshold(float Threshold)
 
             ConsolePrint("Removed color threshold:" @ Threshold);
 
-            SaveConfig();
+            SaveAndUpdate();
             return;
         }
     }
@@ -1118,7 +1118,7 @@ function bool SetRegenColorThreshold(float Threshold, byte R, byte G, byte B, op
         if (RegenColorThresholds[I].Value == Threshold)
         {
             RegenColorThresholds[I].BarColor = MakeColor(R, G, B, A);
-            SaveConfig();
+            SaveAndUpdate();
             return true;
         }
     }
@@ -1128,7 +1128,7 @@ function bool SetRegenColorThreshold(float Threshold, byte R, byte G, byte B, op
     RegenColorThresholds.AddItem(NewItem);
     RegenColorThresholds.Sort(SortColorThresholds);
 
-    SaveConfig();
+    SaveAndUpdate();
     return false;
 }
 
@@ -1159,7 +1159,7 @@ function bool AddColorThreshold(float Threshold, byte R, byte G, byte B, byte A 
         if (ColorThresholds[I].Value == Threshold)
         {
             ColorThresholds[I].BarColor = MakeColor(R, G, B, A);
-            SaveConfig();
+            SaveAndUpdate();
             return true;
         }
     }
@@ -1169,7 +1169,7 @@ function bool AddColorThreshold(float Threshold, byte R, byte G, byte B, byte A 
     ColorThresholds.AddItem(NewItem);
     ColorThresholds.Sort(SortColorThresholds);
 
-    SaveConfig();
+    SaveAndUpdate();
     return false;
 }
 
@@ -1198,7 +1198,7 @@ exec function MoveFHUDColorThreshold(float Threshold, float NewThreshold)
 
             ConsolePrint("Successfully moved threshold from" @ Threshold @ "to" @ NewThreshold);
 
-            SaveConfig();
+            SaveAndUpdate();
             return;
         }
     }
@@ -1232,7 +1232,7 @@ exec function SetFHUDDynamicColors(String Value)
             break;
     }
 
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDDynamicRegenColors(string Value)
@@ -1263,45 +1263,45 @@ exec function SetFHUDDynamicRegenColors(string Value)
             break;
     }
 
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDForceShowBuffs(bool Value)
 {
     ForceShowBuffs = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDUMCompatEnabled(bool Value)
 {
     UMCompatEnabled = Value;
     InitUMCompat();
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDUMColorSyncEnabled(bool Value)
 {
     UMColorSyncEnabled = Value;
     InitUMCompat();
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDCDCompatEnabled(bool Value)
 {
     CDCompatEnabled = Value;
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDCDReadyIconColor(byte R, byte G, byte B, optional byte A = 192)
 {
     CDReadyIconColor = MakeColor(R, G, B, A);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function SetFHUDCDNotReadyIconColor(byte R, byte G, byte B, optional byte A = 192)
 {
     CDNotReadyIconColor = MakeColor(R, G, B, A);
-    SaveConfig();
+    SaveAndUpdate();
 }
 
 exec function ResetFHUDConfig()
@@ -1339,6 +1339,16 @@ delegate int SortColorThresholds(ColorThreshold A, ColorThreshold B)
     if (A.Value < B.Value) return 1;
     if (A.Value > B.Value) return -1;
     return 0;
+}
+
+function SaveAndUpdate()
+{
+    SaveConfig();
+
+    if (FHUDInteraction != None)
+    {
+        FHUDInteraction.UpdateRuntimeVars();
+    }
 }
 
 defaultproperties
