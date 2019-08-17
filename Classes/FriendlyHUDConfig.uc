@@ -93,7 +93,7 @@ const LatestVersion = 2;
 
 const DEPRECATED_ENTRY = "DEPRECATED";
 
-simulated function Initialized()
+function Initialized()
 {
     local Color OldBGColor;
 
@@ -170,13 +170,13 @@ simulated function Initialized()
     `Log("[FriendlyHUD] Initialized config");
 }
 
-simulated function UpdateChangeLogVersion()
+function UpdateChangeLogVersion()
 {
     LastChangeLogVersion = LatestVersion;
     SaveConfig();
 }
 
-simulated function LoadDefaultFHUDConfig()
+function LoadDefaultFHUDConfig()
 {
     INIVersion = 2;
     UpdateInterval = 0.5f;
