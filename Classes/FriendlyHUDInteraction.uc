@@ -294,9 +294,8 @@ simulated function DrawTeamHealthBars(Canvas Canvas)
         // If enabled, don't render ourselves
         if (HUDConfig.IgnoreSelf && KFPRI == KFPlayerOwner.PlayerReplicationInfo) continue;
 
-        // If the player hasn't spawned in yet, don't render (unless we're in debug mode)
-        // FIXME: HasHadInitialSpawn() doesn't work on bots, so we use HUDConfig.Debug for testing
-        if (!KFPRI.HasHadInitialSpawn() && !HUDConfig.Debug) continue;
+        // Only render players that have spawned in once already
+        if (FHUDRepInfo.HasSpawnedArray[CurrentPRIEntry.RepIndex] == 0) continue;
 
         // Layout: row first
         if (HUDConfig.Flow == 1)

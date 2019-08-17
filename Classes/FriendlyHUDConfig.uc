@@ -86,7 +86,6 @@ var KFPlayerController KFPlayerOwner;
 var FriendlyHUDMutator FHUDMutator;
 var FriendlyHUDInteraction FHUDInteraction;
 
-var bool Debug;
 var bool DrawDebugLines;
 
 var int CurrentVersion;
@@ -373,7 +372,6 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint(" ");
         ConsolePrint("Misc/Debug Settings");
         ConsolePrint("--------------------------");
-        ConsolePrint("SetFHUDDebug <bool>: allows bots to show up on the HUD -- useful for testing and configuring settings");
         ConsolePrint("SetFHUDDrawDebugLines <bool>: displays debug lines -- useful for debugging layout issues");
         ConsolePrint("DebugFHUDSetArmor <int Armor> <int MaxArmor = -1>: sets the armor value for your own character -- cheats only");
         ConsolePrint("DebugFHUDSetHealth <int Health> <int MaxHealth = -1>: sets the health value for your own character -- cheats only");
@@ -971,11 +969,6 @@ exec function SetFHUDOffsetY(float Value)
 {
     OffsetY = Value;
     SaveConfig();
-}
-
-exec function SetFHUDDebug(bool Value)
-{
-    Debug = Value;
 }
 
 exec function SetFHUDDrawDebugLines(bool Value)

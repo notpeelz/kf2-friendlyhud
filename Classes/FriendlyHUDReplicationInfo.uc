@@ -38,6 +38,7 @@ var byte IsFriendArray[REP_INFO_COUNT];
 // Replicated arrays
 var KFPawn_Human KFPHArray[REP_INFO_COUNT];
 var repnotify KFPlayerReplicationInfo KFPRIArray[REP_INFO_COUNT];
+var byte HasSpawnedArray[REP_INFO_COUNT];
 var BarInfo HealthInfoArray[REP_INFO_COUNT];
 var BarInfo ArmorInfoArray[REP_INFO_COUNT];
 var int RegenHealthArray[REP_INFO_COUNT];
@@ -54,7 +55,7 @@ replication
 {
     // We don't need to replicate PCArray
     if (bNetDirty)
-        KFPHArray, KFPRIArray, HealthInfoArray, ArmorInfoArray, RegenHealthArray, MedBuffArray, PlayerStateArray, NextRepInfo;
+        KFPHArray, KFPRIArray, HasSpawnedArray, HealthInfoArray, ArmorInfoArray, RegenHealthArray, MedBuffArray, PlayerStateArray, NextRepInfo;
 }
 
 simulated event ReplicatedEvent(name VarName)
@@ -81,11 +82,7 @@ function NotifyLogin(Controller C)
 {
     local int I;
 
-    // Second check is for bot debugging
-    if (PlayerController(C) == None && KFPawn_Human(C.Pawn) == None)
-    {
-        return;
-    }
+    if (PlayerController(C) == None && KFPawn_Human(C.Pawn) == None) return;
 
     // Find empty spot
     for (I = 0; I < REP_INFO_COUNT; I++)
@@ -114,11 +111,7 @@ function NotifyLogout(Controller C)
 {
     local int I;
 
-    // Second check is for bot debugging
-    if (PlayerController(C) == None && KFPawn_Human(C.Pawn) == None)
-    {
-        return;
-    }
+    if (PlayerController(C) == None && KFPawn_Human(C.Pawn) == None) return;
 
     for (I = 0; I < REP_INFO_COUNT; I++)
     {
@@ -127,6 +120,7 @@ function NotifyLogout(Controller C)
             PCArray[I] = None;
             KFPHArray[I] = None;
             KFPRIArray[I] = None;
+            HasSpawnedArray[I] = 0;
             HealthInfoArray[I] = EMPTY_BAR_INFO;
             ArmorInfoArray[I] = EMPTY_BAR_INFO;
             RegenHealthArray[I] = 0;
@@ -167,6 +161,9 @@ function UpdateInfo()
 
         KFPHArray[I] = KFPH;
         KFPRIArray[I] = KFPRI;
+
+        // HasHadInitialSpawn() doesn't work on bots
+        HasSpawnedArray[I] = (KFAIController(PCArray[I]) != None || KFPRI.HasHadInitialSpawn()) ? 1 : 0;
 
         if (GameStateName == 'PendingMatch')
         {
