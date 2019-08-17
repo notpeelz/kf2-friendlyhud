@@ -27,8 +27,8 @@ var array<PRIEntry> SortedKFPRIArray;
 
 var Texture2d BarBGTexture;
 var Texture2d BuffIconTexture;
-var Texture2d CDNotReadyIconTexture;
-var Texture2d CDReadyIconTexture;
+var Texture2d PlayerNotReadyIconTexture;
+var Texture2d PlayerReadyIconTexture;
 var Color AxisXLineColor;
 var Color AxisYLineColor;
 
@@ -638,11 +638,11 @@ simulated function DrawPlayerIcon(Canvas Canvas, const out PlayerItemInfo ItemIn
         {
             case PRS_Ready:
                 SetCanvasColor(Canvas, HUDConfig.CDReadyIconColor);
-                Canvas.DrawTile(CDReadyIconTexture, PlayerIconSize, PlayerIconSize, 0, 0, 256, 256);
+                Canvas.DrawTile(PlayerReadyIconTexture, PlayerIconSize, PlayerIconSize, 0, 0, 256, 256);
                 return;
             case PRS_NotReady:
                 SetCanvasColor(Canvas, HUDConfig.CDNotReadyIconColor);
-                Canvas.DrawTile(CDNotReadyIconTexture, PlayerIconSize, PlayerIconSize, 0, 0, 256, 256);
+                Canvas.DrawTile(PlayerNotReadyIconTexture, PlayerIconSize, PlayerIconSize, 0, 0, 256, 256);
                 return;
             case PRS_Default:
             default:
@@ -834,6 +834,6 @@ defaultproperties
     AxisYLineColor = (R=0, G=100, B=210, A=192);
     BarBGTexture = Texture2D'EngineResources.WhiteSquareTexture';
     BuffIconTexture = Texture2D'UI_VoiceComms_TEX.UI_VoiceCommand_Icon_Heal';
-    CDNotReadyIconTexture = Texture2D'UI_VoiceComms_TEX.UI_VoiceCommand_Icon_Negative';
-    CDReadyIconTexture = Texture2D'UI_VoiceComms_TEX.UI_VoiceCommand_Icon_Affirmative';
+    PlayerNotReadyIconTexture = Texture2D'UI_VoiceComms_TEX.UI_VoiceCommand_Icon_Negative';
+    PlayerReadyIconTexture = Texture2D'UI_VoiceComms_TEX.UI_VoiceCommand_Icon_Affirmative';
 }
