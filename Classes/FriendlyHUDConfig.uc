@@ -7,6 +7,19 @@ struct ColorThreshold
     var float Value;
 };
 
+struct BlockSizeOverride
+{
+    var float Width;
+    var float Height;
+    var int BlockIndex;
+};
+
+struct BlockRatioOverride
+{
+    var float Ratio;
+    var int BlockIndex;
+};
+
 var config int INIVersion;
 var config int LastChangeLogVersion;
 var config float UpdateInterval;
@@ -16,11 +29,22 @@ var config int Flow;
 var config int Layout;
 var config float BarWidthMin;
 var config float BarGap;
-var config float BlockWidth;
-var config float BlockHeight;
-var config int BlockCount;
-var config float BlockGap;
-var config int BlockStyle;
+var config float ArmorBlockWidth;
+var config float HealthBlockWidth;
+var config float ArmorBlockHeight;
+var config float HealthBlockHeight;
+var config array<BlockSizeOverride> ArmorBlockSizeOverrides;
+var config array<BlockSizeOverride> HealthBlockSizeOverrides;
+var config array<BlockRatioOverride> ArmorBlockRatioOverrides;
+var config array<BlockRatioOverride> HealthBlockRatioOverrides;
+var config int ArmorBlockCount;
+var config int HealthBlockCount;
+var config float ArmorBlockGap;
+var config float HealthBlockGap;
+var config int ArmorBlockStyle;
+var config int HealthBlockStyle;
+var config int ArmorBlockVerticalAlignment;
+var config int HealthBlockVerticalAlignment;
 var config int ItemsPerColumn;
 var config int ItemsPerRow;
 var config float ItemMarginX;
@@ -123,11 +147,12 @@ function Initialized()
             BarWidthMin = 202.f;
             BarGap = -1.f;
             EmptyBlockThreshold = 0.f;
-            BlockWidth = 200.f;
-            BlockHeight = 10.f;
-            BlockCount = 1;
-            BlockGap = 2.f;
-            BlockStyle = 0;
+            SetFHUDBlockWidth(200.f);
+            SetFHUDBlockHeight(10.f);
+            SetFHUDBlockCount(1);
+            SetFHUDBlockGap(2.f);
+            SetFHUDBlockStyle(0);
+            SetFHUDBlockAlignY(2);
             NameMarginX = 0.f;
             NameMarginY = 0.f;
             NameScale = 1.f;
@@ -165,6 +190,10 @@ function Initialized()
         SaveAndUpdate();
     }
 
+    HealthBlockSizeOverrides.Sort(SortBlockSizeOverrides);
+    ArmorBlockSizeOverrides.Sort(SortBlockSizeOverrides);
+    HealthBlockRatioOverrides.Sort(SortBlockRatioOverrides);
+    ArmorBlockRatioOverrides.Sort(SortBlockRatioOverrides);
     ColorThresholds.Sort(SortColorThresholds);
 
     `Log("[FriendlyHUD] Initialized config");
@@ -239,11 +268,13 @@ exec function ResetFHUDBar()
     NameScale = 1.f;
     BarWidthMin = 202.f;
     BarGap = -1.f;
-    BlockGap = 2.f;
-    BlockWidth = 200.f;
-    BlockHeight = 10.f;
-    BlockCount = 1;
-    BlockStyle = 0;
+    SetFHUDBlockGap(2.f);
+    ClearFHUDBlockDimensions();
+    SetFHUDBlockWidth(200.f);
+    SetFHUDBlockHeight(10.f);
+    SetFHUDBlockCount(1);
+    SetFHUDBlockStyle(0);
+    SetFHUDBlockAlignY(2);
 
     SaveAndUpdate();
 }
@@ -334,11 +365,17 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("Bar Settings");
         ConsolePrint("--------------------------");
         ConsolePrint("ResetFHUDBar: resets the bar settings (including buffs) to their defaults");
+        ConsolePrint("ClearFHUDBlockDimensions: clears the block dimensions overrides");
         ConsolePrint("SetFHUDBarGap <float>: controls the gap between the armor and the health bar (default is -1)");
-        ConsolePrint("SetFHUDBlockSize <float Width = 200> <float Height = 10>: controls the dimensions of bar blocks (default is 200 x 10)");
+        ConsolePrint("SetFHUDBlockSize <float Width> <float Height>: controls the dimensions of bar blocks (default is 200 x 10)");
+        ConsolePrint("SetFHUDBlockSize <float Width> <float Height> <int BlockIndex = -1>: controls the dimensions of individual blocks (first block starts at 0)");
+        ConsolePrint("SetFHUDBlockWidth <float> <int BlockIndex = -1>: controls the width of bar blocks");
+        ConsolePrint("SetFHUDBlockHeight <float> <int BlockIndex = -1>: controls the height of bar blocks");
         ConsolePrint("SetFHUDBlockCount <int>: controls the number of bar blocks (default is 1)");
         ConsolePrint("SetFHUDBlockGap <float>: controls the gap between the bar blocks (default is 2)");
+        ConsolePrint("SetFHUDBlockAlignY <string>: controls how blocks are aligned vertically when you have blocks of different heights (default is middle); possible values: top, bottom, middle");
         ConsolePrint("SetFHUDBlockStyle <string>: controls the bar block value rounding logic (default is default); possible values: default, round, ceil, floor");
+        ConsolePrint("NOTE: armor bar and health bar settings can be controlled separately; e.g. SetFHUDArmorBlockSize, SetFHUDHealthBlockSize, ...");
         ConsolePrint("SetFHUDIconSize <float>: controls the dimensions of the perk icon (default is 32)");
         ConsolePrint("SetFHUDIconOffset <float>: controls the vertical offset of the perk icon (default is 0)");
         ConsolePrint("SetFHUDIconGap <float>: controls the gap between the perk icon and the bars (default is 4)");
@@ -549,46 +586,46 @@ exec function LoadFHUDBarPreset(string Value)
         case "default":
             break;
         case "1080_block5":
-            BlockStyle = 1;
-            BlockCount = 5;
-            BlockWidth = 11.f;
-            BlockHeight = 11.f;
+            SetFHUDBlockStyle(1);
+            SetFHUDBlockCount(5);
+            SetFHUDBlockWidth(11.f);
+            SetFHUDBlockHeight(11.f);
             BarGap = 2.f;
             break;
         case "1440_block5":
-            BlockStyle = 1;
-            BlockCount = 5;
-            BlockWidth = 13.f;
-            BlockHeight = 13.f;
+            SetFHUDBlockStyle(1);
+            SetFHUDBlockCount(5);
+            SetFHUDBlockWidth(13.f);
+            SetFHUDBlockHeight(13.f);
             BarGap = 2.f;
             break;
         case "1080_block10":
-            BlockStyle = 1;
-            BlockCount = 10;
-            BlockWidth = 11.f;
-            BlockHeight = 11.f;
+            SetFHUDBlockStyle(1);
+            SetFHUDBlockCount(10);
+            SetFHUDBlockWidth(11.f);
+            SetFHUDBlockHeight(11.f);
             BarGap = 2.f;
             break;
         case "1440_block10":
-            BlockStyle = 1;
-            BlockCount = 10;
-            BlockWidth = 13.f;
-            BlockHeight = 13.f;
+            SetFHUDBlockStyle(1);
+            SetFHUDBlockCount(10);
+            SetFHUDBlockWidth(13.f);
+            SetFHUDBlockHeight(13.f);
             BarGap = 4.f;
             break;
         case "block2":
-            BlockCount = 2;
-            BlockWidth = 100.f;
+            SetFHUDBlockCount(2);
+            SetFHUDBlockWidth(100.f);
             BarGap = 4.f;
             break;
         case "barcode":
             IconSize = 50.f;
             IconOffset = -10.f;
-            BlockGap = 0.f;
-            BlockStyle = 3;
-            BlockCount = 50;
-            BlockWidth = 2.f;
-            BlockHeight = 10.f;
+            SetFHUDBlockGap(0.f);
+            SetFHUDBlockStyle(3);
+            SetFHUDBlockCount(50);
+            SetFHUDBlockWidth(2.f);
+            SetFHUDBlockHeight(10.f);
             BarGap = 4.f;
             BuffOffset = 5.f;
             BuffSize = 11.f;
@@ -609,7 +646,7 @@ exec function SetFHUDScale(float Value)
     SaveAndUpdate();
 }
 
-exec function SetFHUDFlow(string Value)
+exec function SetFHUDFlow(coerce string Value)
 {
     switch (Locs(Value))
     {
@@ -634,7 +671,7 @@ exec function SetFHUDFlow(string Value)
     SaveAndUpdate();
 }
 
-exec function SetFHUDLayout(string Value)
+exec function SetFHUDLayout(coerce string Value)
 {
     switch (Locs(Value))
     {
@@ -673,48 +710,378 @@ exec function SetFHUDBarGap(float Value)
     SaveAndUpdate();
 }
 
-exec function SetFHUDBlockSize(optional float Width = 200.f, optional float Height = 10.f)
+exec function SetFHUDBlockSize(float Width, float Height, optional int BlockIndex = -1)
 {
-    BlockWidth = FMax(Width, 1.f);
-    BlockHeight = FMax(Height, 1.f);
+    SetFHUDArmorBlockSize(Width, Height, BlockIndex);
+    SetFHUDHealthBlockSize(Width, Height, BlockIndex);
+}
+
+exec function SetFHUDArmorBlockSize(float Width, float Height, optional int BlockIndex = -1)
+{
+    SetFHUDArmorBlockWidth(Width, BlockIndex);
+    SetFHUDArmorBlockHeight(Height, BlockIndex);
+}
+
+exec function SetFHUDHealthBlockSize(float Width, float Height, optional int BlockIndex = -1)
+{
+    SetFHUDHealthBlockWidth(Width, BlockIndex);
+    SetFHUDHealthBlockHeight(Height, BlockIndex);
+}
+
+exec function ClearFHUDBlockDimensions()
+{
+    ClearFHUDArmorBlockDimensions();
+    ClearFHUDHealthBlockDimensions();
+    SaveAndUpdate();
+}
+
+exec function ClearFHUDArmorBlockDimensions()
+{
+    ArmorBlockSizeOverrides.Length = 0;
+    SaveAndUpdate();
+}
+
+exec function ClearFHUDHealthBlockDimensions()
+{
+    HealthBlockSizeOverrides.Length = 0;
+    SaveAndUpdate();
+}
+
+exec function SetFHUDBlockWidth(float Value, optional int BlockIndex = -1)
+{
+    SetFHUDArmorBlockWidth(Value, BlockIndex);
+    SetFHUDHealthBlockWidth(Value, BlockIndex);
+}
+
+exec function SetFHUDArmorBlockWidth(float Value, optional int BlockIndex = -1)
+{
+    local BlockSizeOverride Item, NewItem;
+    local int I;
+
+    Value = FMax(Value, 0.f);
+
+    if (BlockIndex < 0)
+    {
+        foreach ArmorBlockSizeOverrides(Item)
+        {
+            if (Item.Width > 0)
+            {
+                ConsolePrint("Some armor blocks are overriding the default width. Use ClearFHUDArmorBlockDimensions to reset all armor block dimensions.");
+                break;
+            }
+        }
+
+        ArmorBlockWidth = FMax(Value, 1.f);
+        SaveAndUpdate();
+        return;
+    }
+
+    for (I = 0; I < ArmorBlockSizeOverrides.Length; I++)
+    {
+        if (ArmorBlockSizeOverrides[I].BlockIndex == BlockIndex)
+        {
+            ArmorBlockSizeOverrides[I].Width = Value;
+            SaveAndUpdate();
+            return;
+        }
+    }
+
+    NewItem.Width = Value;
+    NewItem.BlockIndex = BlockIndex;
+    ArmorBlockSizeOverrides.AddItem(NewItem);
+    ArmorBlockSizeOverrides.Sort(SortBlockSizeOverrides);
+
+    SaveAndUpdate();
+}
+
+exec function SetFHUDHealthBlockWidth(float Value, optional int BlockIndex = -1)
+{
+    local BlockSizeOverride Item, NewItem;
+    local int I;
+
+    Value = FMax(Value, 0.f);
+
+    if (BlockIndex < 0)
+    {
+        foreach HealthBlockSizeOverrides(Item)
+        {
+            if (Item.Width > 0)
+            {
+                ConsolePrint("Some health blocks are overriding the default width. Use ClearFHUDHealthBlockDimensions to reset all health block dimensions.");
+                break;
+            }
+        }
+
+        HealthBlockWidth = FMax(Value, 1.f);
+        SaveAndUpdate();
+        return;
+    }
+
+    for (I = 0; I < HealthBlockSizeOverrides.Length; I++)
+    {
+        if (HealthBlockSizeOverrides[I].BlockIndex == BlockIndex)
+        {
+            HealthBlockSizeOverrides[I].Width = Value;
+            SaveAndUpdate();
+            return;
+        }
+    }
+
+    NewItem.Width = Value;
+    NewItem.BlockIndex = BlockIndex;
+    HealthBlockSizeOverrides.AddItem(NewItem);
+    HealthBlockSizeOverrides.Sort(SortBlockSizeOverrides);
+
+    SaveAndUpdate();
+}
+
+exec function SetFHUDBlockHeight(float Value, optional int BlockIndex = -1)
+{
+    SetFHUDArmorBlockHeight(Value, BlockIndex);
+    SetFHUDHealthBlockHeight(Value, BlockIndex);
+}
+
+exec function SetFHUDArmorBlockHeight(float Value, optional int BlockIndex = -1)
+{
+    local BlockSizeOverride Item, NewItem;
+    local int I;
+
+    Value = FMax(Value, 0.f);
+
+    if (BlockIndex < 0)
+    {
+        foreach ArmorBlockSizeOverrides(Item)
+        {
+            if (Item.Height > 0)
+            {
+                ConsolePrint("Some armor blocks are overriding the default height. Use ClearFHUDArmorBlockDimensions to reset all armor block dimensions.");
+                break;
+            }
+        }
+
+        ArmorBlockHeight = FMax(Value, 1.f);
+        SaveAndUpdate();
+        return;
+    }
+
+    for (I = 0; I < ArmorBlockSizeOverrides.Length; I++)
+    {
+        if (ArmorBlockSizeOverrides[I].BlockIndex == BlockIndex)
+        {
+            ArmorBlockSizeOverrides[I].Height = Value;
+            SaveAndUpdate();
+            return;
+        }
+    }
+
+    NewItem.Height = Value;
+    NewItem.BlockIndex = BlockIndex;
+    ArmorBlockSizeOverrides.AddItem(NewItem);
+    ArmorBlockSizeOverrides.Sort(SortBlockSizeOverrides);
+
+    SaveAndUpdate();
+}
+
+exec function SetFHUDHealthBlockHeight(float Value, optional int BlockIndex = -1)
+{
+    local BlockSizeOverride Item, NewItem;
+    local int I;
+
+    Value = FMax(Value, 0.f);
+
+    if (BlockIndex < 0)
+    {
+        foreach HealthBlockSizeOverrides(Item)
+        {
+            if (Item.Height > 0)
+            {
+                ConsolePrint("Some health blocks are overriding the default height. Use ClearFHUDHealthBlockDimensions to reset all health block dimensions.");
+                break;
+            }
+        }
+
+        HealthBlockHeight = FMax(Value, 1.f);
+        SaveAndUpdate();
+        return;
+    }
+
+    for (I = 0; I < HealthBlockSizeOverrides.Length; I++)
+    {
+        if (HealthBlockSizeOverrides[I].BlockIndex == BlockIndex)
+        {
+            HealthBlockSizeOverrides[I].Height = Value;
+            SaveAndUpdate();
+            return;
+        }
+    }
+
+    NewItem.Height = Value;
+    NewItem.BlockIndex = BlockIndex;
+    HealthBlockSizeOverrides.AddItem(NewItem);
+    HealthBlockSizeOverrides.Sort(SortBlockSizeOverrides);
+
     SaveAndUpdate();
 }
 
 exec function SetFHUDBlockCount(int Value)
 {
-    BlockCount = Max(Value, 1);
+    SetFHUDArmorBlockCount(Value);
+    SetFHUDHealthBlockCount(Value);
+}
+
+exec function SetFHUDArmorBlockCount(int Value)
+{
+    ArmorBlockCount = Max(Value, 1);
+    SaveAndUpdate();
+}
+
+exec function SetFHUDHealthBlockCount(int Value)
+{
+    HealthBlockCount = Max(Value, 1);
     SaveAndUpdate();
 }
 
 exec function SetFHUDBlockGap(float Value)
 {
-    BlockGap = FMax(Value, 0.f);
+    SetFHUDArmorBlockGap(Value);
+    SetFHUDHealthBlockGap(Value);
+}
+
+exec function SetFHUDArmorBlockGap(float Value)
+{
+    ArmorBlockGap = Value;
     SaveAndUpdate();
 }
 
-exec function SetFHUDBlockStyle(string Value)
+exec function SetFHUDHealthBlockGap(float Value)
+{
+    HealthBlockGap = Value;
+    SaveAndUpdate();
+}
+
+exec function SetFHUDBlockAlignY(coerce string Value)
+{
+    SetFHUDArmorBlockAlignY(Value);
+    SetFHUDHealthBlockAlignY(Value);
+}
+
+exec function SetFHUDArmorBlockAlignY(coerce string Value)
+{
+    switch (Locs(Value))
+    {
+        case "top":
+            ArmorBlockVerticalAlignment = 0;
+            break;
+        case "bottom":
+            ArmorBlockVerticalAlignment = 1;
+            break;
+        case "middle":
+            ArmorBlockVerticalAlignment = 2;
+            break;
+        default:
+            // Non-int values get parsed as 0
+            ArmorBlockVerticalAlignment = Clamp(int(Value), 0, 2);
+
+            // Invalid value
+            if (ArmorBlockVerticalAlignment == 0 && Value != "0" || int(Value) != ArmorBlockVerticalAlignment)
+            {
+                ConsolePrint("Invalid block vertical alignment:" @ Value);
+            }
+            break;
+    }
+
+    SaveAndUpdate();
+}
+
+exec function SetFHUDHealthBlockAlignY(coerce string Value)
+{
+    switch (Locs(Value))
+    {
+        case "top":
+            HealthBlockVerticalAlignment = 0;
+            break;
+        case "bottom":
+            HealthBlockVerticalAlignment = 1;
+            break;
+        case "middle":
+            HealthBlockVerticalAlignment = 2;
+            break;
+        default:
+            // Non-int values get parsed as 0
+            HealthBlockVerticalAlignment = Clamp(int(Value), 0, 2);
+
+            // Invalid value
+            if (HealthBlockVerticalAlignment == 0 && Value != "0" || int(Value) != HealthBlockVerticalAlignment)
+            {
+                ConsolePrint("Invalid block vertical alignment:" @ Value);
+            }
+            break;
+    }
+
+    SaveAndUpdate();
+}
+
+exec function SetFHUDBlockStyle(coerce string Value)
+{
+    SetFHUDArmorBlockStyle(Value);
+    SetFHUDHealthBlockStyle(Value);
+}
+
+exec function SetFHUDArmorBlockStyle(coerce string Value)
 {
     switch (Locs(Value))
     {
         case "default":
-            BlockStyle = 0;
+            ArmorBlockStyle = 0;
             break;
         case "round":
         case "full":
-            BlockStyle = 1;
+            ArmorBlockStyle = 1;
             break;
         case "ceil":
-            BlockStyle = 2;
+            ArmorBlockStyle = 2;
             break;
         case "floor":
-            BlockStyle = 3;
+            ArmorBlockStyle = 3;
             break;
         default:
             // Non-int values get parsed as 0
-            BlockStyle = Clamp(int(Value), 0, 3);
+            ArmorBlockStyle = Clamp(int(Value), 0, 3);
 
             // Invalid value
-            if (BlockStyle == 0 && Value != "0" || int(Value) != BlockStyle)
+            if (ArmorBlockStyle == 0 && Value != "0" || int(Value) != ArmorBlockStyle)
+            {
+                ConsolePrint("Invalid block style:" @ Value);
+            }
+            break;
+    }
+
+    SaveAndUpdate();
+}
+
+exec function SetFHUDHealthBlockStyle(coerce string Value)
+{
+    switch (Locs(Value))
+    {
+        case "default":
+            HealthBlockStyle = 0;
+            break;
+        case "round":
+        case "full":
+            HealthBlockStyle = 1;
+            break;
+        case "ceil":
+            HealthBlockStyle = 2;
+            break;
+        case "floor":
+            HealthBlockStyle = 3;
+            break;
+        default:
+            // Non-int values get parsed as 0
+            HealthBlockStyle = Clamp(int(Value), 0, 3);
+
+            // Invalid value
+            if (HealthBlockStyle == 0 && Value != "0" || int(Value) != HealthBlockStyle)
             {
                 ConsolePrint("Invalid block style:" @ Value);
             }
@@ -858,7 +1225,7 @@ exec function SetFHUDItemMarginY(float Value)
     SaveAndUpdate();
 }
 
-exec function SetFHUDBuffLayout(string Value)
+exec function SetFHUDBuffLayout(coerce string Value)
 {
     switch (Locs(Value))
     {
@@ -1206,7 +1573,7 @@ exec function MoveFHUDColorThreshold(float Threshold, float NewThreshold)
     ConsolePrint("Failed to find threshold" @ Threshold);
 }
 
-exec function SetFHUDDynamicColors(String Value)
+exec function SetFHUDDynamicColors(coerce String Value)
 {
     switch (Locs(Value))
     {
@@ -1235,7 +1602,7 @@ exec function SetFHUDDynamicColors(String Value)
     SaveAndUpdate();
 }
 
-exec function SetFHUDDynamicRegenColors(string Value)
+exec function SetFHUDDynamicRegenColors(coerce string Value)
 {
     switch (Locs(Value))
     {
@@ -1349,6 +1716,20 @@ function SaveAndUpdate()
     {
         FHUDInteraction.UpdateRuntimeVars();
     }
+}
+
+delegate int SortBlockSizeOverrides(BlockSizeOverride A, BlockSizeOverride B)
+{
+    if (A.BlockIndex < B.BlockIndex) return 1;
+    if (A.BlockIndex > B.BlockIndex) return -1;
+    return 0;
+}
+
+delegate int SortBlockRatioOverrides(BlockRatioOverride A, BlockRatioOverride B)
+{
+    if (A.BlockIndex < B.BlockIndex) return 1;
+    if (A.BlockIndex > B.BlockIndex) return -1;
+    return 0;
 }
 
 defaultproperties
