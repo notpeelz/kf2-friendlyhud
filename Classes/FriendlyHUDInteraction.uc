@@ -61,7 +61,7 @@ var bool RuntimeInitialized;
 var float CachedScreenWidth, CachedScreenHeight;
 var UI_RuntimeVars R;
 
-const ASCIICharacters = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{_}~";
+const ASCIICharacters = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 const FLOAT_EPSILON = 0.0001f;
 const PrestigeIconScale = 0.75f;
 
