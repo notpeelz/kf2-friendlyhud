@@ -66,3 +66,8 @@ static simulated function Color ColorFromString(string Value)
 
     return Result;
 }
+
+static simulated function string FloatToString(float Value, int Decimals)
+{
+    return Left(String(Value), InStr(string(Value), ".") + Decimals + 1);
+}

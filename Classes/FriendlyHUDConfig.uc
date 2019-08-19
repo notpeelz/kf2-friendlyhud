@@ -111,6 +111,7 @@ var FriendlyHUDMutator FHUDMutator;
 var FriendlyHUDInteraction FHUDInteraction;
 
 var bool DrawDebugLines;
+var bool DrawDebugRatios;
 
 var int CurrentVersion;
 const LatestVersion = 2;
@@ -270,6 +271,7 @@ exec function ResetFHUDBar()
     BarGap = -1.f;
     SetFHUDBlockGap(2.f);
     ClearFHUDBlockDimensions();
+    ClearFHUDBlockRatios();
     SetFHUDBlockWidth(200.f);
     SetFHUDBlockHeight(10.f);
     SetFHUDBlockCount(1);
@@ -366,16 +368,18 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("--------------------------");
         ConsolePrint("ResetFHUDBar: resets the bar settings (including buffs) to their defaults");
         ConsolePrint("ClearFHUDBlockDimensions: clears the block dimensions overrides");
-        ConsolePrint("SetFHUDBarGap <float>: controls the gap between the armor and the health bar (default is -1)");
+        ConsolePrint("ClearFHUDBlockRatios: clears the block ratio overrides");
         ConsolePrint("SetFHUDBlockSize <float Width> <float Height>: controls the dimensions of bar blocks (default is 200 x 10)");
         ConsolePrint("SetFHUDBlockSize <float Width> <float Height> <int BlockIndex = -1>: controls the dimensions of individual blocks (first block starts at 0)");
         ConsolePrint("SetFHUDBlockWidth <float> <int BlockIndex = -1>: controls the width of bar blocks");
         ConsolePrint("SetFHUDBlockHeight <float> <int BlockIndex = -1>: controls the height of bar blocks");
+        ConsolePrint("SetFHUDBlockRatio <float> <int BlockIndex>: controls the bar ratio (health ratio or armor ratio) represented by a specific block");
         ConsolePrint("SetFHUDBlockCount <int>: controls the number of bar blocks (default is 1)");
         ConsolePrint("SetFHUDBlockGap <float>: controls the gap between the bar blocks (default is 2)");
         ConsolePrint("SetFHUDBlockAlignY <string>: controls how blocks are aligned vertically when you have blocks of different heights (default is middle); possible values: top, bottom, middle");
         ConsolePrint("SetFHUDBlockStyle <string>: controls the bar block value rounding logic (default is default); possible values: default, round, ceil, floor");
         ConsolePrint("NOTE: armor bar and health bar settings can be controlled separately; e.g. SetFHUDArmorBlockSize, SetFHUDHealthBlockSize, ...");
+        ConsolePrint("SetFHUDBarGap <float>: controls the gap between the armor and the health bar (default is -1)");
         ConsolePrint("SetFHUDIconSize <float>: controls the dimensions of the perk icon (default is 32)");
         ConsolePrint("SetFHUDIconOffset <float>: controls the vertical offset of the perk icon (default is 0)");
         ConsolePrint("SetFHUDIconGap <float>: controls the gap between the perk icon and the bars (default is 4)");
@@ -410,6 +414,7 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("Misc/Debug Settings");
         ConsolePrint("--------------------------");
         ConsolePrint("SetFHUDDrawDebugLines <bool>: displays debug lines -- useful for debugging layout issues");
+        ConsolePrint("SetFHUDDrawDebugRatios <bool>: displays ratios over blocks -- useful for debugging block distribution issues");
         ConsolePrint("DebugFHUDSetArmor <int Armor> <int MaxArmor = -1>: sets the armor value for your own character -- cheats only");
         ConsolePrint("DebugFHUDSetHealth <int Health> <int MaxHealth = -1>: sets the health value for your own character -- cheats only");
         ConsolePrint("SetFHUDUpdateInterval <float>: controls the interval (in seconds) between player list updates (default is 0.5)");
@@ -732,7 +737,6 @@ exec function ClearFHUDBlockDimensions()
 {
     ClearFHUDArmorBlockDimensions();
     ClearFHUDHealthBlockDimensions();
-    SaveAndUpdate();
 }
 
 exec function ClearFHUDArmorBlockDimensions()
@@ -744,6 +748,24 @@ exec function ClearFHUDArmorBlockDimensions()
 exec function ClearFHUDHealthBlockDimensions()
 {
     HealthBlockSizeOverrides.Length = 0;
+    SaveAndUpdate();
+}
+
+exec function ClearFHUDBlockRatios()
+{
+    ClearFHUDArmorBlockRatios();
+    ClearFHUDHealthBlockRatios();
+}
+
+exec function ClearFHUDArmorBlockRatios()
+{
+    ArmorBlockRatioOverrides.Length = 0;
+    SaveAndUpdate();
+}
+
+exec function ClearFHUDHealthBlockRatios()
+{
+    HealthBlockRatioOverrides.Length = 0;
     SaveAndUpdate();
 }
 
@@ -919,6 +941,76 @@ exec function SetFHUDHealthBlockHeight(float Value, optional int BlockIndex = -1
     NewItem.BlockIndex = BlockIndex;
     HealthBlockSizeOverrides.AddItem(NewItem);
     HealthBlockSizeOverrides.Sort(SortBlockSizeOverrides);
+
+    SaveAndUpdate();
+}
+
+exec function SetFHUDBlockRatio(float Value, int BlockIndex)
+{
+    if (BlockIndex < 0)
+    {
+        ConsolePrint("Invalid BlockIndex:" @ BlockIndex);
+        return;
+    }
+
+    SetFHUDHealthBlockRatio(Value, BlockIndex);
+    SetFHUDArmorBlockRatio(Value, BlockIndex);
+}
+
+exec function SetFHUDHealthBlockRatio(float Value, int BlockIndex)
+{
+    local BlockRatioOverride NewItem;
+    local int I;
+
+    if (BlockIndex < 0)
+    {
+        ConsolePrint("Invalid BlockIndex:" @ BlockIndex);
+        return;
+    }
+
+    for (I = 0; I < HealthBlockRatioOverrides.Length; I++)
+    {
+        if (HealthBlockRatioOverrides[I].BlockIndex == BlockIndex)
+        {
+            HealthBlockRatioOverrides[I].Ratio = Value;
+            SaveAndUpdate();
+            return;
+        }
+    }
+
+    NewItem.Ratio = Value;
+    NewItem.BlockIndex = BlockIndex;
+    HealthBlockRatioOverrides.AddItem(NewItem);
+    HealthBlockRatioOverrides.Sort(SortBlockRatioOverrides);
+
+    SaveAndUpdate();
+}
+
+exec function SetFHUDArmorBlockRatio(float Value, int BlockIndex)
+{
+    local BlockRatioOverride NewItem;
+    local int I;
+
+    if (BlockIndex < 0)
+    {
+        ConsolePrint("Invalid BlockIndex:" @ BlockIndex);
+        return;
+    }
+
+    for (I = 0; I < ArmorBlockRatioOverrides.Length; I++)
+    {
+        if (ArmorBlockRatioOverrides[I].BlockIndex == BlockIndex)
+        {
+            ArmorBlockRatioOverrides[I].Ratio = Value;
+            SaveAndUpdate();
+            return;
+        }
+    }
+
+    NewItem.Ratio = Value;
+    NewItem.BlockIndex = BlockIndex;
+    ArmorBlockRatioOverrides.AddItem(NewItem);
+    ArmorBlockRatioOverrides.Sort(SortBlockRatioOverrides);
 
     SaveAndUpdate();
 }
@@ -1341,6 +1433,11 @@ exec function SetFHUDOffsetY(float Value)
 exec function SetFHUDDrawDebugLines(bool Value)
 {
     DrawDebugLines = Value;
+}
+
+exec function SetFHUDDrawDebugRatios(bool Value)
+{
+    DrawDebugRatios = Value;
 }
 
 exec function SetFHUDEnabled(bool Value)

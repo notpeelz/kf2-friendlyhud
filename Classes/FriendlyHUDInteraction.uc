@@ -230,6 +230,18 @@ function UpdateRuntimeVars(optional Canvas Canvas)
         HUDConfig.HealthBlockGap
     );
 
+    UpdateBlockRatioOverrides(
+        R.ArmorBlockRatioOverrides,
+        HUDConfig.ArmorBlockRatioOverrides,
+        HUDConfig.ArmorBlockCount
+    );
+
+    UpdateBlockRatioOverrides(
+        R.HealthBlockRatioOverrides,
+        HUDConfig.HealthBlockRatioOverrides,
+        HUDConfig.HealthBlockCount
+    );
+
     R.NameMarginX = HUDConfig.NameMarginX * R.Scale;
     R.NameMarginY = HUDConfig.NameMarginY * R.Scale;
     R.ItemMarginX = HUDConfig.ItemMarginX * R.Scale;
@@ -246,6 +258,116 @@ function UpdateRuntimeVars(optional Canvas Canvas)
         R.ArmorBarHeight + R.HealthBarHeight + R.BarGap + R.TextHeight + R.NameMarginY,
         R.PlayerIconSize + R.PlayerIconOffset
     ) + R.ItemMarginY;
+}
+
+function UpdateBlockRatioOverrides(
+    out array<FriendlyHUDConfig.BlockRatioOverride> BlockRatioOverrides,
+    const out array<FriendlyHUDConfig.BlockRatioOverride> ConfigBlockRatioOverrides,
+    int BlockCount
+)
+{
+    local FriendlyHUDConfig.BlockRatioOverride CurrentItem, Override;
+    local float BarRatio;
+    local bool FoundOverride;
+    local int UnassignedBlocks;
+    local float RatioPerBlock;
+    local int I;
+
+    // We start with 100% of the bar
+    BarRatio = 1.f;
+
+    BlockRatioOverrides.Length = BlockCount;
+    for (I = 0; I < BlockCount; I++)
+    {
+        BlockRatioOverrides[I].BlockIndex = I;
+
+        // If the BarRatio is depleted, we can't assign any more blocks
+        if (BarRatio <= 0.f)
+        {
+            BlockRatioOverrides[I].Ratio = 0.f;
+            continue;
+        }
+
+        // -1 means unassigned
+        BlockRatioOverrides[I].Ratio = -1.f;
+
+        FoundOverride = false;
+        foreach ConfigBlockRatioOverrides(CurrentItem)
+        {
+            if (CurrentItem.BlockIndex == I)
+            {
+                Override = CurrentItem;
+                FoundOverride = true;
+            }
+        }
+
+        // If no override is found, add it to "list" of unassigned blocks for automatic ratio distribution
+        if (!FoundOverride || Override.Ratio <= 0.f)
+        {
+            UnassignedBlocks++;
+        }
+        // Otherwise, use the ratio from the override
+        else
+        {
+            BarRatio -= Override.Ratio;
+            BlockRatioOverrides[I].Ratio = Override.Ratio;
+
+            // If we overflowed, subtract the overflow from the BarRatio
+            if (BarRatio <= 0.f)
+            {
+                // BarRatio is negative, so we need to add it to the block ratio
+                BlockRatioOverrides[I].Ratio += BarRatio;
+            }
+        }
+    }
+
+    // If the BarRatio has been depleted, we don't need to distribute the remainder
+    if (BarRatio <= 0.f || UnassignedBlocks == 0)
+    {
+        // Set all unassigned blocks to 0%
+        for (I = 0; I < BlockCount; I++)
+        {
+            if (BlockRatioOverrides[I].Ratio >= 0.f) continue;
+            BlockRatioOverrides[I].Ratio = 0.f;
+        }
+
+        return;
+    }
+
+    // If we can't distribute the remaining BarRatio evenly into the unassigned blocks,
+    // we distribute it so that all unassigned blocks hold at least 1%
+    if ((BarRatio / float(UnassignedBlocks)) < 1.f)
+    {
+        RatioPerBlock = 1.f;
+    }
+    else
+    {
+        RatioPerBlock = BarRatio / float(UnassignedBlocks);
+    }
+
+    // Deal with unassigned blocks
+    for (I = 0; I < BlockCount; I++)
+    {
+        // Filter out assigned blocks
+        if (BlockRatioOverrides[I].Ratio >= 0.f) continue;
+
+        // If the BarRatio has been depleted, set unassigned blocks to 0%
+        if (BarRatio <= 0.f)
+        {
+            BlockRatioOverrides[I].Ratio = 0.f;
+            continue;
+        }
+
+        BarRatio -= RatioPerBlock;
+        BlockRatioOverrides[I].Ratio = RatioPerBlock;
+
+        // If we overflowed, subtract the overflow from the BarRatio
+        if (BarRatio <= 0.f)
+        {
+            // BarRatio is negative, so we need to add it to the block ratio
+            BlockRatioOverrides[I].Ratio += BarRatio;
+        }
+    }
 }
 
 function UpdateBlockSizeOverrides(
@@ -680,10 +802,15 @@ function DrawBar(
 {
     local int BlockCount, BlockGap, BlockStyle, BarHeight, BlockVerticalAlignment;
     local array<FriendlyHUDConfig.BlockSizeOverride> BlockSizeOverrides;
+    local array<FriendlyHUDConfig.BlockRatioOverride> BlockRatioOverrides;
     local Color BarColor, BufferColor, BGColor, EmptyBGColor;
     local float CurrentBlockPosX, CurrentBlockPosY, CurrentBlockWidth, CurrentBlockHeight;
     local float BarBlockWidth, BufferBlockWidth;
-    local float RatioPerBlock, P1, P2;
+    local float P1, P2;
+    local float BlockRatio;
+    local string DebugRatioText;
+    local float DebugRatioWidth, DebugRatioHeight;
+    local FontRenderInfo DebugTextFontRenderInfo;
     local int I;
 
     TotalWidth = 0.f;
@@ -704,6 +831,7 @@ function DrawBar(
         BarHeight = R.ArmorBarHeight;
         BlockVerticalAlignment = HUDConfig.ArmorBlockVerticalAlignment;
         BlockSizeOverrides = R.ArmorBlockSizeOverrides;
+        BlockRatioOverrides = R.ArmorBlockRatioOverrides;
 
         BarColor = HUDConfig.ArmorColor;
         BGColor = HUDConfig.ArmorBGColor;
@@ -717,6 +845,7 @@ function DrawBar(
         BarHeight = R.HealthBarHeight;
         BlockVerticalAlignment = HUDConfig.HealthBlockVerticalAlignment;
         BlockSizeOverrides = R.HealthBlockSizeOverrides;
+        BlockRatioOverrides = R.HealthBlockRatioOverrides;
 
         BarColor = HUDConfig.HealthColor;
         BufferColor = HUDConfig.HealthRegenColor;
@@ -740,8 +869,6 @@ function DrawBar(
         }
     }
 
-    RatioPerBlock = 1.f / BlockCount;
-
     for (I = 0; I < BlockCount; I++)
     {
         CurrentBlockWidth = BlockSizeOverrides[I].Width;
@@ -750,26 +877,37 @@ function DrawBar(
         TotalWidth += CurrentBlockWidth + BlockGap + 2.f;
         TotalHeight = FMax(TotalHeight, CurrentBlockHeight);
 
-        BarRatio -= RatioPerBlock;
-        P1 = BarRatio < 0.f
-            // We overflowed, so we have to subtract it
-            ? FMax((RatioPerBlock + BarRatio) / RatioPerBlock, 0.f)
-            // We can fill the block up to 100%
-            : 1.f;
-        P2 = 0.f;
+        BlockRatio = BlockRatioOverrides[I].Ratio;
 
-        // Once we've "drained" (rendered) all of the primary bar, start draining the buffer
-        if (BufferRatio > 0.f && P1 < 1.f)
+        // Handle empty blocks so that we don't get DBZ errors
+        if (BlockRatio <= 0.f)
         {
-            // Try to fill the rest of the block (that's not occupied by the first bar)
-            P2 = 1.f - P1;
-            BufferRatio -= P2 * RatioPerBlock;
+            P1 = 0.f;
+            P2 = 0.f;
+        }
+        else
+        {
+            BarRatio -= BlockRatio;
+            P1 = BarRatio < 0.f
+                // We overflowed, so we have to subtract it
+                ? FMax((BlockRatio + BarRatio) / BlockRatio, 0.f)
+                // We can fill the block up to 100%
+                : 1.f;
+            P2 = 0.f;
 
-            // If we overflowed, subtract the overflow from the buffer (P2)
-            if (BufferRatio < 0.f)
+            // Once we've "drained" (rendered) all of the primary bar, start draining the buffer
+            if (BufferRatio > 0.f && P1 < 1.f)
             {
-                // BufferRatio is negative, so we need to add it to P2
-                P2 += BufferRatio / RatioPerBlock;
+                // Try to fill the rest of the block (that's not occupied by the first bar)
+                P2 = 1.f - P1;
+                BufferRatio -= P2 * BlockRatio;
+
+                // If we overflowed, subtract the overflow from the buffer (P2)
+                if (BufferRatio < 0.f)
+                {
+                    // BufferRatio is negative, so we need to add it to P2
+                    P2 += BufferRatio / BlockRatio;
+                }
             }
         }
 
@@ -815,6 +953,15 @@ function DrawBar(
             SetCanvasColor(Canvas, BufferColor);
             Canvas.SetPos(CurrentBlockPosX + BarBlockWidth, CurrentBlockPosY);
             Canvas.DrawTile(default.BarBGTexture, BufferBlockWidth, CurrentBlockHeight - 2.f, 0, 0, 32, 32);
+        }
+
+        if (HUDConfig.DrawDebugRatios)
+        {
+            DebugRatioText = class'FriendlyHUD.FriendlyHUDHelper'.static.FloatToString(P1 * BlockRatio, 2) $ "/" $ class'FriendlyHUD.FriendlyHUDHelper'.static.FloatToString(BlockRatio, 2);
+            SetCanvasColor(Canvas, MakeColor(202, 44, 146, 255));
+            Canvas.TextSize(DebugRatioText, DebugRatioWidth, DebugRatioHeight, 0.6f, 0.6f);
+            Canvas.SetPos(CurrentBlockPosX, CurrentBlockPosY + CurrentBlockHeight - DebugRatioHeight);
+            Canvas.DrawText(DebugRatioText, , 0.6f, 0.6f, DebugTextFontRenderInfo);
         }
 
         CurrentBlockPosX += CurrentBlockWidth + BlockGap + 2.f;
