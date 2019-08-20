@@ -371,6 +371,7 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("ClearFHUDBlockRatios: clears the block ratio overrides");
         ConsolePrint("SetFHUDBlockSize <float Width> <float Height>: controls the dimensions of bar blocks (default is 200 x 10)");
         ConsolePrint("SetFHUDBlockSize <float Width> <float Height> <int BlockIndex = -1>: controls the dimensions of individual blocks (first block starts at 0)");
+        ConsolePrint("SetFHUDProportions <float Width> <string Ratios>: sets up block dimensions and block ratios from a given total bar width and a list of ratios; the ratios are comma-separated, e.g.: 0.7,0.3");
         ConsolePrint("SetFHUDBlockWidth <float> <int BlockIndex = -1>: controls the width of bar blocks");
         ConsolePrint("SetFHUDBlockHeight <float> <int BlockIndex = -1>: controls the height of bar blocks");
         ConsolePrint("SetFHUDBlockRatio <float> <int BlockIndex>: controls the bar ratio (health ratio or armor ratio) represented by a specific block");
@@ -767,6 +768,155 @@ exec function ClearFHUDHealthBlockRatios()
 {
     HealthBlockRatioOverrides.Length = 0;
     SaveAndUpdate();
+}
+
+exec function SetFHUDBlockProportions(float Width, optional string Ratios)
+{
+    local array<string> Params;
+
+    // UE3 BUG: We have to do it this way, otherwise UE ignores the input for whatever reason
+    if (Ratios == "") Ratios = "1";
+
+    Params = SplitString(Ratios, ",", true);
+
+    if (Params.Length < 1)
+    {
+        ConsolePrint("Not enough blocks defined.");
+        return;
+    }
+
+    SetFHUDArmorBlockProportions(Width, Ratios);
+    SetFHUDHealthBlockProportions(Width, Ratios);
+}
+
+exec function SetFHUDArmorBlockProportions(float Width, optional string Ratios)
+{
+    local array<string> Params;
+    local float TotalWidth, CurrentBlockWidth;
+    local float Ratio;
+    local int BlockCount;
+    local int I;
+
+    // UE3 BUG: We have to do it this way, otherwise UE ignores the input for whatever reason
+    if (Ratios == "") Ratios = "1";
+
+    Params = SplitString(Ratios, ",", true);
+
+    // Clear previous overrides
+    ClearFHUDArmorBlockDimensions();
+    ClearFHUDArmorBlockRatios();
+
+    if (Params.Length < 1)
+    {
+        ConsolePrint("Not enough blocks defined.");
+        return;
+    }
+
+    BlockCount = 0;
+    TotalWidth = Width;
+
+    // Set the block dimensions and ratios
+    for (I = 0; I < Params.Length; I++)
+    {
+        Ratio = float(Params[I]);
+        SetFHUDArmorBlockRatio(Ratio, I);
+
+        if (Params.Length > 1)
+        {
+            // If we reached maximum width, ignore it
+            if (TotalWidth <= 0.f) continue;
+
+            // If the ratio would end up in an invisible block, ignore it
+            if (Ratio < class'FriendlyHUD.FriendlyHUDInteraction'.const.FLOAT_EPSILON) continue;
+
+            CurrentBlockWidth = Width * Ratio;
+            TotalWidth -= CurrentBlockWidth;
+
+            // If we overflowed, subtract the overflow from the TotalWidth
+            if (TotalWidth <= 0.f)
+            {
+                // TotalWidth is negative, so we need to add it to the block ratio
+                CurrentBlockWidth += TotalWidth;
+            }
+
+            SetFHUDArmorBlockWidth(CurrentBlockWidth, I);
+
+            BlockCount++;
+        }
+    }
+
+    // If we haven't set an override for any blocks, set the default block width instead
+    if (BlockCount == 0)
+    {
+        SetFHUDArmorBlockWidth(Width);
+    }
+
+    SetFHUDArmorBlockCount(BlockCount);
+}
+
+exec function SetFHUDHealthBlockProportions(float Width, optional string Ratios)
+{
+    local array<string> Params;
+    local float TotalWidth, CurrentBlockWidth;
+    local float Ratio;
+    local int BlockCount;
+    local int I;
+
+    // UE3 BUG: We have to do it this way, otherwise UE ignores the input for whatever reason
+    if (Ratios == "") Ratios = "1";
+
+    Params = SplitString(Ratios, ",", true);
+
+    // Clear previous overrides
+    ClearFHUDHealthBlockDimensions();
+    ClearFHUDHealthBlockRatios();
+
+    if (Params.Length < 1)
+    {
+        ConsolePrint("Not enough blocks defined.");
+        return;
+    }
+
+    BlockCount = 0;
+    TotalWidth = Width;
+
+    // Set the block dimensions and ratios
+    for (I = 0; I < Params.Length; I++)
+    {
+        Ratio = float(Params[I]);
+        SetFHUDHealthBlockRatio(Ratio, I);
+
+        if (Params.Length > 1)
+        {
+            // If we reached maximum width, ignore it
+            if (TotalWidth <= 0.f) continue;
+
+            // If the ratio would end up in an invisible block, ignore it
+            if (Ratio < class'FriendlyHUD.FriendlyHUDInteraction'.const.FLOAT_EPSILON) continue;
+
+            CurrentBlockWidth = Width * Ratio;
+            TotalWidth -= CurrentBlockWidth;
+
+            // If we overflowed, subtract the overflow from the TotalWidth
+            if (TotalWidth <= 0.f)
+            {
+                // TotalWidth is negative, so we need to add it to the block ratio
+                CurrentBlockWidth += TotalWidth;
+            }
+
+            SetFHUDHealthBlockWidth(CurrentBlockWidth, I);
+
+            BlockCount++;
+        }
+    }
+
+    // If we haven't set an override for any blocks, set the default block width instead
+    if (BlockCount == 0)
+    {
+        SetFHUDHealthBlockWidth(Width);
+    }
+
+    SetFHUDHealthBlockCount(BlockCount);
 }
 
 exec function SetFHUDBlockWidth(float Value, optional int BlockIndex = -1)
@@ -1433,11 +1583,13 @@ exec function SetFHUDOffsetY(float Value)
 exec function SetFHUDDrawDebugLines(bool Value)
 {
     DrawDebugLines = Value;
+    SaveAndUpdate();
 }
 
 exec function SetFHUDDrawDebugRatios(bool Value)
 {
     DrawDebugRatios = Value;
+    SaveAndUpdate();
 }
 
 exec function SetFHUDEnabled(bool Value)
