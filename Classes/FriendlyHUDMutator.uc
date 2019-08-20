@@ -138,9 +138,15 @@ simulated function InitializeDeferred()
     InitializeChatHook();
     InitializeCompat();
 
-    // Defer the printing because we want our message to show up last
-    SetTimer(0.2f, false, nameof(PrintNotification));
-
+    if (IsUMLoaded())
+    {
+        // Defer the printing because we want our message to show up last
+        SetTimer(1.f, false, nameof(PrintNotification));
+    }
+    else
+    {
+        PrintNotification();
+    }
     `Log("[FriendlyHUD] Initialized");
 }
 
@@ -155,7 +161,7 @@ simulated function bool IsUMLoaded()
 
     for (Mut = WorldInfo.Game.BaseMutator; Mut != None; Mut = Mut.NextMutator)
     {
-        if (PathName(Mut.class) == "UnofficialMod.UnofficialModMut") return true;
+        if (Locs(PathName(Mut.class)) == Locs("UnofficialMod.UnofficialModMut")) return true;
     }
 
     return false;
