@@ -418,6 +418,13 @@ function UpdateBlockSizeOverrides(
             }
         }
 
+        // Enforce minimum block dimensions to display the ratio labels over
+        if (HUDConfig.DrawDebugRatios)
+        {
+            BlockSizeOverrides[I].Width = FMax(BlockSizeOverrides[I].Width, 90.f);
+            BlockSizeOverrides[I].Height = FMax(BlockSizeOverrides[I].Height, 22.f);
+        }
+
         BarWidth += BlockSizeOverrides[I].Width + (BlockGap * R.Scale) + 2.f;
         BarHeight = FMax(BarHeight, BlockSizeOverrides[I].Height);
     }
