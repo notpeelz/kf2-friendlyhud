@@ -613,9 +613,10 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
     local bool ForceShowBuffs;
     local int BuffLevel;
     local byte IsFriend;
+    local FriendlyHUDReplicationInfo.EPlayerReadyState PlayerState;
 
     KFPRI = ItemInfo.KFPRI;
-    ItemInfo.RepInfo.GetPlayerInfo(ItemInfo.RepIndex, ArmorInfo, HealthInfo, HealthToRegen, BuffInfo, IsFriend);
+    ItemInfo.RepInfo.GetPlayerInfo(ItemInfo.RepIndex, ArmorInfo, HealthInfo, HealthToRegen, BuffInfo, IsFriend, PlayerState);
 
     TotalRegenRatio = HealthInfo.MaxValue > 0 ? FMin(FMax(float(HealthToRegen) / float(HealthInfo.MaxValue), 0.f), 1.f) : 0.f;
     HealthToRegen = HealthToRegen > 0 ? Max(HealthToRegen - HealthInfo.Value, 0) : 0;
@@ -628,11 +629,15 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
 
     ForceShowBuffs = HUDConfig.ForceShowBuffs && BuffLevel > 0;
 
-    // If enabled, don't render dead teammates
-    if (HUDConfig.IgnoreDeadTeammates && HealthRatio <= 0.f) return false;
+    // Only apply render restrictions if we don't have a special state
+    if (PlayerState == PRS_Default)
+    {
+        // If enabled, don't render dead teammates
+        if (HUDConfig.IgnoreDeadTeammates && HealthRatio <= 0.f) return false;
 
-    // If enabled, don't render teammates above a certain health threshold
-    if (HealthRatio > HUDConfig.MinHealthThreshold && !ForceShowBuffs) return false;
+        // If enabled, don't render teammates above a certain health threshold
+        if (HealthRatio > HUDConfig.MinHealthThreshold && !ForceShowBuffs) return false;
+    }
 
     TextFontRenderInfo = Canvas.CreateFontRenderInfo(true);
 

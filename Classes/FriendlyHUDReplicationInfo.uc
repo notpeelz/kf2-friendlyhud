@@ -260,7 +260,15 @@ simulated function UpdateFriends()
     }
 }
 
-simulated function GetPlayerInfo(int Index, out BarInfo ArmorInfo, out BarInfo HealthInfo, out int RegenHealth, out MedBuffInfo BuffInfo, out byte IsFriend)
+simulated function GetPlayerInfo(
+    int Index,
+    out BarInfo ArmorInfo,
+    out BarInfo HealthInfo,
+    out int RegenHealth,
+    out MedBuffInfo BuffInfo,
+    out byte IsFriend,
+    out EPlayerReadyState PlayerState
+)
 {
     ArmorInfo = ArmorInfoArray[Index];
     HealthInfo = HealthInfoArray[Index];
@@ -272,6 +280,8 @@ simulated function GetPlayerInfo(int Index, out BarInfo ArmorInfo, out BarInfo H
     `else
     IsFriend = IsFriendArray[Index];
     `endif
+
+    PlayerState = PlayerStateArray[Index];
 }
 
 function bool IsPlayerRegistered(Controller C)
