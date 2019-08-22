@@ -788,7 +788,7 @@ exec function ClearFHUDHealthBlockRatios()
     SaveAndUpdate();
 }
 
-exec function SetFHUDBlockProportions(float Width, optional string Ratios)
+exec function SetFHUDBarProportions(float Width, optional string Ratios)
 {
     local array<string> Params;
 
@@ -803,11 +803,11 @@ exec function SetFHUDBlockProportions(float Width, optional string Ratios)
         return;
     }
 
-    SetFHUDArmorBlockProportions(Width, Ratios);
-    SetFHUDHealthBlockProportions(Width, Ratios);
+    SetFHUDArmorBarProportions(Width, Ratios);
+    SetFHUDHealthBarProportions(Width, Ratios);
 }
 
-exec function SetFHUDArmorBlockProportions(float Width, optional string Ratios)
+exec function SetFHUDArmorBarProportions(float Width, optional string Ratios)
 {
     local array<string> Params;
     local float TotalWidth, CurrentBlockWidth;
@@ -872,7 +872,7 @@ exec function SetFHUDArmorBlockProportions(float Width, optional string Ratios)
     SetFHUDArmorBlockCount(BlockCount);
 }
 
-exec function SetFHUDHealthBlockProportions(float Width, optional string Ratios)
+exec function SetFHUDHealthBarProportions(float Width, optional string Ratios)
 {
     local array<string> Params;
     local float TotalWidth, CurrentBlockWidth;
