@@ -58,6 +58,10 @@ var config int BuffCountMax;
 var config float IconSize;
 var config float IconOffset;
 var config float IconGap;
+var config bool FriendIconEnabled;
+var config float FriendIconSize;
+var config float FriendIconGap;
+var config float FriendIconOffsetY;
 var config float NameMarginX;
 var config float NameMarginY;
 var config float NameScale;
@@ -68,6 +72,7 @@ var config Color NameColor;
 var config Color FriendNameColor;
 var config bool FriendNameColorEnabled;
 var config Color IconColor;
+var config Color FriendIconColor;
 var config Color ArmorBGColor;
 var config Color ArmorEmptyBGColor;
 var config Color ArmorColor;
@@ -167,7 +172,12 @@ function Initialized()
             CDReadyIconColor = MakeColor(0, 210, 120, 192);
             CDNotReadyIconColor = MakeColor(255, 0, 0, 192);
             FriendNameColor = MakeColor(51, 222, 44, 255);
-            FriendNameColorEnabled = true;
+            FriendNameColorEnabled = false;
+            FriendIconColor = MakeColor(255, 255, 255, 192);
+            FriendIconSize = 24.f;
+            FriendIconGap = 2.f;
+            FriendIconOffsetY = 0.f;
+            FriendIconEnabled = true;
 
             OldBGColor = class'FriendlyHUD.FriendlyHUDHelper'.static.ColorFromString(BGColor);
             ArmorBGColor = OldBGColor;
@@ -266,6 +276,10 @@ exec function ResetFHUDBar()
     IconSize = 32.f;
     IconOffset = 0.f;
     IconGap = 4.f;
+    FriendIconEnabled = true;
+    FriendIconSize = 24.f;
+    FriendIconGap = 2.f;
+    FriendIconOffsetY = 0.f;
     NameMarginX = 0.f;
     NameMarginY = 0.f;
     NameScale = 1.f;
@@ -289,8 +303,9 @@ exec function ResetFHUDColors()
     ShadowColor = MakeColor(0, 0, 0, 255);
     NameColor = MakeColor(255, 255, 255, 192);
     FriendNameColor = MakeColor(51, 222, 44, 255);
-    FriendNameColorEnabled = true;
+    FriendNameColorEnabled = false;
     IconColor = MakeColor(255, 255, 255, 192);
+    FriendIconColor = MakeColor(255, 255, 255, 192);
     ArmorBGColor = MakeColor(16, 16, 16, 192);
     HealthBGColor = MakeColor(16, 16, 16, 192);
     ArmorEmptyBGColor = MakeColor(16, 16, 16, 192);
@@ -1556,6 +1571,36 @@ exec function SetFHUDIconOffset(float Value)
 exec function SetFHUDIconGap(float Value)
 {
     IconGap = Value;
+    SaveAndUpdate();
+}
+
+exec function SetFHUDFriendIconEnabled(bool Value)
+{
+    FriendIconEnabled = Value;
+    SaveAndUpdate();
+}
+
+exec function SetFHUDFriendIconColor(byte R, byte G, byte B, byte A = 192)
+{
+    FriendIconColor = MakeColor(R, G, B, A);
+    SaveAndUpdate();
+}
+
+exec function SetFHUDFriendIconSize(float Value)
+{
+    FriendIconSize = FMax(Value, 0.f);
+    SaveAndUpdate();
+}
+
+exec function SetFHUDFriendIconGap(float Value)
+{
+    FriendIconGap = Value;
+    SaveAndUpdate();
+}
+
+exec function SetFHUDFriendIconOffsetY(float Value)
+{
+    FriendIconOffsetY = Value;
     SaveAndUpdate();
 }
 

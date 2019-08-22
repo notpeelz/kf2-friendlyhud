@@ -35,6 +35,7 @@ var Texture2d BarBGTexture;
 var Texture2d BuffIconTexture;
 var Texture2d PlayerNotReadyIconTexture;
 var Texture2d PlayerReadyIconTexture;
+var Texture2d FriendIconTexture;
 var Color AxisXLineColor;
 var Color AxisYLineColor;
 
@@ -50,6 +51,7 @@ struct UI_RuntimeVars
     var float BarGap;
     var float PlayerIconSize, PlayerIconGap, PlayerIconOffset;
     var float BuffOffset, BuffIconSize, BuffPlayerIconMargin, BuffPlayerIconGap;
+    var float FriendIconSize, FriendIconGap, FriendIconOffsetY;
     var float NameMarginX, NameMarginY;
     var float ItemMarginX, ItemMarginY;
     var float ScreenPosX, ScreenPosY;
@@ -204,6 +206,10 @@ function UpdateRuntimeVars(optional Canvas Canvas)
     R.PlayerIconGap = HUDConfig.IconGap * R.Scale;
     R.PlayerIconOffset = HUDConfig.IconOffset * R.Scale;
 
+    R.FriendIconSize = HUDConfig.FriendIconSize * R.Scale;
+    R.FriendIconGap = HUDConfig.FriendIconGap * R.Scale;
+    R.FriendIconOffsetY = HUDConfig.FriendIconOffsetY * R.Scale;
+
     R.ArmorBlockGap = HUDConfig.ArmorBlockGap * R.Scale;
     R.HealthBlockGap = HUDConfig.HealthBlockGap * R.Scale;
     R.BarGap = HUDConfig.BarGap * R.Scale;
@@ -255,7 +261,7 @@ function UpdateRuntimeVars(optional Canvas Canvas)
         )
         + R.ItemMarginX;
     R.TotalItemHeight = FMax(
-        R.ArmorBarHeight + R.HealthBarHeight + R.BarGap + R.TextHeight + R.NameMarginY,
+        R.ArmorBarHeight + R.HealthBarHeight + R.BarGap + FMax(R.FriendIconSize, R.TextHeight) + R.NameMarginY,
         R.PlayerIconSize + R.PlayerIconOffset
     ) + R.ItemMarginY;
 }
@@ -594,6 +600,8 @@ function DrawTeamHealthBars(Canvas Canvas)
 
 function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo, float PosX, float PosY)
 {
+    local float PlayerNamePosX, PlayerNamePosY;
+    local float FriendIconPosX, FriendIconPosY;
     local float PlayerIconPosX, PlayerIconPosY;
     local FontRenderInfo TextFontRenderInfo;
     local KFPlayerReplicationInfo KFPRI;
@@ -638,10 +646,17 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
             ), 1.f
         ) * HUDConfig.Opacity;
 
-    // Draw drop shadow behind the player icon
-    SetCanvasColor(Canvas, HUDConfig.ShadowColor);
     PlayerIconPosX = PosX;
     PlayerIconPosY = PosY + R.PlayerIconOffset + (R.TextHeight + R.NameMarginY) / 2.f;
+
+    PlayerNamePosX = PosX + R.PlayerIconSize + R.PlayerIconGap + R.NameMarginX;
+    PlayerNamePosY = PosY;
+
+    FriendIconPosX = PlayerNamePosX;
+    FriendIconPosY = PlayerNamePosY + R.TextHeight - R.FriendIconSize + R.FriendIconOffsetY;
+
+    // Draw drop shadow behind the player icon
+    SetCanvasColor(Canvas, HUDConfig.ShadowColor);
     DrawPlayerIcon(Canvas, ItemInfo, PlayerIconPosX + 1, PlayerIconPosY);
 
     // Draw player icon
@@ -658,20 +673,29 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
         PosX += R.BuffPlayerIconMargin + R.BuffIconSize;
     }
 
+    if (IsFriend != 0 && HUDConfig.FriendIconEnabled)
+    {
+        // Draw drop shadow behind the friend icon
+        SetCanvasColor(Canvas, HUDConfig.ShadowColor);
+        Canvas.SetPos(FriendIconPosX, FriendIconPosY + 1);
+        Canvas.DrawTile(default.FriendIconTexture, R.FriendIconSize, R.FriendIconSize, 0, 0, 256, 256);
+
+        // Draw friend icon
+        SetCanvasColor(Canvas, HUDConfig.FriendIconColor);
+        Canvas.SetPos(FriendIconPosX, FriendIconPosY);
+        Canvas.DrawTile(default.FriendIconTexture, R.FriendIconSize, R.FriendIconSize, 0, 0, 256, 256);
+
+        PlayerNamePosX += R.FriendIconSize + R.FriendIconGap;
+    }
+
     // Draw drop shadow behind the player name
     SetCanvasColor(Canvas, HUDConfig.ShadowColor);
-    Canvas.SetPos(
-        PosX + R.PlayerIconSize + R.PlayerIconGap + R.NameMarginX,
-        PosY + 1
-    );
+    Canvas.SetPos(PlayerNamePosX, PlayerNamePosY + 1);
     Canvas.DrawText(KFPRI.PlayerName, , R.FontScale, R.FontScale, TextFontRenderInfo);
 
     // Draw player name
     SetCanvasColor(Canvas, (IsFriend != 0 && HUDConfig.FriendNameColorEnabled) ? HUDConfig.FriendNameColor : HUDConfig.NameColor);
-    Canvas.SetPos(
-        PosX + R.PlayerIconSize + R.PlayerIconGap + R.NameMarginX,
-        PosY
-    );
+    Canvas.SetPos(PlayerNamePosX, PlayerNamePosY);
     Canvas.DrawText(KFPRI.PlayerName, , R.FontScale, R.FontScale, TextFontRenderInfo);
 
     // Draw armor bar
@@ -1190,4 +1214,5 @@ defaultproperties
     BuffIconTexture = Texture2D'UI_VoiceComms_TEX.UI_VoiceCommand_Icon_Heal';
     PlayerNotReadyIconTexture = Texture2D'UI_VoiceComms_TEX.UI_VoiceCommand_Icon_Negative';
     PlayerReadyIconTexture = Texture2D'UI_VoiceComms_TEX.UI_VoiceCommand_Icon_Affirmative';
+    FriendIconTexture = Texture2D'FriendlyHUDAssets.UI_Friend_Icon';
 }

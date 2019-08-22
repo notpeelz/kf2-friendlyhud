@@ -266,7 +266,12 @@ simulated function GetPlayerInfo(int Index, out BarInfo ArmorInfo, out BarInfo H
     HealthInfo = HealthInfoArray[Index];
     RegenHealth = RegenHealthArray[Index];
     BuffInfo = MedBuffArray[Index];
+
+    `if(`isdefined(debug))
+    IsFriend = 1;
+    `else
     IsFriend = IsFriendArray[Index];
+    `endif
 }
 
 function bool IsPlayerRegistered(Controller C)
