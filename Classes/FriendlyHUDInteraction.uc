@@ -667,7 +667,7 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
     Canvas.DrawText(KFPRI.PlayerName, , R.FontScale, R.FontScale, TextFontRenderInfo);
 
     // Draw player name
-    SetCanvasColor(Canvas, IsFriend != 0 ? HUDConfig.FriendNameColor : HUDConfig.NameColor);
+    SetCanvasColor(Canvas, (IsFriend != 0 && HUDConfig.FriendNameColorEnabled) ? HUDConfig.FriendNameColor : HUDConfig.NameColor);
     Canvas.SetPos(
         PosX + R.PlayerIconSize + R.PlayerIconGap + R.NameMarginX,
         PosY

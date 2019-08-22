@@ -66,6 +66,7 @@ var config float OffsetY;
 var config Color ShadowColor;
 var config Color NameColor;
 var config Color FriendNameColor;
+var config bool FriendNameColorEnabled;
 var config Color IconColor;
 var config Color ArmorBGColor;
 var config Color ArmorEmptyBGColor;
@@ -166,6 +167,7 @@ function Initialized()
             CDReadyIconColor = MakeColor(0, 210, 120, 192);
             CDNotReadyIconColor = MakeColor(255, 0, 0, 192);
             FriendNameColor = MakeColor(51, 222, 44, 255);
+            FriendNameColorEnabled = true;
 
             OldBGColor = class'FriendlyHUD.FriendlyHUDHelper'.static.ColorFromString(BGColor);
             ArmorBGColor = OldBGColor;
@@ -287,6 +289,7 @@ exec function ResetFHUDColors()
     ShadowColor = MakeColor(0, 0, 0, 255);
     NameColor = MakeColor(255, 255, 255, 192);
     FriendNameColor = MakeColor(51, 222, 44, 255);
+    FriendNameColorEnabled = true;
     IconColor = MakeColor(255, 255, 255, 192);
     ArmorBGColor = MakeColor(16, 16, 16, 192);
     HealthBGColor = MakeColor(16, 16, 16, 192);
@@ -1383,6 +1386,12 @@ exec function SetFHUDNameColor(byte R, byte G, byte B, optional byte A = 192)
 exec function SetFHUDFriendNameColor(byte R, byte G, byte B, optional byte A = 192)
 {
     FriendNameColor = MakeColor(R, G, B, A);
+    SaveAndUpdate();
+}
+
+exec function SetFHUDFriendNameColorEnabled(bool Value)
+{
+    FriendNameColorEnabled = Value;
     SaveAndUpdate();
 }
 
