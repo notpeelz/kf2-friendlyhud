@@ -442,6 +442,7 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("SetFHUDDrawDebugRatios <bool>: displays ratios over blocks -- useful for debugging block distribution issues");
         ConsolePrint("DebugFHUDSetArmor <int Armor> <int MaxArmor = -1>: sets the armor value for your own character -- cheats only");
         ConsolePrint("DebugFHUDSetHealth <int Health> <int MaxHealth = -1>: sets the health value for your own character -- cheats only");
+        ConsolePrint("DebugFHUDForceFriend <bool>: forces all players to show up as friends");
         ConsolePrint("SetFHUDUpdateInterval <float>: controls the interval (in seconds) between player list updates (default is 0.5)");
         ConsolePrint("SetFHUDEmptyBlockThreshold <float>: the minimum block ratio to consider a block empty (default is 0); used for EmptyBG colors");
         ConsolePrint("SetFHUDUMCompatEnabled <bool>: controls whether FHUD should override Unofficial Mod's HMTech cooldowns HUD to prevent layout conflicts (default is true)");
@@ -732,6 +733,7 @@ exec function SetFHUDLayout(coerce string Value)
 exec function SetFHUDBarWidthMin(float Value)
 {
     BarWidthMin = FMax(Value, 0);
+    SaveAndUpdate();
 }
 
 exec function SetFHUDBarGap(float Value)

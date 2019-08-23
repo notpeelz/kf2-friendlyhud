@@ -3,9 +3,11 @@ class FriendlyHUDMutator extends KFMutator
 
 var KFPlayerController KFPC;
 var KFGFxHudWrapper HUD;
+var FriendlyHUDInteraction FHUDInteraction;
 var FriendlyHUDConfig HUDConfig;
 var FriendlyHUDReplicationInfo RepInfo;
 var bool UMLoaded, CDLoaded;
+var bool ForceShowAsFriend;
 
 var FriendlyHUDCDCompatController CDCompat;
 
@@ -116,8 +118,6 @@ simulated function InitializeClientReplication()
 
 simulated function InitializeDeferred()
 {
-    local FriendlyHUDInteraction FHUDInteraction;
-
     HUD = KFGFxHudWrapper(KFPC.myHUD);
     if (HUD == None)
     {

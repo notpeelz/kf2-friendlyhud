@@ -43,11 +43,13 @@ var FriendlyHUDMutator FHUDMutator;
 
 struct UI_RuntimeVars
 {
-    var float ResScale, Scale, FontScale;
+    var float ResScale, Scale, NameScale;
     var float TextHeight, TotalItemWidth, TotalItemHeight;
     var float ArmorBarWidth, HealthBarWidth;
     var float ArmorBarHeight, HealthBarHeight;
     var float ArmorBlockGap, HealthBlockGap;
+    var float BarWidthMin;
+    var int PlayerNameLetterCount;
     var float BarGap;
     var float PlayerIconSize, PlayerIconGap, PlayerIconOffset;
     var float BuffOffset, BuffIconSize, BuffPlayerIconMargin, BuffPlayerIconGap;
@@ -63,7 +65,7 @@ var bool RuntimeInitialized;
 var float CachedScreenWidth, CachedScreenHeight;
 var UI_RuntimeVars R;
 
-const ASCIICharacters = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+const ASCIICharacters = " !1\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 const FLOAT_EPSILON = 0.0001f;
 const PrestigeIconScale = 0.75f;
 
@@ -144,6 +146,8 @@ function UpdatePRIArray()
 
 event PostRender(Canvas Canvas)
 {
+    local bool ShouldUpdateRuntime;
+
     if (KFPlayerOwner == None || HUD == None || HUDConfig == None) return;
 
     // Don't render if the user disabled the custom HUD
@@ -155,11 +159,15 @@ event PostRender(Canvas Canvas)
     // Don't render when HUD is hidden
     if (!HUD.bShowHUD) return;
 
+    ShouldUpdateRuntime = !RuntimeInitialized;
+
     // Cache runtime vars and refresh them whenever the resolution changes
-    if (!RuntimeInitialized || (CachedScreenWidth != Canvas.SizeX || CachedScreenHeight != Canvas.SizeY))
+    if (ShouldUpdateRuntime || (CachedScreenWidth != Canvas.SizeX || CachedScreenHeight != Canvas.SizeY))
     {
         UpdateRuntimeVars(Canvas);
     }
+
+    CachePlayerNames(Canvas, ShouldUpdateRuntime);
 
     // Only render the HUD if we're not a Zed (Versus)
     if (KFPlayerOwner.GetTeamNum() != 255)
@@ -174,9 +182,78 @@ function SetCanvasColor(Canvas Canvas, Color C)
     Canvas.DrawColor = C;
 }
 
+function CachePlayerNames(Canvas Canvas, optional bool ForceRefresh = false, optional FriendlyHUDReplicationInfo FHUDRepInfo)
+{
+    local float NameWidth, NameHeight, NameWidthMax;
+    local string TempPlayerName, PlayerName;
+    local int LetterIdx, LetterCount;
+    local bool Truncated;
+    local int I;
+
+    if (FHUDRepInfo == None)
+    {
+        FHUDRepInfo = FHUDMutator.RepInfo;
+    }
+
+    if (FHUDRepInfo.ShouldUpdatePlayerNames || ForceRefresh)
+    {
+        for (I = 0; I < class'FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
+        {
+            if (FHUDRepInfo.KFPRIArray[I] == None)
+            {
+                FHUDRepInfo.PlayerNameArray[I] = "";
+                continue;
+            }
+
+            PlayerName = FHUDRepInfo.KFPRIArray[I].PlayerName;
+            FHUDRepInfo.PlayerNameArray[I] = PlayerName;
+
+            NameWidthMax = R.BarWidthMin;
+
+            // Subtract the friend icon from the available width for the player name
+            if (HUDConfig.FriendIconEnabled && (FHUDRepInfo.IsFriendArray[I] != 0 || FHUDMutator.ForceShowAsFriend))
+            {
+                NameWidthMax -= R.FriendIconSize + R.FriendIconGap;
+            }
+
+            Truncated = false;
+            LetterCount = Len(PlayerName);
+            // This gets skipped if we're below the "safe character count" (the # of chars that's guaranteed not to exceed the length)
+            for (LetterIdx = R.PlayerNameLetterCount; LetterIdx < LetterCount; LetterIdx++)
+            {
+                TempPlayerName = Left(PlayerName, LetterIdx + 1);
+                Canvas.TextSize(TempPlayerName, NameWidth, NameHeight, R.NameScale);
+                FHUDRepInfo.PlayerNameArray[I] = TempPlayerName;
+
+                if (NameWidth >= NameWidthMax)
+                {
+                    Truncated = true;
+                    break;
+                }
+            }
+
+            if (Truncated)
+            {
+                // We replace the last 2 characters with "..."
+                FHUDRepInfo.PlayerNameArray[I] = Left(FHUDRepInfo.PlayerNameArray[I], Max(Len(FHUDRepInfo.PlayerNameArray[I]) - 2, 0)) $ "...";
+            }
+        }
+
+        FHUDRepInfo.ShouldUpdatePlayerNames = false;
+    }
+
+    if (FHUDRepInfo.NextRepInfo != None)
+    {
+        CachePlayerNames(Canvas, ForceRefresh, FHUDRepInfo.NextRepInfo);
+    }
+}
+
 function UpdateRuntimeVars(optional Canvas Canvas)
 {
-    local float TempTextWidth;
+    local int I;
+    local string PlayerNamePlaceholder;
+    local float PlayerNameWidth;
+    local float Temp;
 
     // If no canvas is passed, we schedule the update for the next render
     if (Canvas == None)
@@ -194,8 +271,8 @@ function UpdateRuntimeVars(optional Canvas Canvas)
     R.ResScale = class'FriendlyHUD.FriendlyHUDHelper'.static.GetResolutionScale(Canvas);
     R.Scale = R.ResScale * HUDConfig.Scale;
 
-    R.FontScale = class'KFGameEngine'.static.GetKFFontScale() * HUDConfig.NameScale * R.Scale;
-    Canvas.TextSize(ASCIICharacters, TempTextWidth, R.TextHeight, R.FontScale, R.FontScale);
+    R.NameScale = class'KFGameEngine'.static.GetKFFontScale() * HUDConfig.NameScale * R.Scale;
+    Canvas.TextSize(ASCIICharacters, Temp, R.TextHeight, R.NameScale, R.NameScale);
 
     R.BuffOffset = HUDConfig.BuffOffset * R.Scale;
     R.BuffIconSize = HUDConfig.BuffSize * R.Scale;
@@ -253,12 +330,36 @@ function UpdateRuntimeVars(optional Canvas Canvas)
     R.ItemMarginX = HUDConfig.ItemMarginX * R.Scale;
     R.ItemMarginY = HUDConfig.ItemMarginY * R.Scale;
 
+    R.BarWidthMin = FMax(
+        FMax(R.ArmorBarWidth - R.ArmorBlockGap, R.HealthBarWidth - R.HealthBlockGap),
+        HUDConfig.BarWidthMin * R.Scale
+    );
+
+    // Calculate and cache the "minimum character length to exceed the maximum player-name width"
+    R.PlayerNameLetterCount = 0;
+    PlayerNamePlaceholder = "";
+
+    // Make sure we don't exceed the screen boundaries (in case of some ridiculously high BarWidthMin value)
+    for (I = 0; I < Canvas.ClipX; I++)
+    {
+        // "W" is one of the widest letters in the KFMerged font
+        // We use it so that we don't overestimate the character count
+        PlayerNamePlaceholder $= "W";
+
+        // Calculate the width of the placeholder
+        Canvas.TextSize(PlayerNamePlaceholder, PlayerNameWidth, Temp, R.NameScale, R.NameScale);
+
+        // Abort when we exceed the max width (accounts for the friend icons)
+        // Reminder: we're looking for the *minimum char count* to exceed the max width, so we need
+        //           something that fits when the friend icon is visible
+        if (PlayerNameWidth >= (R.BarWidthMin - R.FriendIconSize - R.FriendIconGap)) break;
+
+        R.PlayerNameLetterCount++;
+    }
+
     R.TotalItemWidth = R.PlayerIconSize
         + R.PlayerIconGap
-        + FMax(
-            FMax(R.ArmorBarWidth - R.ArmorBlockGap, R.HealthBarWidth - R.HealthBlockGap),
-            HUDConfig.BarWidthMin
-        )
+        + R.BarWidthMin
         + R.ItemMarginX;
     R.TotalItemHeight = FMax(
         R.ArmorBarHeight + R.HealthBarHeight + R.BarGap + FMax(R.FriendIconSize, R.TextHeight) + R.NameMarginY,
@@ -600,11 +701,11 @@ function DrawTeamHealthBars(Canvas Canvas)
 
 function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo, float PosX, float PosY)
 {
+    local string PlayerName;
     local float PlayerNamePosX, PlayerNamePosY;
     local float FriendIconPosX, FriendIconPosY;
     local float PlayerIconPosX, PlayerIconPosY;
     local FontRenderInfo TextFontRenderInfo;
-    local KFPlayerReplicationInfo KFPRI;
     local float ArmorRatio, HealthRatio, RegenRatio, TotalRegenRatio;
     local FriendlyHUDReplicationInfo.BarInfo ArmorInfo, HealthInfo;
     local float PreviousBarWidth, PreviousBarHeight;
@@ -615,8 +716,7 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
     local byte IsFriend;
     local FriendlyHUDReplicationInfo.EPlayerReadyState PlayerState;
 
-    KFPRI = ItemInfo.KFPRI;
-    ItemInfo.RepInfo.GetPlayerInfo(ItemInfo.RepIndex, ArmorInfo, HealthInfo, HealthToRegen, BuffInfo, IsFriend, PlayerState);
+    ItemInfo.RepInfo.GetPlayerInfo(ItemInfo.RepIndex, PlayerName, ArmorInfo, HealthInfo, HealthToRegen, BuffInfo, IsFriend, PlayerState);
 
     TotalRegenRatio = HealthInfo.MaxValue > 0 ? FMin(FMax(float(HealthToRegen) / float(HealthInfo.MaxValue), 0.f), 1.f) : 0.f;
     HealthToRegen = HealthToRegen > 0 ? Max(HealthToRegen - HealthInfo.Value, 0) : 0;
@@ -696,12 +796,17 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
     // Draw drop shadow behind the player name
     SetCanvasColor(Canvas, HUDConfig.ShadowColor);
     Canvas.SetPos(PlayerNamePosX, PlayerNamePosY + 1);
-    Canvas.DrawText(KFPRI.PlayerName, , R.FontScale, R.FontScale, TextFontRenderInfo);
+    Canvas.DrawText(PlayerName, , R.NameScale, R.NameScale, TextFontRenderInfo);
 
     // Draw player name
-    SetCanvasColor(Canvas, (IsFriend != 0 && HUDConfig.FriendNameColorEnabled) ? HUDConfig.FriendNameColor : HUDConfig.NameColor);
+    SetCanvasColor(
+        Canvas,
+        ((IsFriend != 0 || FHUDMutator.ForceShowAsFriend) && HUDConfig.FriendNameColorEnabled)
+            ? HUDConfig.FriendNameColor
+            : HUDConfig.NameColor
+    );
     Canvas.SetPos(PlayerNamePosX, PlayerNamePosY);
-    Canvas.DrawText(KFPRI.PlayerName, , R.FontScale, R.FontScale, TextFontRenderInfo);
+    Canvas.DrawText(PlayerName, , R.NameScale, R.NameScale, TextFontRenderInfo);
 
     // Draw armor bar
     DrawBar(
@@ -1117,6 +1222,12 @@ exec function DebugFHUDSetHealth(int Health, optional int MaxHealth = -1)
     {
         KFPlayerOwner.Pawn.HealthMax = MaxHealth;
     }
+}
+
+exec function DebugFHUDForceFriend(bool Value)
+{
+    FHUDMutator.ForceShowAsFriend = Value;
+    UpdateRuntimeVars();
 }
 
 delegate int SortKFPRI(PRIEntry A, PRIEntry B)

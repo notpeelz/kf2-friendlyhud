@@ -27,15 +27,17 @@ var MedBuffInfo EMPTY_BUFF_INFO;
 
 var KFPlayerController LocalPC;
 
-// Server-only arrays
+// Server-only
 var Controller PCArray[REP_INFO_COUNT];
 var float SpeedBoostTimerArray[REP_INFO_COUNT];
 var byte CDPlayerReadyArray[REP_INFO_COUNT];
 
-// Client-only arrays
+// Client-only
 var byte IsFriendArray[REP_INFO_COUNT];
+var string PlayerNameArray[REP_INFO_COUNT];
+var bool ShouldUpdatePlayerNames;
 
-// Replicated arrays
+// Replicated
 var KFPawn_Human KFPHArray[REP_INFO_COUNT];
 var repnotify KFPlayerReplicationInfo KFPRIArray[REP_INFO_COUNT];
 var byte HasSpawnedArray[REP_INFO_COUNT];
@@ -91,6 +93,7 @@ function NotifyLogin(Controller C)
         {
             PCArray[I] = C;
             SpeedBoostTimerArray[I] = TIMER_RESET_VALUE;
+            UpdatePlayerNameDeferred(I);
             return;
         }
     }
@@ -105,6 +108,22 @@ function NotifyLogin(Controller C)
     }
 
     NextRepInfo.NotifyLogin(C);
+}
+
+function UpdatePlayerNameDeferred(int RepIndex)
+{
+    local KFPlayerReplicationInfo KFPRI;
+
+    KFPRI = KFPRIArray[RepIndex];
+
+    // Defer our execution until player name replication is done
+    if (KFPRI == None || !KFPRI.bHasBeenWelcomed)
+    {
+        SetTimer(0.1f, false, nameof(UpdatePlayerNameDeferred));
+        return;
+    }
+
+    ShouldUpdatePlayerNames = true;
 }
 
 function NotifyLogout(Controller C)
@@ -262,6 +281,7 @@ simulated function UpdateFriends()
 
 simulated function GetPlayerInfo(
     int Index,
+    out string PlayerName,
     out BarInfo ArmorInfo,
     out BarInfo HealthInfo,
     out int RegenHealth,
@@ -270,17 +290,12 @@ simulated function GetPlayerInfo(
     out EPlayerReadyState PlayerState
 )
 {
+    PlayerName = PlayerNameArray[Index];
     ArmorInfo = ArmorInfoArray[Index];
     HealthInfo = HealthInfoArray[Index];
     RegenHealth = RegenHealthArray[Index];
     BuffInfo = MedBuffArray[Index];
-
-    `if(`isdefined(debug))
-    IsFriend = 1;
-    `else
-    IsFriend = IsFriendArray[Index];
-    `endif
-
+    IsFriend = FHUDMutator.ForceShowAsFriend ? 1 : IsFriendArray[Index];
     PlayerState = PlayerStateArray[Index];
 }
 
