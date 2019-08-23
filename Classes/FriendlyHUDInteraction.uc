@@ -1237,6 +1237,17 @@ delegate int SortKFPRI(PRIEntry A, PRIEntry B)
     if (A.KFPRI == None && B.KFPRI != None) return -1;
     if (A.KFPRI == B.KFPRI) return 0;
 
+    if (A.KFPRI == KFPlayerOwner.PlayerReplicationInfo)
+    {
+        if (HUDConfig.SelfSortStrategy == 1) return 1;
+        if (HUDConfig.SelfSortStrategy == 2) return -1;
+    }
+    if (B.KFPRI == KFPlayerOwner.PlayerReplicationInfo)
+    {
+        if (HUDConfig.SelfSortStrategy == 1) return -1;
+        if (HUDConfig.SelfSortStrategy == 2) return 1;
+    }
+
     if (A.KFPRI.PlayerID < B.KFPRI.PlayerID) return -1;
     if (A.KFPRI.PlayerID > B.KFPRI.PlayerID) return 1;
     return 0;
@@ -1254,6 +1265,17 @@ delegate int SortKFPRIByHealthDescending(PRIEntry A, PRIEntry B)
     {
         if (A.HealthRatio < B.HealthRatio) return -1;
         if (A.HealthRatio > B.HealthRatio) return 1;
+    }
+
+    if (A.KFPRI == KFPlayerOwner.PlayerReplicationInfo)
+    {
+        if (HUDConfig.SelfSortStrategy == 1) return 1;
+        if (HUDConfig.SelfSortStrategy == 2) return -1;
+    }
+    if (B.KFPRI == KFPlayerOwner.PlayerReplicationInfo)
+    {
+        if (HUDConfig.SelfSortStrategy == 1) return -1;
+        if (HUDConfig.SelfSortStrategy == 2) return 1;
     }
 
     if (A.KFPRI == B.KFPRI) return 0;
@@ -1276,6 +1298,17 @@ delegate int SortKFPRIByHealth(PRIEntry A, PRIEntry B)
         if (A.HealthRatio > B.HealthRatio) return -1;
     }
 
+    if (A.KFPRI == KFPlayerOwner.PlayerReplicationInfo)
+    {
+        if (HUDConfig.SelfSortStrategy == 1) return 1;
+        if (HUDConfig.SelfSortStrategy == 2) return -1;
+    }
+    if (B.KFPRI == KFPlayerOwner.PlayerReplicationInfo)
+    {
+        if (HUDConfig.SelfSortStrategy == 1) return -1;
+        if (HUDConfig.SelfSortStrategy == 2) return 1;
+    }
+
     if (A.KFPRI == B.KFPRI) return 0;
     if (A.KFPRI.PlayerID < B.KFPRI.PlayerID) return -1;
     if (A.KFPRI.PlayerID > B.KFPRI.PlayerID) return 1;
@@ -1296,6 +1329,17 @@ delegate int SortKFPRIByRegenHealthDescending(PRIEntry A, PRIEntry B)
         if (A.RegenHealthRatio > B.RegenHealthRatio) return 1;
     }
 
+    if (A.KFPRI == KFPlayerOwner.PlayerReplicationInfo)
+    {
+        if (HUDConfig.SelfSortStrategy == 1) return 1;
+        if (HUDConfig.SelfSortStrategy == 2) return -1;
+    }
+    if (B.KFPRI == KFPlayerOwner.PlayerReplicationInfo)
+    {
+        if (HUDConfig.SelfSortStrategy == 1) return -1;
+        if (HUDConfig.SelfSortStrategy == 2) return 1;
+    }
+
     if (A.KFPRI == B.KFPRI) return 0;
     if (A.KFPRI.PlayerID < B.KFPRI.PlayerID) return -1;
     if (A.KFPRI.PlayerID > B.KFPRI.PlayerID) return 1;
@@ -1314,6 +1358,17 @@ delegate int SortKFPRIByRegenHealth(PRIEntry A, PRIEntry B)
     {
         if (A.RegenHealthRatio < B.RegenHealthRatio) return 1;
         if (A.RegenHealthRatio > B.RegenHealthRatio) return -1;
+    }
+
+    if (A.KFPRI == KFPlayerOwner.PlayerReplicationInfo)
+    {
+        if (HUDConfig.SelfSortStrategy == 1) return 1;
+        if (HUDConfig.SelfSortStrategy == 2) return -1;
+    }
+    if (B.KFPRI == KFPlayerOwner.PlayerReplicationInfo)
+    {
+        if (HUDConfig.SelfSortStrategy == 1) return -1;
+        if (HUDConfig.SelfSortStrategy == 2) return 1;
     }
 
     if (A.KFPRI == B.KFPRI) return 0;

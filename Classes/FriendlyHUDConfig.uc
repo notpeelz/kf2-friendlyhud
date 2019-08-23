@@ -24,6 +24,7 @@ var config int INIVersion;
 var config int LastChangeLogVersion;
 var config float UpdateInterval;
 var config int SortStrategy;
+var config int SelfSortStrategy;
 var config float Scale;
 var config int Flow;
 var config int Layout;
@@ -140,6 +141,7 @@ function Initialized()
 
             UpdateInterval = 0.5f;
             SortStrategy = 0;
+            SelfSortStrategy = 1;
             DO_MinOpacity = 1.f;
             DO_MaxOpacity = 1.f;
             DO_T0 = 4.f;
@@ -223,6 +225,7 @@ function LoadDefaultFHUDConfig()
     INIVersion = 2;
     UpdateInterval = 0.5f;
     SortStrategy = 0;
+    SelfSortStrategy = 1;
     DisableHUD = false;
     EmptyBlockThreshold = 0.f;
     OnlyForMedic = false;
@@ -445,6 +448,7 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("DebugFHUDForceFriend <bool>: forces all players to show up as friends");
         ConsolePrint("SetFHUDUpdateInterval <float>: controls the interval (in seconds) between player list updates (default is 0.5)");
         ConsolePrint("SetFHUDEmptyBlockThreshold <float>: the minimum block ratio to consider a block empty (default is 0); used for EmptyBG colors");
+        ConsolePrint("SetFHUDSelfSortStrategy <string Strategy>: controls how your player should be sorted (default is first); possible values: unset, first, last");
         ConsolePrint("SetFHUDUMCompatEnabled <bool>: controls whether FHUD should override Unofficial Mod's HMTech cooldowns HUD to prevent layout conflicts (default is true)");
         ConsolePrint("SetFHUDUMColorSyncEnabled <bool>: controls whether FHUD should automatically synchronize Unofficial Mod's color scheme (default is true)");
         ConsolePrint("SetFHUDCDCompatEnabled <bool>: controls whether FHUD should display the ready status for Controlled Difficulty");
@@ -1690,6 +1694,35 @@ exec function SetFHUDUpdateInterval(float Value)
     if (FHUDInteraction != None)
     {
         FHUDInteraction.ResetUpdateTimer();
+    }
+
+    SaveAndUpdate();
+}
+
+exec function SetFHUDSelfSortStrategy(string Strategy)
+{
+    switch (Locs(Strategy))
+    {
+        case "default":
+        case "first":
+            SelfSortStrategy = 1;
+            break;
+        case "last":
+            SelfSortStrategy = 2;
+            break;
+        case "unset":
+            SelfSortStrategy = 0;
+            break;
+        default:
+            // Non-int values get parsed as 0
+            SelfSortStrategy = Clamp(int(Strategy), 0, 2);
+
+            // Invalid value
+            if (SelfSortStrategy == 0 && Strategy != "0" || int(Strategy) != SelfSortStrategy)
+            {
+                ConsolePrint("Invalid self sort strategy:" @ Strategy);
+            }
+            break;
     }
 
     SaveAndUpdate();
