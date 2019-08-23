@@ -103,6 +103,7 @@ var config bool ForceShowBuffs;
 var config bool UMCompatEnabled;
 var config bool UMColorSyncEnabled;
 var config int UMDisableHMTechChargeHUD;
+var config bool CDOnlyTraderTime;
 var config bool CDCompatEnabled;
 var config Color CDReadyIconColor;
 var config Color CDNotReadyIconColor;
@@ -171,6 +172,7 @@ function Initialized()
             UMDisableHMTechChargeHUD = 0;
             UMColorSyncEnabled = true;
             CDCompatEnabled = true;
+            CDOnlyTraderTime = false;
             CDReadyIconColor = MakeColor(0, 210, 120, 192);
             CDNotReadyIconColor = MakeColor(255, 0, 0, 192);
             FriendNameColor = MakeColor(51, 222, 44, 255);
@@ -243,6 +245,7 @@ function LoadDefaultFHUDConfig()
     UMCompatEnabled = true;
     UMColorSyncEnabled = true;
     CDCompatEnabled = true;
+    CDOnlyTraderTime = false;
 
     ResetFHUDLayout();
     ResetFHUDBar();
@@ -439,19 +442,24 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("MoveFHUDColorThreshold <float Threshold> <float NewThreshold>: changes the threshold value of an existing color threshold");
 
         ConsolePrint(" ");
-        ConsolePrint("Misc/Debug Settings");
+        ConsolePrint("Misc Settings");
+        ConsolePrint("--------------------------");
+        ConsolePrint("SetFHUDUpdateInterval <float>: controls the interval (in seconds) between player list updates (default is 0.5)");
+        ConsolePrint("SetFHUDEmptyBlockThreshold <float>: the minimum block ratio to qualify a block as empty (default is 0); used for EmptyBG colors");
+        ConsolePrint("SetFHUDSelfSortStrategy <string Strategy>: controls how your player should be sorted (default is first); possible values: unset, first, last");
+        ConsolePrint("SetFHUDUMCompatEnabled <bool>: controls whether FHUD should override Unofficial Mod's HMTech cooldowns HUD to prevent layout conflicts (default is true)");
+        ConsolePrint("SetFHUDUMColorSyncEnabled <bool>: controls whether FHUD should automatically synchronize Unofficial Mod's color scheme (default is true)");
+        ConsolePrint("SetFHUDCDCompatEnabled <bool>: controls whether FHUD should display the ready status for Controlled Difficulty");
+        ConsolePrint("SetFHUDCDOnlyTraderTime <bool>: controls whether FHUD should only appear during trader time (for Controlled Difficulty)");
+
+        ConsolePrint(" ");
+        ConsolePrint("Debug Settings");
         ConsolePrint("--------------------------");
         ConsolePrint("SetFHUDDrawDebugLines <bool>: displays debug lines -- useful for debugging layout issues");
         ConsolePrint("SetFHUDDrawDebugRatios <bool>: displays ratios over blocks -- useful for debugging block distribution issues");
         ConsolePrint("DebugFHUDSetArmor <int Armor> <int MaxArmor = -1>: sets the armor value for your own character -- cheats only");
         ConsolePrint("DebugFHUDSetHealth <int Health> <int MaxHealth = -1>: sets the health value for your own character -- cheats only");
         ConsolePrint("DebugFHUDForceFriend <bool>: forces all players to show up as friends");
-        ConsolePrint("SetFHUDUpdateInterval <float>: controls the interval (in seconds) between player list updates (default is 0.5)");
-        ConsolePrint("SetFHUDEmptyBlockThreshold <float>: the minimum block ratio to consider a block empty (default is 0); used for EmptyBG colors");
-        ConsolePrint("SetFHUDSelfSortStrategy <string Strategy>: controls how your player should be sorted (default is first); possible values: unset, first, last");
-        ConsolePrint("SetFHUDUMCompatEnabled <bool>: controls whether FHUD should override Unofficial Mod's HMTech cooldowns HUD to prevent layout conflicts (default is true)");
-        ConsolePrint("SetFHUDUMColorSyncEnabled <bool>: controls whether FHUD should automatically synchronize Unofficial Mod's color scheme (default is true)");
-        ConsolePrint("SetFHUDCDCompatEnabled <bool>: controls whether FHUD should display the ready status for Controlled Difficulty");
     }
     else
     {
@@ -2000,6 +2008,12 @@ exec function SetFHUDUMColorSyncEnabled(bool Value)
 exec function SetFHUDCDCompatEnabled(bool Value)
 {
     CDCompatEnabled = Value;
+    SaveAndUpdate();
+}
+
+exec function SetFHUDCDOnlyTraderTime(bool Value)
+{
+    CDOnlyTraderTime = Value;
     SaveAndUpdate();
 }
 

@@ -738,6 +738,11 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
         // If enabled, don't render teammates above a certain health threshold
         if (HealthRatio > HUDConfig.MinHealthThreshold && !ForceShowBuffs) return false;
     }
+    // Don't render if we're in a special state and trader-time only is enabled
+    else if (HUDConfig.CDOnlyTraderTime && HUDConfig.CDCompatEnabled)
+    {
+        return false;
+    }
 
     TextFontRenderInfo = Canvas.CreateFontRenderInfo(true);
 
