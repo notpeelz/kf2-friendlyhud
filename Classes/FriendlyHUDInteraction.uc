@@ -946,7 +946,7 @@ function DrawBar(
     out float TotalHeight
 )
 {
-    local int BlockCount, BlockGap, BlockStyle, BarHeight, BlockVerticalAlignment;
+    local int BlockCount, BlockGap, BlockRoundingStrategy, BarHeight, BlockVerticalAlignment;
     local array<FriendlyHUDConfig.BlockSizeOverride> BlockSizeOverrides;
     local array<FriendlyHUDConfig.BlockRatioOverride> BlockRatioOverrides;
     local Color BarColor, BufferColor, BGColor, EmptyBGColor;
@@ -973,7 +973,7 @@ function DrawBar(
     {
         BlockCount = HUDConfig.ArmorBlockCount;
         BlockGap = R.ArmorBlockGap;
-        BlockStyle = HUDConfig.ArmorBlockStyle;
+        BlockRoundingStrategy = HUDConfig.ArmorBlockRoundingStrategy;
         BarHeight = R.ArmorBarHeight;
         BlockVerticalAlignment = HUDConfig.ArmorBlockVerticalAlignment;
         BlockSizeOverrides = R.ArmorBlockSizeOverrides;
@@ -987,7 +987,7 @@ function DrawBar(
     {
         BlockCount = HUDConfig.HealthBlockCount;
         BlockGap = R.HealthBlockGap;
-        BlockStyle = HUDConfig.HealthBlockStyle;
+        BlockRoundingStrategy = HUDConfig.HealthBlockRoundingStrategy;
         BarHeight = R.HealthBarHeight;
         BlockVerticalAlignment = HUDConfig.HealthBlockVerticalAlignment;
         BlockSizeOverrides = R.HealthBlockSizeOverrides;
@@ -1076,7 +1076,7 @@ function DrawBar(
         }
 
         // Second condition is to prevent rendering over a rounded-up block
-        BufferBlockWidth = (P2 > 0.f && !(BlockStyle != 0 && BarBlockWidth >= 1.f))
+        BufferBlockWidth = (P2 > 0.f && !(BlockRoundingStrategy != 0 && BarBlockWidth >= 1.f))
             ? GetInnerBarWidth(BarType, CurrentBlockWidth, P2, P1)
             : 0.f;
 
@@ -1187,7 +1187,7 @@ function float GetInnerBarWidth(EBarType BarType, float BlockWidth, float P1, op
     else if ((1.f - C) < FLOAT_EPSILON) X = 1;
     else if ((1.f - C) >= -FLOAT_EPSILON && (1.f - C) < 0.f) X = 1;
 
-    switch (BarType == BT_Armor ? HUDConfig.ArmorBlockStyle : HUDConfig.HealthBlockStyle)
+    switch (BarType == BT_Armor ? HUDConfig.ArmorBlockRoundingStrategy : HUDConfig.HealthBlockRoundingStrategy)
     {
         case 1: // Round
             return BlockWidth * (Abs(C - 0.5f) >= FLOAT_EPSILON ? Round(C + FLOAT_EPSILON) : 0);

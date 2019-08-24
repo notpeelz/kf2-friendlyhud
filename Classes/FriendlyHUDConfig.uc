@@ -42,8 +42,8 @@ var config int ArmorBlockCount;
 var config int HealthBlockCount;
 var config float ArmorBlockGap;
 var config float HealthBlockGap;
-var config int ArmorBlockStyle;
-var config int HealthBlockStyle;
+var config int ArmorBlockRoundingStrategy;
+var config int HealthBlockRoundingStrategy;
 var config int ArmorBlockVerticalAlignment;
 var config int HealthBlockVerticalAlignment;
 var config int ItemsPerColumn;
@@ -161,7 +161,7 @@ function Initialized()
             SetFHUDBlockHeight(10.f);
             SetFHUDBlockCount(1);
             SetFHUDBlockGap(2.f);
-            SetFHUDBlockStyle(0);
+            SetFHUDBlockRoundingStrategy(0);
             SetFHUDBlockAlignY(2);
             NameMarginX = 0.f;
             NameMarginY = 0.f;
@@ -297,7 +297,7 @@ exec function ResetFHUDBar()
     SetFHUDBlockWidth(200.f);
     SetFHUDBlockHeight(10.f);
     SetFHUDBlockCount(1);
-    SetFHUDBlockStyle(0);
+    SetFHUDBlockRoundingStrategy(0);
     SetFHUDBlockAlignY(2);
 
     SaveAndUpdate();
@@ -402,7 +402,7 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("SetFHUDBlockCount <int>: controls the number of bar blocks (default is 1)");
         ConsolePrint("SetFHUDBlockGap <float>: controls the gap between the bar blocks (default is 2)");
         ConsolePrint("SetFHUDBlockAlignY <string>: controls how blocks are aligned vertically when you have blocks of different heights (default is middle); possible values: top, bottom, middle");
-        ConsolePrint("SetFHUDBlockStyle <string>: controls the bar block value rounding logic (default is default); possible values: default, round, ceil, floor");
+        ConsolePrint("SetFHUDBlockRoundingStrategy <string>: controls the bar block value rounding logic (default is default); possible values: default, round, ceil, floor");
         ConsolePrint("NOTE: armor bar and health bar settings can be controlled separately; e.g. SetFHUDArmorBlockSize, SetFHUDHealthBlockSize, ...");
         ConsolePrint("SetFHUDBarProportions <float Width> <string Ratios>: sets up block dimensions and block ratios from a given total bar width and a list of ratios; the ratios are comma-separated, e.g.: 0.7,0.3");
         ConsolePrint("SetFHUDBarGap <float>: controls the gap between the armor and the health bar (default is -1)");
@@ -629,28 +629,28 @@ exec function LoadFHUDBarPreset(string Value)
         case "default":
             break;
         case "1080_block5":
-            SetFHUDBlockStyle(1);
+            SetFHUDBlockRoundingStrategy(1);
             SetFHUDBlockCount(5);
             SetFHUDBlockWidth(11.f);
             SetFHUDBlockHeight(11.f);
             BarGap = 2.f;
             break;
         case "1440_block5":
-            SetFHUDBlockStyle(1);
+            SetFHUDBlockRoundingStrategy(1);
             SetFHUDBlockCount(5);
             SetFHUDBlockWidth(13.f);
             SetFHUDBlockHeight(13.f);
             BarGap = 2.f;
             break;
         case "1080_block10":
-            SetFHUDBlockStyle(1);
+            SetFHUDBlockRoundingStrategy(1);
             SetFHUDBlockCount(10);
             SetFHUDBlockWidth(11.f);
             SetFHUDBlockHeight(11.f);
             BarGap = 2.f;
             break;
         case "1440_block10":
-            SetFHUDBlockStyle(1);
+            SetFHUDBlockRoundingStrategy(1);
             SetFHUDBlockCount(10);
             SetFHUDBlockWidth(13.f);
             SetFHUDBlockHeight(13.f);
@@ -665,7 +665,7 @@ exec function LoadFHUDBarPreset(string Value)
             IconSize = 50.f;
             IconOffset = -10.f;
             SetFHUDBlockGap(0.f);
-            SetFHUDBlockStyle(3);
+            SetFHUDBlockRoundingStrategy(3);
             SetFHUDBlockCount(50);
             SetFHUDBlockWidth(2.f);
             SetFHUDBlockHeight(10.f);
@@ -1301,37 +1301,37 @@ exec function SetFHUDHealthBlockAlignY(coerce string Value)
     SaveAndUpdate();
 }
 
-exec function SetFHUDBlockStyle(coerce string Value)
+exec function SetFHUDBlockRoundingStrategy(coerce string Value)
 {
-    SetFHUDArmorBlockStyle(Value);
-    SetFHUDHealthBlockStyle(Value);
+    SetFHUDArmorBlockRoundingStrategy(Value);
+    SetFHUDHealthBlockRoundingStrategy(Value);
 }
 
-exec function SetFHUDArmorBlockStyle(coerce string Value)
+exec function SetFHUDArmorBlockRoundingStrategy(coerce string Value)
 {
     switch (Locs(Value))
     {
         case "default":
-            ArmorBlockStyle = 0;
+            ArmorBlockRoundingStrategy = 0;
             break;
         case "round":
         case "full":
-            ArmorBlockStyle = 1;
+            ArmorBlockRoundingStrategy = 1;
             break;
         case "ceil":
-            ArmorBlockStyle = 2;
+            ArmorBlockRoundingStrategy = 2;
             break;
         case "floor":
-            ArmorBlockStyle = 3;
+            ArmorBlockRoundingStrategy = 3;
             break;
         default:
             // Non-int values get parsed as 0
-            ArmorBlockStyle = Clamp(int(Value), 0, 3);
+            ArmorBlockRoundingStrategy = Clamp(int(Value), 0, 3);
 
             // Invalid value
-            if (ArmorBlockStyle == 0 && Value != "0" || int(Value) != ArmorBlockStyle)
+            if (ArmorBlockRoundingStrategy == 0 && Value != "0" || int(Value) != ArmorBlockRoundingStrategy)
             {
-                ConsolePrint("Invalid block style:" @ Value);
+                ConsolePrint("Invalid block rounding strategy:" @ Value);
             }
             break;
     }
@@ -1339,31 +1339,31 @@ exec function SetFHUDArmorBlockStyle(coerce string Value)
     SaveAndUpdate();
 }
 
-exec function SetFHUDHealthBlockStyle(coerce string Value)
+exec function SetFHUDHealthBlockRoundingStrategy(coerce string Value)
 {
     switch (Locs(Value))
     {
         case "default":
-            HealthBlockStyle = 0;
+            HealthBlockRoundingStrategy = 0;
             break;
         case "round":
         case "full":
-            HealthBlockStyle = 1;
+            HealthBlockRoundingStrategy = 1;
             break;
         case "ceil":
-            HealthBlockStyle = 2;
+            HealthBlockRoundingStrategy = 2;
             break;
         case "floor":
-            HealthBlockStyle = 3;
+            HealthBlockRoundingStrategy = 3;
             break;
         default:
             // Non-int values get parsed as 0
-            HealthBlockStyle = Clamp(int(Value), 0, 3);
+            HealthBlockRoundingStrategy = Clamp(int(Value), 0, 3);
 
             // Invalid value
-            if (HealthBlockStyle == 0 && Value != "0" || int(Value) != HealthBlockStyle)
+            if (HealthBlockRoundingStrategy == 0 && Value != "0" || int(Value) != HealthBlockRoundingStrategy)
             {
-                ConsolePrint("Invalid block style:" @ Value);
+                ConsolePrint("Invalid block rounding strategy:" @ Value);
             }
             break;
     }
