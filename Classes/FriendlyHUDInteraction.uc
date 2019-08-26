@@ -443,7 +443,7 @@ function UpdateBlockRatioOverrides(
 
     // If we can't distribute the remaining BarRatio evenly into the unassigned blocks,
     // we distribute it so that all unassigned blocks hold at least 1%
-    if ((BarRatio / float(UnassignedBlocks)) < 1.f)
+    if ((BarRatio / float(UnassignedBlocks)) < 0.01f)
     {
         RatioPerBlock = 1.f;
     }
