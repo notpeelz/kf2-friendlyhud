@@ -173,7 +173,7 @@ function Initialized()
             BuffCountMax = 3;
             BuffLayout = 1;
             BuffOffset = 0;
-            BarWidthMin = 202.f;
+            BarWidthMin = 122.f;
             BarGap = -1.f;
             EmptyBlockThreshold = 0.f;
             SetFHUDBlockWidth(200.f);
@@ -314,7 +314,7 @@ exec function ResetFHUDBar()
     NameMarginX = 0.f;
     NameMarginY = 0.f;
     NameScale = 1.f;
-    BarWidthMin = 202.f;
+    BarWidthMin = 122.f;
     BarGap = -1.f;
     SetFHUDBlockGap(2.f);
     ClearFHUDBlockDimensions();
@@ -450,7 +450,7 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("SetFHUDNameScale <float>: controls the scale of the player name (default is 1)");
         ConsolePrint("SetFHUDNameMarginX <float>: controls the horizontal margin of the player name (default is 0)");
         ConsolePrint("SetFHUDNameMarginY <float>: controls the vertical margin of the player name (default is 0)");
-        ConsolePrint("SetFHUDBarWidthMin <float>: forces healthbars to assume a minimum spacing between them, so to prevent names from overlapping (default is 202)");
+        ConsolePrint("SetFHUDBarWidthMin <float>: forces bars to assume a minimum width, so to ensure player names have enough space to render (default is 122)");
 
         ConsolePrint(" ");
         ConsolePrint("Buff Settings");
@@ -683,7 +683,6 @@ exec function LoadFHUDBarPreset(string Value)
             SetFHUDBlockHeight(11.f);
             SetFHUDBlockOutline(1);
             BarGap = 2.f;
-            BarWidthMin = 122;
             break;
         case "1440_block5":
             SetFHUDBlockRoundingStrategy(1);
@@ -692,7 +691,6 @@ exec function LoadFHUDBarPreset(string Value)
             SetFHUDBlockHeight(13.f);
             SetFHUDBlockOutline(1);
             BarGap = 2.f;
-            BarWidthMin = 122;
             break;
         case "1080_block10":
             SetFHUDBlockRoundingStrategy(1);
@@ -728,7 +726,6 @@ exec function LoadFHUDBarPreset(string Value)
             BuffOffset = 5.f;
             BuffSize = 11.f;
             BuffGap = 5.f;
-            BarWidthMin = 210.f;
             break;
         default:
             ConsolePrint("Invalid bar preset:" @ Value);
