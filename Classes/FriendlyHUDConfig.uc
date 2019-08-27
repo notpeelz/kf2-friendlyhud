@@ -626,6 +626,13 @@ exec function LoadFHUDPreset(string Value)
             break;
         case "1080_topright":
             ReverseY = true;
+            Layout = 2;
+            Flow = 0;
+            ItemsPerColumn = 11;
+            ReverseX = true;
+            ItemsPerRow = 1;
+            OffsetY = -60.f;
+            break;
         case "1080_right":
             Layout = 2;
             Flow = 0;
@@ -636,6 +643,14 @@ exec function LoadFHUDPreset(string Value)
             break;
         case "1440_topright":
             ReverseY = true;
+            Layout = 2;
+            Flow = 0;
+            Scale = 1.1f;
+            ItemsPerColumn = 11;
+            ReverseX = true;
+            ItemsPerRow = 1;
+            OffsetY = -60.f;
+            break;
         case "1440_right":
             Layout = 2;
             Flow = 0;
