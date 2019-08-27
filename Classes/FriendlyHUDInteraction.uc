@@ -60,6 +60,7 @@ struct UI_RuntimeVars
     var float Opacity;
     var array<FriendlyHUDConfig.BlockSizeOverride> ArmorBlockSizeOverrides, HealthBlockSizeOverrides;
     var array<FriendlyHUDConfig.BlockRatioOverride> ArmorBlockRatioOverrides, HealthBlockRatioOverrides;
+    var array<FriendlyHUDConfig.BlockOffsetOverride> ArmorBlockOffsetOverrides, HealthBlockOffsetOverrides;
     var FriendlyHUDConfig.BlockOutline ArmorBlockOutline, HealthBlockOutline;
 };
 
@@ -333,6 +334,18 @@ function UpdateRuntimeVars(optional Canvas Canvas)
         HUDConfig.HealthBlockCount
     );
 
+    UpdateBlockOffsetOverrides(
+        R.ArmorBlockOffsetOverrides,
+        HUDConfig.ArmorBlockOffsetOverrides,
+        HUDConfig.ArmorBlockCount
+    );
+
+    UpdateBlockOffsetOverrides(
+        R.HealthBlockOffsetOverrides,
+        HUDConfig.HealthBlockOffsetOverrides,
+        HUDConfig.HealthBlockCount
+    );
+
     R.NameMarginX = HUDConfig.NameMarginX * R.Scale;
     R.NameMarginY = HUDConfig.NameMarginY * R.Scale;
     R.ItemMarginX = HUDConfig.ItemMarginX * R.Scale;
@@ -376,6 +389,32 @@ function UpdateRuntimeVars(optional Canvas Canvas)
         // Icon (left side)
         R.PlayerIconSize + R.PlayerIconOffset
     ) + R.ItemMarginY;
+}
+
+function UpdateBlockOffsetOverrides(
+    out array<FriendlyHUDConfig.BlockOffsetOverride> OutBlockOffsetOverrides,
+    const out array<FriendlyHUDConfig.BlockOffsetOverride> BlockOffsetOverrides,
+    int BlockCount
+)
+{
+    local FriendlyHUDConfig.BlockOffsetOverride CurrentItem;
+    local int I;
+
+    OutBlockOffsetOverrides.Length = BlockCount;
+    for (I = 0; I < BlockCount; I++)
+    {
+        OutBlockOffsetOverrides[I].BlockIndex = I;
+
+        foreach BlockOffsetOverrides(CurrentItem)
+        {
+            if (CurrentItem.BlockIndex == I)
+            {
+                OutBlockOffsetOverrides[I].X = CurrentItem.X;
+                OutBlockOffsetOverrides[I].Y = CurrentItem.Y;
+                break;
+            }
+        }
+    }
 }
 
 function UpdateBlockRatioOverrides(
@@ -964,8 +1003,10 @@ function DrawBar(
     local int BlockCount, BlockGap, BlockRoundingStrategy, BarHeight, BlockVerticalAlignment;
     local array<FriendlyHUDConfig.BlockSizeOverride> BlockSizeOverrides;
     local array<FriendlyHUDConfig.BlockRatioOverride> BlockRatioOverrides;
+    local array<FriendlyHUDConfig.BlockOffsetOverride> BlockOffsetOverrides;
     local FriendlyHUDConfig.BlockOutline BlockOutline;
     local float BlockOutlineH, BlockOutlineV;
+    local float BlockOffsetX, BlockOffsetY;
     local Color BarColor, BufferColor, BGColor, EmptyBGColor;
     local float CurrentBlockPosX, CurrentBlockPosY, CurrentBlockWidth, CurrentBlockHeight;
     local float BarBlockWidth, BufferBlockWidth;
@@ -991,6 +1032,7 @@ function DrawBar(
         BlockVerticalAlignment = HUDConfig.ArmorBlockVerticalAlignment;
         BlockSizeOverrides = R.ArmorBlockSizeOverrides;
         BlockRatioOverrides = R.ArmorBlockRatioOverrides;
+        BlockOffsetOverrides = R.ArmorBlockOffsetOverrides;
         BlockOutline = R.ArmorBlockOutline;
 
         BarColor = HUDConfig.ArmorColor;
@@ -1006,6 +1048,7 @@ function DrawBar(
         BlockVerticalAlignment = HUDConfig.HealthBlockVerticalAlignment;
         BlockSizeOverrides = R.HealthBlockSizeOverrides;
         BlockRatioOverrides = R.HealthBlockRatioOverrides;
+        BlockOffsetOverrides = R.HealthBlockOffsetOverrides;
         BlockOutline = R.HealthBlockOutline;
 
         BarColor = HUDConfig.HealthColor;
@@ -1047,6 +1090,8 @@ function DrawBar(
         TotalHeight = FMax(TotalHeight, CurrentBlockHeight + BlockOutlineV);
 
         BlockRatio = BlockRatioOverrides[I].Ratio;
+        BlockOffsetX = BlockOffsetOverrides[I].X;
+        BlockOffsetY = BlockOffsetOverrides[I].Y;
 
         // Handle empty blocks so that we don't get DBZ errors
         if (BlockRatio <= 0.f)
@@ -1106,7 +1151,7 @@ function DrawBar(
 
         // Draw background
         SetCanvasColor(Canvas, ((BarBlockWidth + BufferBlockWidth) / CurrentBlockWidth) <= HUDConfig.EmptyBlockThreshold ? EmptyBGColor : BGColor);
-        Canvas.SetPos(CurrentBlockPosX, CurrentBlockPosY);
+        Canvas.SetPos(BlockOffsetX + CurrentBlockPosX, BlockOffsetY + CurrentBlockPosY);
         Canvas.DrawTile(default.BarBGTexture, CurrentBlockWidth + BlockOutlineH, CurrentBlockHeight + BlockOutlineV, 0, 0, 32, 32);
 
         CurrentBlockPosX += BlockOutline.Left;
@@ -1116,7 +1161,7 @@ function DrawBar(
         if (BarBlockWidth > 0.f)
         {
             SetCanvasColor(Canvas, BarColor);
-            Canvas.SetPos(CurrentBlockPosX, CurrentBlockPosY);
+            Canvas.SetPos(BlockOffsetX + CurrentBlockPosX, BlockOffsetY + CurrentBlockPosY);
             Canvas.DrawTile(default.BarBGTexture, BarBlockWidth, CurrentBlockHeight, 0, 0, 32, 32);
         }
 
@@ -1124,7 +1169,7 @@ function DrawBar(
         if (BufferBlockWidth > 0.f)
         {
             SetCanvasColor(Canvas, BufferColor);
-            Canvas.SetPos(CurrentBlockPosX + BarBlockWidth, CurrentBlockPosY);
+            Canvas.SetPos(BlockOffsetX + CurrentBlockPosX + BarBlockWidth, BlockOffsetY + CurrentBlockPosY);
             Canvas.DrawTile(default.BarBGTexture, BufferBlockWidth, CurrentBlockHeight, 0, 0, 32, 32);
         }
 
@@ -1133,7 +1178,7 @@ function DrawBar(
             DebugRatioText = class'FriendlyHUD.FriendlyHUDHelper'.static.FloatToString(P1 * BlockRatio, 2) $ "/" $ class'FriendlyHUD.FriendlyHUDHelper'.static.FloatToString(BlockRatio, 2);
             SetCanvasColor(Canvas, MakeColor(202, 44, 146, 255));
             Canvas.TextSize(DebugRatioText, DebugRatioWidth, DebugRatioHeight, 0.6f, 0.6f);
-            Canvas.SetPos(CurrentBlockPosX, CurrentBlockPosY + CurrentBlockHeight - DebugRatioHeight);
+            Canvas.SetPos(BlockOffsetX + CurrentBlockPosX, BlockOffsetY + CurrentBlockPosY + CurrentBlockHeight - DebugRatioHeight);
             Canvas.DrawText(DebugRatioText, , 0.6f, 0.6f, DebugTextFontRenderInfo);
         }
 

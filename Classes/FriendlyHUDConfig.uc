@@ -28,6 +28,13 @@ struct BlockOutline
     var float Bottom;
 };
 
+struct BlockOffsetOverride
+{
+    var float X;
+    var float Y;
+    var int BlockIndex;
+};
+
 var config int INIVersion;
 var config int LastChangeLogVersion;
 var config float UpdateInterval;
@@ -46,6 +53,8 @@ var config array<BlockSizeOverride> ArmorBlockSizeOverrides;
 var config array<BlockSizeOverride> HealthBlockSizeOverrides;
 var config array<BlockRatioOverride> ArmorBlockRatioOverrides;
 var config array<BlockRatioOverride> HealthBlockRatioOverrides;
+var config array<BlockOffsetOverride> ArmorBlockOffsetOverrides;
+var config array<BlockOffsetOverride> HealthBlockOffsetOverrides;
 var config int ArmorBlockCount;
 var config int HealthBlockCount;
 var config float ArmorBlockGap;
@@ -218,10 +227,15 @@ function Initialized()
         SaveAndUpdate();
     }
 
-    HealthBlockSizeOverrides.Sort(SortBlockSizeOverrides);
     ArmorBlockSizeOverrides.Sort(SortBlockSizeOverrides);
-    HealthBlockRatioOverrides.Sort(SortBlockRatioOverrides);
+    HealthBlockSizeOverrides.Sort(SortBlockSizeOverrides);
+
     ArmorBlockRatioOverrides.Sort(SortBlockRatioOverrides);
+    HealthBlockRatioOverrides.Sort(SortBlockRatioOverrides);
+
+    ArmorBlockOffsetOverrides.Sort(SortBlockOffsetOverrides);
+    HealthBlockOffsetOverrides.Sort(SortBlockOffsetOverrides);
+
     ColorThresholds.Sort(SortColorThresholds);
 
     `Log("[FriendlyHUD] Initialized config");
@@ -305,6 +319,7 @@ exec function ResetFHUDBar()
     SetFHUDBlockGap(2.f);
     ClearFHUDBlockDimensions();
     ClearFHUDBlockRatios();
+    ClearFHUDBlockOffsets();
     SetFHUDBlockWidth(200.f);
     SetFHUDBlockHeight(8.f);
     SetFHUDBlockCount(1);
@@ -406,6 +421,7 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("ResetFHUDBar: resets the bar settings (including buffs) to their defaults");
         ConsolePrint("ClearFHUDBlockDimensions: clears the block dimensions overrides");
         ConsolePrint("ClearFHUDBlockRatios: clears the block ratio overrides");
+        ConsolePrint("ClearFHUDBlockOffsets: clears the block offset overrides");
         ConsolePrint("SetFHUDBlockSize <float Width> <float Height>: controls the dimensions of bar blocks (default is 200 x 10)");
         ConsolePrint("SetFHUDBlockSize <float Width> <float Height> <int BlockIndex = -1>: controls the dimensions of individual blocks (first block starts at 0)");
         ConsolePrint("SetFHUDBlockOutline <float Top> <float Right = -1> <float Bottom = -1> <float Left = -1>: controls the outline of the blocks (default is 1)");
@@ -414,6 +430,8 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("SetFHUDBlockWidth <float> <int BlockIndex = -1>: controls the width of bar blocks");
         ConsolePrint("SetFHUDBlockHeight <float> <int BlockIndex = -1>: controls the height of bar blocks");
         ConsolePrint("SetFHUDBlockRatio <float> <int BlockIndex>: controls the bar ratio (health ratio or armor ratio) represented by a specific block");
+        ConsolePrint("SetFHUDBlockOffsetX <float> <int BlockIndex>: controls the relative horizontal offset of a specific block");
+        ConsolePrint("SetFHUDBlockOffsetY <float> <int BlockIndex>: controls the relative vertical offset of a specific block");
         ConsolePrint("SetFHUDBlockAlignY <string>: controls how blocks are aligned vertically when you have blocks of different heights (default is middle); possible values: top, bottom, middle");
         ConsolePrint("SetFHUDBlockRoundingStrategy <string>: controls the bar block value rounding logic (default is default); possible values: default, round, ceil, floor");
         ConsolePrint(" ");
@@ -830,6 +848,24 @@ exec function ClearFHUDHealthBlockRatios()
     SaveAndUpdate();
 }
 
+exec function ClearFHUDBlockOffsets()
+{
+    ClearFHUDArmorBlockOffsets();
+    ClearFHUDHealthBlockOffsets();
+}
+
+exec function ClearFHUDArmorBlockOffsets()
+{
+    ArmorBlockOffsetOverrides.Length = 0;
+    SaveAndUpdate();
+}
+
+exec function ClearFHUDHealthBlockOffsets()
+{
+    HealthBlockOffsetOverrides.Length = 0;
+    SaveAndUpdate();
+}
+
 exec function SetFHUDBarProportions(float Width, optional string Ratios)
 {
     local array<string> Params;
@@ -1221,6 +1257,134 @@ exec function SetFHUDArmorBlockRatio(float Value, int BlockIndex)
     NewItem.BlockIndex = BlockIndex;
     ArmorBlockRatioOverrides.AddItem(NewItem);
     ArmorBlockRatioOverrides.Sort(SortBlockRatioOverrides);
+
+    SaveAndUpdate();
+}
+
+exec function SetFHUDBlockOffsetX(float Value, int BlockIndex)
+{
+    SetFHUDArmorBlockOffsetX(Value, BlockIndex);
+    SetFHUDHealthBlockOffsetX(Value, BlockIndex);
+}
+
+exec function SetFHUDBlockOffsetY(float Value, int BlockIndex)
+{
+    SetFHUDArmorBlockOffsetY(Value, BlockIndex);
+    SetFHUDHealthBlockOffsetY(Value, BlockIndex);
+}
+
+exec function SetFHUDArmorBlockOffsetX(float Value, int BlockIndex)
+{
+    local BlockOffsetOverride NewItem;
+    local int I;
+
+    if (BlockIndex < 0)
+    {
+        ConsolePrint("Invalid BlockIndex:" @ BlockIndex);
+        return;
+    }
+
+    for (I = 0; I < ArmorBlockOffsetOverrides.Length; I++)
+    {
+        if (ArmorBlockOffsetOverrides[I].BlockIndex == BlockIndex)
+        {
+            ArmorBlockOffsetOverrides[I].X = Value;
+            SaveAndUpdate();
+            return;
+        }
+    }
+
+    NewItem.X = Value;
+    NewItem.BlockIndex = BlockIndex;
+    ArmorBlockOffsetOverrides.AddItem(NewItem);
+    ArmorBlockOffsetOverrides.Sort(SortBlockOffsetOverrides);
+
+    SaveAndUpdate();
+}
+
+exec function SetFHUDHealthBlockOffsetX(float Value, int BlockIndex)
+{
+    local BlockOffsetOverride NewItem;
+    local int I;
+
+    if (BlockIndex < 0)
+    {
+        ConsolePrint("Invalid BlockIndex:" @ BlockIndex);
+        return;
+    }
+
+    for (I = 0; I < HealthBlockOffsetOverrides.Length; I++)
+    {
+        if (HealthBlockOffsetOverrides[I].BlockIndex == BlockIndex)
+        {
+            HealthBlockOffsetOverrides[I].X = Value;
+            SaveAndUpdate();
+            return;
+        }
+    }
+
+    NewItem.X = Value;
+    NewItem.BlockIndex = BlockIndex;
+    HealthBlockOffsetOverrides.AddItem(NewItem);
+    HealthBlockOffsetOverrides.Sort(SortBlockOffsetOverrides);
+
+    SaveAndUpdate();
+}
+
+exec function SetFHUDArmorBlockOffsetY(float Value, int BlockIndex)
+{
+    local BlockOffsetOverride NewItem;
+    local int I;
+
+    if (BlockIndex < 0)
+    {
+        ConsolePrint("Invalid BlockIndex:" @ BlockIndex);
+        return;
+    }
+
+    for (I = 0; I < ArmorBlockOffsetOverrides.Length; I++)
+    {
+        if (ArmorBlockOffsetOverrides[I].BlockIndex == BlockIndex)
+        {
+            ArmorBlockOffsetOverrides[I].Y = Value;
+            SaveAndUpdate();
+            return;
+        }
+    }
+
+    NewItem.Y = Value;
+    NewItem.BlockIndex = BlockIndex;
+    ArmorBlockOffsetOverrides.AddItem(NewItem);
+    ArmorBlockOffsetOverrides.Sort(SortBlockOffsetOverrides);
+
+    SaveAndUpdate();
+}
+
+exec function SetFHUDHealthBlockOffsetY(float Value, int BlockIndex)
+{
+    local BlockOffsetOverride NewItem;
+    local int I;
+
+    if (BlockIndex < 0)
+    {
+        ConsolePrint("Invalid BlockIndex:" @ BlockIndex);
+        return;
+    }
+
+    for (I = 0; I < HealthBlockOffsetOverrides.Length; I++)
+    {
+        if (HealthBlockOffsetOverrides[I].BlockIndex == BlockIndex)
+        {
+            HealthBlockOffsetOverrides[I].Y = Value;
+            SaveAndUpdate();
+            return;
+        }
+    }
+
+    NewItem.Y = Value;
+    NewItem.BlockIndex = BlockIndex;
+    HealthBlockOffsetOverrides.AddItem(NewItem);
+    HealthBlockOffsetOverrides.Sort(SortBlockOffsetOverrides);
 
     SaveAndUpdate();
 }
@@ -2124,6 +2288,13 @@ delegate int SortBlockSizeOverrides(BlockSizeOverride A, BlockSizeOverride B)
 }
 
 delegate int SortBlockRatioOverrides(BlockRatioOverride A, BlockRatioOverride B)
+{
+    if (A.BlockIndex < B.BlockIndex) return 1;
+    if (A.BlockIndex > B.BlockIndex) return -1;
+    return 0;
+}
+
+delegate int SortBlockOffsetOverrides(BlockOffsetOverride A, BlockOffsetOverride B)
 {
     if (A.BlockIndex < B.BlockIndex) return 1;
     if (A.BlockIndex > B.BlockIndex) return -1;
