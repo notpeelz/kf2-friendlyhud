@@ -494,7 +494,7 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("--------------------------");
         ConsolePrint("1080_block5, 1440_block5: 5 blocks of 20% HP each");
         ConsolePrint("1080_block10, 1440_block10: 10 blocks of 10% HP each");
-        ConsolePrint("block2: 2 blocks of 50% HP");
+        ConsolePrint("70-30: bar separated in two blocks (70%-30%)");
         ConsolePrint("barcode: 50 blocks with no gap (resembling a barcode)");
 
         ConsolePrint(" ");
@@ -677,10 +677,9 @@ exec function LoadFHUDBarPreset(string Value)
             SetFHUDBlockOutline(1);
             BarGap = 4.f;
             break;
-        case "block2":
-            SetFHUDBlockCount(2);
-            SetFHUDBlockWidth(100.f);
+        case "70-30":
             SetFHUDBlockOutline(1);
+            SetFHUDHealthBarProportions(196, "0.7,0.3");
             BarGap = 4.f;
             break;
         case "barcode":
