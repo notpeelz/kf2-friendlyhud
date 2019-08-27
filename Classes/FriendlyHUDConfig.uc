@@ -20,6 +20,14 @@ struct BlockRatioOverride
     var int BlockIndex;
 };
 
+struct BlockOutline
+{
+    var float Left;
+    var float Right;
+    var float Top;
+    var float Bottom;
+};
+
 var config int INIVersion;
 var config int LastChangeLogVersion;
 var config float UpdateInterval;
@@ -46,6 +54,8 @@ var config int ArmorBlockRoundingStrategy;
 var config int HealthBlockRoundingStrategy;
 var config int ArmorBlockVerticalAlignment;
 var config int HealthBlockVerticalAlignment;
+var config BlockOutline ArmorBlockOutline;
+var config BlockOutline HealthBlockOutline;
 var config int ItemsPerColumn;
 var config int ItemsPerRow;
 var config float ItemMarginX;
@@ -158,11 +168,12 @@ function Initialized()
             BarGap = -1.f;
             EmptyBlockThreshold = 0.f;
             SetFHUDBlockWidth(200.f);
-            SetFHUDBlockHeight(10.f);
+            SetFHUDBlockHeight(8.f);
             SetFHUDBlockCount(1);
             SetFHUDBlockGap(2.f);
             SetFHUDBlockRoundingStrategy(0);
             SetFHUDBlockAlignY(2);
+            SetFHUDBlockOutline(1);
             NameMarginX = 0.f;
             NameMarginY = 0.f;
             NameScale = 1.f;
@@ -295,10 +306,11 @@ exec function ResetFHUDBar()
     ClearFHUDBlockDimensions();
     ClearFHUDBlockRatios();
     SetFHUDBlockWidth(200.f);
-    SetFHUDBlockHeight(10.f);
+    SetFHUDBlockHeight(8.f);
     SetFHUDBlockCount(1);
     SetFHUDBlockRoundingStrategy(0);
     SetFHUDBlockAlignY(2);
+    SetFHUDBlockOutline(1);
 
     SaveAndUpdate();
 }
@@ -396,14 +408,17 @@ exec function PrintFHUDHelp(optional bool ShowAdvancedCommands = false)
         ConsolePrint("ClearFHUDBlockRatios: clears the block ratio overrides");
         ConsolePrint("SetFHUDBlockSize <float Width> <float Height>: controls the dimensions of bar blocks (default is 200 x 10)");
         ConsolePrint("SetFHUDBlockSize <float Width> <float Height> <int BlockIndex = -1>: controls the dimensions of individual blocks (first block starts at 0)");
+        ConsolePrint("SetFHUDBlockOutline <float Top> <float Right = -1> <float Bottom = -1> <float Left = -1>: controls the outline of the blocks (default is 1)");
+        ConsolePrint("SetFHUDBlockCount <int>: controls the number of bar blocks (default is 1)");
+        ConsolePrint("SetFHUDBlockGap <float>: controls the gap between the bar blocks (default is 2)");
         ConsolePrint("SetFHUDBlockWidth <float> <int BlockIndex = -1>: controls the width of bar blocks");
         ConsolePrint("SetFHUDBlockHeight <float> <int BlockIndex = -1>: controls the height of bar blocks");
         ConsolePrint("SetFHUDBlockRatio <float> <int BlockIndex>: controls the bar ratio (health ratio or armor ratio) represented by a specific block");
-        ConsolePrint("SetFHUDBlockCount <int>: controls the number of bar blocks (default is 1)");
-        ConsolePrint("SetFHUDBlockGap <float>: controls the gap between the bar blocks (default is 2)");
         ConsolePrint("SetFHUDBlockAlignY <string>: controls how blocks are aligned vertically when you have blocks of different heights (default is middle); possible values: top, bottom, middle");
         ConsolePrint("SetFHUDBlockRoundingStrategy <string>: controls the bar block value rounding logic (default is default); possible values: default, round, ceil, floor");
-        ConsolePrint("NOTE: armor bar and health bar settings can be controlled separately; e.g. SetFHUDArmorBlockSize, SetFHUDHealthBlockSize, ...");
+        ConsolePrint(" ");
+        ConsolePrint("*NOTE*: armor bar and health bar block settings can be controlled separately; e.g. SetFHUDArmorBlockSize, SetFHUDHealthBlockSize, ...");
+        ConsolePrint(" ");
         ConsolePrint("SetFHUDBarProportions <float Width> <string Ratios>: sets up block dimensions and block ratios from a given total bar width and a list of ratios; the ratios are comma-separated, e.g.: 0.7,0.3");
         ConsolePrint("SetFHUDBarGap <float>: controls the gap between the armor and the health bar (default is -1)");
         ConsolePrint("SetFHUDIconSize <float>: controls the dimensions of the perk icon (default is 32)");
@@ -633,20 +648,25 @@ exec function LoadFHUDBarPreset(string Value)
             SetFHUDBlockCount(5);
             SetFHUDBlockWidth(11.f);
             SetFHUDBlockHeight(11.f);
+            SetFHUDBlockOutline(1);
             BarGap = 2.f;
+            BarWidthMin = 122;
             break;
         case "1440_block5":
             SetFHUDBlockRoundingStrategy(1);
             SetFHUDBlockCount(5);
             SetFHUDBlockWidth(13.f);
             SetFHUDBlockHeight(13.f);
+            SetFHUDBlockOutline(1);
             BarGap = 2.f;
+            BarWidthMin = 122;
             break;
         case "1080_block10":
             SetFHUDBlockRoundingStrategy(1);
             SetFHUDBlockCount(10);
             SetFHUDBlockWidth(11.f);
             SetFHUDBlockHeight(11.f);
+            SetFHUDBlockOutline(1);
             BarGap = 2.f;
             break;
         case "1440_block10":
@@ -654,11 +674,13 @@ exec function LoadFHUDBarPreset(string Value)
             SetFHUDBlockCount(10);
             SetFHUDBlockWidth(13.f);
             SetFHUDBlockHeight(13.f);
+            SetFHUDBlockOutline(1);
             BarGap = 4.f;
             break;
         case "block2":
             SetFHUDBlockCount(2);
             SetFHUDBlockWidth(100.f);
+            SetFHUDBlockOutline(1);
             BarGap = 4.f;
             break;
         case "barcode":
@@ -669,6 +691,7 @@ exec function LoadFHUDBarPreset(string Value)
             SetFHUDBlockCount(50);
             SetFHUDBlockWidth(2.f);
             SetFHUDBlockHeight(10.f);
+            SetFHUDBlockOutline(1);
             BarGap = 4.f;
             BuffOffset = 5.f;
             BuffSize = 11.f;
@@ -1368,6 +1391,24 @@ exec function SetFHUDHealthBlockRoundingStrategy(coerce string Value)
             break;
     }
 
+    SaveAndUpdate();
+}
+
+exec function SetFHUDBlockOutline(float Top, optional float Right = -1.f, optional float Bottom = -1.f, optional float Left = -1.f)
+{
+    SetFHUDArmorBlockOutline(Top, Right, Bottom, Left);
+    SetFHUDHealthBlockOutline(Top, Right, Bottom, Left);
+}
+
+exec function SetFHUDArmorBlockOutline(float Top, optional float Right = -1.f, optional float Bottom = -1.f, optional float Left = -1.f)
+{
+    ArmorBlockOutline = class'FriendlyHUD.FriendlyHUDHelper'.static.MakeOutline(Top, Right, Bottom, Left);
+    SaveAndUpdate();
+}
+
+exec function SetFHUDHealthBlockOutline(float Top, optional float Right = -1.f, optional float Bottom = -1.f, optional float Left = -1.f)
+{
+    HealthBlockOutline = class'FriendlyHUD.FriendlyHUDHelper'.static.MakeOutline(Top, Right, Bottom, Left);
     SaveAndUpdate();
 }
 

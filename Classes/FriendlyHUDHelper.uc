@@ -1,4 +1,38 @@
-class FriendlyHUDHelper extends Object;
+class FriendlyHUDHelper extends Object
+    dependson(FriendlyHUDConfig);
+
+static simulated function FriendlyHUDConfig.BlockOutline MakeOutline(
+    float Top,
+    optional float Right = -1.f,
+    optional float Bottom = -1.f,
+    optional float Left = -1.f
+)
+{
+    local FriendlyHUDConfig.BlockOutline OutValue;
+
+    OutValue.Top = FMax(Top, 0.f);
+    OutValue.Right = FMax(Top, 0.f);
+    OutValue.Bottom = FMax(Top, 0.f);
+    OutValue.Left = FMax(Top, 0.f);
+
+    if (Right >= 0.f)
+    {
+        OutValue.Right = FMax(Right, 0.f);
+        OutValue.Left = FMax(Right, 0.f);
+    }
+
+    if (Bottom >= 0.f)
+    {
+        OutValue.Bottom = FMax(Bottom, 0.f);
+    }
+
+    if (Left >= 0.f)
+    {
+        OutValue.Left = FMax(Left, 0.f);
+    }
+
+    return OutValue;
+}
 
 static simulated function float GetResolutionScale(Canvas Canvas)
 {
