@@ -833,7 +833,10 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
     // BuffLayout: Right
     if (HUDConfig.BuffLayout == 2)
     {
-        // This ensures that we don't render over the player name (and bars)
+        // This ensures that we don't render the buffs over the player name
+        PlayerNamePosX += R.BuffPlayerIconMargin + R.BuffIconSize;
+
+        // This ensures that we don't render the buffs over the bars
         PosX += R.BuffPlayerIconMargin + R.BuffIconSize;
     }
 
