@@ -211,7 +211,7 @@ function CachePlayerNames(Canvas Canvas, optional bool ForceRefresh = false, opt
             PlayerName = FHUDRepInfo.KFPRIArray[I].PlayerName;
             FHUDRepInfo.PlayerNameArray[I] = PlayerName;
 
-            NameWidthMax = R.BarWidthMin;
+            NameWidthMax = R.BarWidthMin - R.NameMarginX;
 
             // Subtract the friend icon from the available width for the player name
             if (HUDConfig.FriendIconEnabled && (FHUDRepInfo.IsFriendArray[I] != 0 || FHUDMutator.ForceShowAsFriend))
@@ -373,7 +373,7 @@ function UpdateRuntimeVars(optional Canvas Canvas)
         // Abort when we exceed the max width (accounts for the friend icons)
         // Reminder: we're looking for the *minimum char count* to exceed the max width, so we need
         //           something that fits when the friend icon is visible
-        if (PlayerNameWidth >= (R.BarWidthMin - R.FriendIconSize - R.FriendIconGap)) break;
+        if (PlayerNameWidth >= (R.BarWidthMin - R.NameMarginX - R.FriendIconSize - R.FriendIconGap)) break;
 
         R.PlayerNameLetterCount++;
     }
