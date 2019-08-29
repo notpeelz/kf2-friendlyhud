@@ -33,13 +33,15 @@ var array<PRIEntry> SortedKFPRIArray;
 
 var Texture2d BarBGTexture;
 var Texture2d BuffIconTexture;
-var Texture2d PlayerNotReadyIconTexture;
-var Texture2d PlayerReadyIconTexture;
+var Texture2d PlayerNotReadyIconTexture, PlayerReadyIconTexture;
 var Texture2d FriendIconTexture;
-var Color AxisXLineColor;
-var Color AxisYLineColor;
+var Color SelfCornerColor, MoveCornerColor, SelectCornerColor, SelectLineColor;
+var Color AxisXLineColor, AxisYLineColor;
 
 var FriendlyHUDMutator FHUDMutator;
+var bool ManualModeActive, MoveModeActive;
+var FriendlyHUDReplicationInfo ManualActiveRepInfo;
+var int ManualActiveRepIndex;
 
 struct UI_RuntimeVars
 {
@@ -71,6 +73,393 @@ var UI_RuntimeVars R;
 const ASCIICharacters = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 const FLOAT_EPSILON = 0.0001f;
 const PrestigeIconScale = 0.75f;
+const RepeatActionInterval = 0.2f;
+
+exec function DebugFHUDSetArmor(int Armor, optional int MaxArmor = -1)
+{
+    local KFPawn_Human KFPH;
+
+    if (KFPlayerOwner.CheatManager == None) return;
+
+    KFPH = KFPawn_Human(KFPlayerOwner.Pawn);
+    if (KFPH == None) return;
+
+    KFPH.Armor = Armor;
+    if (MaxArmor > 0)
+    {
+        KFPH.MaxArmor = MaxArmor;
+    }
+}
+
+exec function DebugFHUDSetHealth(int Health, optional int MaxHealth = -1)
+{
+    if (KFPlayerOwner.CheatManager == None) return;
+    if (KFPlayerOwner.Pawn == None) return;
+
+    KFPlayerOwner.Pawn.Health = Health;
+    if (MaxHealth > 0)
+    {
+        KFPlayerOwner.Pawn.HealthMax = MaxHealth;
+    }
+}
+
+exec function DebugFHUDForceFriend(bool Value)
+{
+    FHUDMutator.ForceShowAsFriend = Value;
+    UpdateRuntimeVars();
+}
+
+exec function ToggleFHUDManualMode()
+{
+    // Initialize the active player to the first valid in the list
+    ManualActiveRepInfo = FHUDMutator.RepInfo;
+    ManualActiveRepIndex = 0;
+    GetNextOccupiedSlot(ManualActiveRepInfo, ManualActiveRepIndex, true);
+
+    if (ManualActiveRepInfo == None) return;
+
+    ManualModeActive = !ManualModeActive;
+    MoveModeActive = false;
+
+    // Disable player movement
+    // Note: this keeps track of how many times it was called, so we don't have to worry
+    //       about breaking the state
+    KFPlayerOwner.IgnoreMoveInput(ManualModeActive);
+
+    /*if (KFPlayerOwner.Pawn != None)
+    {
+        // FIXME: this breaks when the player: a) gets grabbed by a zed; or b) dies then respawns
+        KFPlayerOwner.Pawn.bJumpCapable = !ManualModeActive;
+        KFPlayerOwner.Pawn.bCanCrouch = !ManualModeActive;
+    }*/
+
+    // Clear repeat action timers
+    `TimerHelper.ClearTimer(nameof(SelectMoveUpHold), self);
+    `TimerHelper.ClearTimer(nameof(SelectMoveDownHold), self);
+    `TimerHelper.ClearTimer(nameof(SelectMoveLeftHold), self);
+    `TimerHelper.ClearTimer(nameof(SelectMoveRightHold), self);
+}
+
+exec function ToggleFHUDMoveMode()
+{
+    if (!ManualModeActive) return;
+
+    // We can't move self unless we have SelfSortStrategy set to 'unset'
+    if (ManualActiveRepInfo.KFPRIArray[ManualActiveRepIndex] == KFPlayerOwner.PlayerReplicationInfo && HUDConfig.SelfSortStrategy != 0) return;
+
+    MoveModeActive = !MoveModeActive;
+}
+
+exec function SelectFHUDMoveUp()
+{
+    if (!ManualModeActive) return;
+
+    // Flow: Column
+    if (HUDConfig.Flow == 0)
+    {
+        if (HUDConfig.ReverseY ^^ HUDConfig.Layout != 0)
+        {
+            if (MoveModeActive) UpdateManualPosition(1, true);
+            else UpdateManualSelection(1, true);
+        }
+        else
+        {
+            if (MoveModeActive) UpdateManualPosition(1, false);
+            else UpdateManualSelection(1, false);
+        }
+    }
+    // Flow: Row
+    else
+    {
+        if (HUDConfig.ReverseY ^^ HUDConfig.Layout != 0)
+        {
+            if (MoveModeActive) UpdateManualPosition(HUDConfig.ItemsPerRow, true);
+            else UpdateManualSelection(HUDConfig.ItemsPerRow, true);
+        }
+        else
+        {
+            if (MoveModeActive) UpdateManualPosition(HUDConfig.ItemsPerRow, false);
+            else UpdateManualSelection(HUDConfig.ItemsPerRow, false);
+        }
+    }
+}
+
+exec function SelectFHUDMoveDown()
+{
+    if (!ManualModeActive) return;
+
+    // Flow: Column
+    if (HUDConfig.Flow == 0)
+    {
+        if (HUDConfig.ReverseY ^^ HUDConfig.Layout != 0)
+        {
+            if (MoveModeActive) UpdateManualPosition(1, false);
+            else UpdateManualSelection(1, false);
+        }
+        else
+        {
+            if (MoveModeActive) UpdateManualPosition(1, true);
+            else UpdateManualSelection(1, true);
+        }
+    }
+    // Flow: Row
+    else
+    {
+        if (HUDConfig.ReverseY ^^ HUDConfig.Layout != 0)
+        {
+            if (MoveModeActive) UpdateManualPosition(HUDConfig.ItemsPerRow, false);
+            else UpdateManualSelection(HUDConfig.ItemsPerRow, false);
+        }
+        else
+        {
+            if (MoveModeActive) UpdateManualPosition(HUDConfig.ItemsPerRow, true);
+            else UpdateManualSelection(HUDConfig.ItemsPerRow, true);
+        }
+    }
+}
+
+exec function SelectFHUDMoveLeft()
+{
+    if (!ManualModeActive) return;
+
+    // Flow: Column
+    if (HUDConfig.Flow == 0)
+    {
+        if (HUDConfig.ReverseX)
+        {
+            if (MoveModeActive) UpdateManualPosition(HUDConfig.ItemsPerColumn, true);
+            else UpdateManualSelection(HUDConfig.ItemsPerColumn, true);
+        }
+        else
+        {
+            if (MoveModeActive) UpdateManualPosition(HUDConfig.ItemsPerColumn, false);
+            else UpdateManualSelection(HUDConfig.ItemsPerColumn, false);
+        }
+    }
+    // Flow: Row
+    else
+    {
+        if (HUDConfig.ReverseX ^^ HUDConfig.Layout == 3)
+        {
+            if (MoveModeActive) UpdateManualPosition(1, true);
+            else UpdateManualSelection(1, true);
+        }
+        else
+        {
+            if (MoveModeActive) UpdateManualPosition(1, false);
+            else UpdateManualSelection(1, false);
+        }
+    }
+}
+
+exec function SelectFHUDMoveRight()
+{
+    if (!ManualModeActive) return;
+
+    // Flow: Column
+    if (HUDConfig.Flow == 0)
+    {
+        if (HUDConfig.ReverseX)
+        {
+            if (MoveModeActive) UpdateManualPosition(HUDConfig.ItemsPerColumn, false);
+            else UpdateManualSelection(HUDConfig.ItemsPerColumn, false);
+        }
+        else
+        {
+            if (MoveModeActive) UpdateManualPosition(HUDConfig.ItemsPerColumn, true);
+            else UpdateManualSelection(HUDConfig.ItemsPerColumn, true);
+        }
+    }
+    // Flow: Row
+    else
+    {
+        if (HUDConfig.ReverseX ^^ HUDConfig.Layout == 3)
+        {
+            if (MoveModeActive) UpdateManualPosition(1, false);
+            else UpdateManualSelection(1, false);
+        }
+        else
+        {
+            if (MoveModeActive) UpdateManualPosition(1, true);
+            else UpdateManualSelection(1, true);
+        }
+    }
+}
+
+exec function SelectFHUDSetMoveUp(bool Value)
+{
+    if (!ManualModeActive) return;
+
+    if (Value)
+    {
+        SelectMoveUpHold();
+    }
+    else
+    {
+        `TimerHelper.ClearTimer(nameof(SelectMoveUpHold), self);
+    }
+}
+
+function SelectMoveUpHold()
+{
+    SelectFHUDMoveUp();
+    `TimerHelper.SetTimer(RepeatActionInterval, false, nameof(SelectMoveUpHold), self);
+}
+
+exec function SelectFHUDSetMoveDown(bool Value)
+{
+    if (!ManualModeActive) return;
+
+    if (Value)
+    {
+        SelectMoveDownHold();
+    }
+    else
+    {
+        `TimerHelper.ClearTimer(nameof(SelectMoveDownHold), self);
+    }
+}
+
+function SelectMoveDownHold()
+{
+    SelectFHUDMoveDown();
+    `TimerHelper.SetTimer(RepeatActionInterval, false, nameof(SelectMoveDownHold), self);
+}
+
+exec function SelectFHUDSetMoveLeft(bool Value)
+{
+    if (!ManualModeActive) return;
+
+    if (Value)
+    {
+        SelectMoveLeftHold();
+    }
+    else
+    {
+        `TimerHelper.ClearTimer(nameof(SelectMoveLeftHold), self);
+    }
+}
+
+function SelectMoveLeftHold()
+{
+    SelectFHUDMoveLeft();
+    `TimerHelper.SetTimer(RepeatActionInterval, false, nameof(SelectMoveLeftHold), self);
+}
+
+exec function SelectFHUDSetMoveRight(bool Value)
+{
+    if (!ManualModeActive) return;
+
+    if (Value)
+    {
+        SelectMoveRightHold();
+    }
+    else
+    {
+        `TimerHelper.ClearTimer(nameof(SelectMoveRightHold), self);
+    }
+}
+
+function SelectMoveRightHold()
+{
+    SelectFHUDMoveRight();
+    `TimerHelper.SetTimer(RepeatActionInterval, false, nameof(SelectMoveRightHold), self);
+}
+
+exec function SelectFHUDToggleVisibility()
+{
+
+}
+
+function UpdateManualPosition(int Delta, bool Forward)
+{
+    local FriendlyHUDReplicationInfo RepInfo;
+    local int RepIndex;
+
+    RepInfo = ManualActiveRepInfo;
+    RepIndex = ManualActiveRepIndex;
+
+    GetNextSlot(Delta, Forward, RepInfo, RepIndex);
+
+    if (RepInfo != None && RepInfo.KFPRIArray[RepIndex] != None)
+    {
+        
+    }
+}
+
+function UpdateManualSelection(int Delta, bool Forward)
+{
+    local FriendlyHUDReplicationInfo RepInfo;
+    local int RepIndex;
+
+    RepInfo = ManualActiveRepInfo;
+    RepIndex = ManualActiveRepIndex;
+
+    GetNextSlot(Delta, Forward, RepInfo, RepIndex);
+
+    if (RepInfo != None && RepInfo.KFPRIArray[RepIndex] != None)
+    {
+        ManualActiveRepInfo = RepInfo;
+        ManualActiveRepIndex = RepIndex;
+    }
+}
+
+function GetNextSlot(int Delta, bool Forward, out FriendlyHUDReplicationInfo RepInfo, out int RepIndex)
+{
+    local int CurrentDelta;
+
+    while (Delta > 0)
+    {
+        CurrentDelta = Min(Delta, class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT);
+
+        if (Forward)
+        {
+            if ((RepIndex + CurrentDelta) > (class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT - 1))
+            {
+                RepInfo = RepInfo.NextRepInfo;
+            }
+
+            RepIndex = (RepIndex + CurrentDelta) % class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT;
+        }
+        else
+        {
+            if ((RepIndex - CurrentDelta) < 0)
+            {
+                RepInfo = RepInfo.PreviousRepInfo;
+            }
+
+            RepIndex = (RepIndex - CurrentDelta) % class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT;
+            if (RepIndex < 0)
+            {
+                RepIndex = class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT + RepIndex;
+            }
+        }
+
+        Delta -= CurrentDelta;
+    }
+
+    // The next slot we moved to might be empty, so we slide to the next occupied slot
+    GetNextOccupiedSlot(RepInfo, RepIndex, Forward);
+}
+
+function GetNextOccupiedSlot(out FriendlyHUDReplicationInfo RepInfo, out int RepIndex, bool Forward)
+{
+    local int I;
+
+    while (RepInfo != None)
+    {
+        for (I = RepIndex; I < class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I += (Forward ? 1 : -1))
+        {
+            if (IsPRIRenderable(RepInfo, I))
+            {
+                RepIndex = I;
+                return;
+            }
+        }
+
+        RepInfo = Forward ? RepInfo.NextRepInfo : RepInfo.PreviousRepInfo;
+    }
+}
 
 function Initialized()
 {
@@ -152,6 +541,18 @@ event PostRender(Canvas Canvas)
     local bool ShouldUpdateRuntime;
 
     if (KFPlayerOwner == None || HUD == None || HUDConfig == None) return;
+
+    // Prevent player from crouching in manual mode
+    if (ManualModeActive)
+    {
+        KFPlayerOwner.bDuck = 0;
+
+        // Forcefully disable move mode if the player changes SelfSortingStrategy while moving himself
+        if (HUDConfig.SelfSortStrategy != 0 && ManualActiveRepInfo.KFPRIArray[ManualActiveRepIndex] == KFPlayerOwner.PlayerReplicationInfo)
+        {
+            MoveModeActive = false;
+        }
+    }
 
     // Don't render if the user disabled the custom HUD
     if (HUDConfig.DisableHUD) return;
@@ -390,6 +791,16 @@ function UpdateRuntimeVars(optional Canvas Canvas)
         // Icon (left side)
         R.PlayerIconSize + R.PlayerIconOffset
     ) + R.ItemMarginY;
+
+    // BuffLayout: Left or Right
+    if (HUDConfig.BuffLayout == 1 || HUDConfig.BuffLayout == 2)
+    {
+        R.TotalItemWidth += R.BuffPlayerIconMargin + R.BuffIconSize;
+    }
+    else if (HUDConfig.BuffLayout == 3 || HUDConfig.BuffLayout == 4)
+    {
+        R.TotalItemHeight += R.BuffPlayerIconMargin + R.BuffIconSize;
+    }
 }
 
 function UpdateBlockOffsetOverrides(
@@ -592,6 +1003,26 @@ function UpdateBlockSizeOverrides(
     BarWidth -= BlockGap * R.Scale;
 }
 
+function bool IsPRIRenderable(FriendlyHUDReplicationInfo RepInfo, int RepIndex)
+{
+    local KFPlayerReplicationInfo KFPRI;
+
+    KFPRI = RepInfo.KFPRIArray[RepIndex];
+
+    if (KFPRI == None) return false;
+
+    // Don't render spectators
+    if (KFPRI.bOnlySpectator) return false;
+
+    // Only render players that have spawned in once already
+    if (RepInfo.HasSpawnedArray[RepIndex] == 0) return false;
+
+    // If enabled, don't render ourselves
+    if (HUDConfig.IgnoreSelf && KFPRI == KFPlayerOwner.PlayerReplicationInfo && !ManualModeActive) return false;
+
+    return true;
+}
+
 function DrawTeamHealthBars(Canvas Canvas)
 {
     local FriendlyHUDReplicationInfo RepInfo;
@@ -599,7 +1030,6 @@ function DrawTeamHealthBars(Canvas Canvas)
     local KFPlayerReplicationInfo KFPRI;
     local ASDisplayInfo StatsDI, GearDI;
     local float CurrentItemPosX, CurrentItemPosY;
-    local float TotalItemWidth, TotalItemHeight;
     local int ItemCount, Column, Row;
     local PlayerItemInfo ItemInfo;
 
@@ -615,19 +1045,6 @@ function DrawTeamHealthBars(Canvas Canvas)
     GearDI = HUD.HUDMovie.PlayerBackpackContainer.GetDisplayInfo();
 
     Canvas.Font = class'KFGameEngine'.static.GetKFCanvasFont();
-
-    TotalItemWidth = R.TotalItemWidth;
-    TotalItemHeight = R.TotalItemHeight;
-
-    // BuffLayout: Left or Right
-    if (HUDConfig.BuffLayout == 1 || HUDConfig.BuffLayout == 2)
-    {
-        TotalItemWidth += R.BuffPlayerIconMargin + R.BuffIconSize;
-    }
-    else if (HUDConfig.BuffLayout == 3 || HUDConfig.BuffLayout == 4)
-    {
-        TotalItemHeight += R.BuffPlayerIconMargin + R.BuffIconSize;
-    }
 
     // Layout: Bottom
     if (HUDConfig.Layout == 0)
@@ -670,7 +1087,7 @@ function DrawTeamHealthBars(Canvas Canvas)
     // Layout: Right
     else if (HUDConfig.Layout == 2)
     {
-        R.ScreenPosX = Canvas.ClipX + GearDI.x + HUD.HUDMovie.PlayerBackpackContainer.GetFloat("width") - TotalItemWidth;
+        R.ScreenPosX = Canvas.ClipX + GearDI.x + HUD.HUDMovie.PlayerBackpackContainer.GetFloat("width") - R.TotalItemWidth;
         R.ScreenPosY = HUD.HUDMovie.bIsSpectating
             ? (Canvas.ClipY + GearDI.y + HUD.HUDMovie.PlayerBackpackContainer.GetFloat("height") * 0.9f)
             : (Canvas.ClipY + GearDI.y);
@@ -706,17 +1123,7 @@ function DrawTeamHealthBars(Canvas Canvas)
         RepInfo = CurrentPRIEntry.RepInfo;
         KFPRI = CurrentPRIEntry.KFPRI;
 
-        // Skip empty entries
-        if (KFPRI == None) continue;
-
-        // Don't render spectators
-        if (KFPRI.bOnlySpectator) continue;
-
-        // If enabled, don't render ourselves
-        if (HUDConfig.IgnoreSelf && KFPRI == KFPlayerOwner.PlayerReplicationInfo) continue;
-
-        // Only render players that have spawned in once already
-        if (RepInfo.HasSpawnedArray[CurrentPRIEntry.RepIndex] == 0) continue;
+        if (!IsPRIRenderable(RepInfo, CurrentPRIEntry.RepIndex)) continue;
 
         // Layout: row first
         if (HUDConfig.Flow == 1)
@@ -733,14 +1140,14 @@ function DrawTeamHealthBars(Canvas Canvas)
 
         CurrentItemPosX = (HUDConfig.Layout == 3)
             // Right layout flows right-to-left
-            ? (R.ScreenPosX - TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column))
+            ? (R.ScreenPosX - R.TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column))
             // Everything else flows left-to-right
-            : (R.ScreenPosX + TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column));
+            : (R.ScreenPosX + R.TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column));
         CurrentItemPosY = (HUDConfig.Layout == 0)
             // Bottom layout flows down
-            ? (R.ScreenPosY + TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row))
+            ? (R.ScreenPosY + R.TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row))
             // Left/right layouts flow up
-            : (R.ScreenPosY - TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row));
+            : (R.ScreenPosY - R.TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row));
 
         ItemInfo.KFPH = RepInfo.KFPHArray[CurrentPRIEntry.RepIndex];
         ItemInfo.KFPRI = KFPRI;
@@ -756,22 +1163,26 @@ function DrawTeamHealthBars(Canvas Canvas)
 
 function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo, float PosX, float PosY)
 {
-    local string PlayerName;
+    local float SelectionPosX, SelectionPosY, SelectionWidth, SelectionHeight;
     local float PlayerNamePosX, PlayerNamePosY;
     local float FriendIconPosX, FriendIconPosY;
     local float PlayerIconPosX, PlayerIconPosY;
     local FontRenderInfo TextFontRenderInfo;
     local float ArmorRatio, HealthRatio, RegenRatio, TotalRegenRatio;
+    local KFPlayerReplicationInfo KFPRI;
+    local string PlayerName;
     local FriendlyHUDReplicationInfo.BarInfo ArmorInfo, HealthInfo;
+    local FriendlyHUDReplicationInfo.MedBuffInfo BuffInfo;
+    local FriendlyHUDReplicationInfo.EPlayerReadyState PlayerState;
     local float PreviousBarWidth, PreviousBarHeight;
     local int HealthToRegen;
-    local MedBuffInfo BuffInfo;
     local bool ForceShowBuffs;
     local int BuffLevel;
     local byte IsFriend;
-    local FriendlyHUDReplicationInfo.EPlayerReadyState PlayerState;
 
-    ItemInfo.RepInfo.GetPlayerInfo(ItemInfo.RepIndex, PlayerName, ArmorInfo, HealthInfo, HealthToRegen, BuffInfo, IsFriend, PlayerState);
+    TextFontRenderInfo = Canvas.CreateFontRenderInfo(true);
+
+    ItemInfo.RepInfo.GetPlayerInfo(ItemInfo.RepIndex, KFPRI, PlayerName, ArmorInfo, HealthInfo, HealthToRegen, BuffInfo, IsFriend, PlayerState);
 
     TotalRegenRatio = HealthInfo.MaxValue > 0 ? FMin(FMax(float(HealthToRegen) / float(HealthInfo.MaxValue), 0.f), 1.f) : 0.f;
     HealthToRegen = HealthToRegen > 0 ? Max(HealthToRegen - HealthInfo.Value, 0) : 0;
@@ -784,8 +1195,10 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
 
     ForceShowBuffs = HUDConfig.ForceShowBuffs && BuffLevel > 0;
 
+    // If we're in select mode, bypass all visibility checks
+    if (ManualModeActive) { }
     // Only apply render restrictions if we don't have a special state
-    if (PlayerState == PRS_Default || !FHUDMutator.CDLoaded)
+    else if (PlayerState == PRS_Default || !FHUDMutator.CDLoaded)
     {
         // Don't render if CD trader-time only mode is enabled
         if (HUDConfig.CDOnlyTraderTime) return false;
@@ -797,8 +1210,6 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
         if (HealthRatio > HUDConfig.MinHealthThreshold && !ForceShowBuffs) return false;
     }
 
-    TextFontRenderInfo = Canvas.CreateFontRenderInfo(true);
-
     R.Opacity = FMin(
             FCubicInterp(
                 HUDConfig.DO_MaxOpacity,
@@ -808,6 +1219,11 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
                 HealthRatio
             ), 1.f
         ) * HUDConfig.Opacity;
+
+    SelectionPosX = PosX;
+    SelectionPosY = PosY;
+    SelectionWidth = R.TotalItemWidth - R.ItemMarginX;
+    SelectionHeight = R.TotalItemHeight - R.ItemMarginY;
 
     PlayerIconPosX = PosX;
     PlayerIconPosY = PosY + R.PlayerIconOffset + (R.TextHeight + R.NameMarginY) / 2.f;
@@ -829,6 +1245,11 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
     // Draw buffs
     DrawBuffs(Canvas, BuffLevel, PlayerIconPosX, PlayerIconPosY);
 
+    // BuffLayout: Left
+    if (HUDConfig.BuffLayout == 1)
+    {
+        SelectionPosX -= R.BuffPlayerIconMargin + R.BuffIconSize;
+    }
     // BuffLayout: Right
     if (HUDConfig.BuffLayout == 2)
     {
@@ -894,6 +1315,25 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
         PreviousBarWidth,
         PreviousBarHeight
     );
+
+    if (ManualModeActive)
+    {
+        if (ItemInfo.RepInfo == ManualActiveRepInfo && ItemInfo.RepIndex == ManualActiveRepIndex)
+        {
+            class'FriendlyHUD.FriendlyHUDHelper'.static.DrawSelection(
+                Canvas,
+                SelectionPosX,
+                SelectionPosY,
+                SelectionWidth,
+                SelectionHeight,
+                (KFPRI == KFPlayerOwner.PlayerReplicationInfo && HUDConfig.SelfSortStrategy != 0)
+                    // Use a different color when self is selected and we can't move it
+                    ? SelfCornerColor
+                    : (MoveModeActive ? MoveCornerColor : SelectCornerColor),
+                SelectLineColor
+            );
+        }
+    }
 
     return true;
 }
@@ -1275,40 +1715,6 @@ function float GetInnerBarWidth(EBarType BarType, float BlockWidth, float P1, op
     }
 }
 
-exec function DebugFHUDSetArmor(int Armor, optional int MaxArmor = -1)
-{
-    local KFPawn_Human KFPH;
-
-    if (KFPlayerOwner.CheatManager == None) return;
-
-    KFPH = KFPawn_Human(KFPlayerOwner.Pawn);
-    if (KFPH == None) return;
-
-    KFPH.Armor = Armor;
-    if (MaxArmor > 0)
-    {
-        KFPH.MaxArmor = MaxArmor;
-    }
-}
-
-exec function DebugFHUDSetHealth(int Health, optional int MaxHealth = -1)
-{
-    if (KFPlayerOwner.CheatManager == None) return;
-    if (KFPlayerOwner.Pawn == None) return;
-
-    KFPlayerOwner.Pawn.Health = Health;
-    if (MaxHealth > 0)
-    {
-        KFPlayerOwner.Pawn.HealthMax = MaxHealth;
-    }
-}
-
-exec function DebugFHUDForceFriend(bool Value)
-{
-    FHUDMutator.ForceShowAsFriend = Value;
-    UpdateRuntimeVars();
-}
-
 delegate int SortKFPRI(PRIEntry A, PRIEntry B)
 {
     // Handle empty entries
@@ -1460,6 +1866,10 @@ defaultproperties
 {
     AxisXLineColor = (R=0, G=192, B=0, A=192);
     AxisYLineColor = (R=0, G=100, B=210, A=192);
+    SelfCornerColor = (R=255, G=100, B=0, A=255);
+    MoveCornerColor = (R=255, G=0, B=0, A=255);
+    SelectCornerColor = (R=54, G=137, B=201, A=255);
+    SelectLineColor = (R=54, G=137, B=201, A=255);
     BarBGTexture = Texture2D'EngineResources.WhiteSquareTexture';
     BuffIconTexture = Texture2D'UI_VoiceComms_TEX.UI_VoiceCommand_Icon_Heal';
     PlayerNotReadyIconTexture = Texture2D'UI_VoiceComms_TEX.UI_VoiceCommand_Icon_Negative';

@@ -50,6 +50,16 @@ simulated function PostBeginPlay()
     }
 }
 
+simulated event Destroyed()
+{
+    if (WorldInfo.NetMode != NM_DedicatedServer)
+    {
+        KFPC.ConsoleCommand("exec cfg/OnUnloadFHUD.cfg", false);
+    }
+
+    super.Destroyed();
+}
+
 // Used for HUD testing
 function CheckBots()
 {
@@ -148,6 +158,9 @@ simulated function InitializeDeferred()
     {
         PrintNotification();
     }
+
+    KFPC.ConsoleCommand("exec cfg/OnLoadFHUD.cfg", false);
+
     `Log("[FriendlyHUD] Initialized");
 }
 
@@ -162,7 +175,7 @@ simulated function bool IsUMLoaded()
 
     for (Mut = WorldInfo.Game.BaseMutator; Mut != None; Mut = Mut.NextMutator)
     {
-        if (Locs(PathName(Mut.class)) == Locs("UnofficialMod.UnofficialModMut")) return true;
+        if (PathName(Mut.class) ~= "UnofficialMod.UnofficialModMut") return true;
     }
 
     return false;
@@ -291,7 +304,7 @@ simulated function PrintNotification()
 
 defaultproperties
 {
-    Role = ROLE_Authority
-    RemoteRole = ROLE_SimulatedProxy
-    bAlwaysRelevant = true
+    Role = ROLE_Authority;
+    RemoteRole = ROLE_SimulatedProxy;
+    bAlwaysRelevant = true;
 }

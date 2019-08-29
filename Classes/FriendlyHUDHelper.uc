@@ -1,7 +1,52 @@
 class FriendlyHUDHelper extends Object
     dependson(FriendlyHUDConfig);
 
-static simulated function FriendlyHUDConfig.BlockOutline MakeOutline(
+var Rotator Rotator90Deg, Rotator180Deg, Rotator270Deg;
+var Texture2d SelectionLineHTexture, SelectionLineVTexture;
+var Texture2D SelectionCornerTexture;
+
+static function DrawSelection(Canvas Canvas, float PosX, float PosY, float Width, float Height, Color CornerColor, Color LineColor)
+{
+    // Corner pieces
+    Canvas.DrawColor = CornerColor;
+
+    // Top left corner
+    Canvas.SetPos(PosX - 3.f, PosY + 9.f);
+    Canvas.DrawTile(default.SelectionCornerTexture, 16, 16, 0, 0, 16, 16);
+
+    // Top right corner
+    Canvas.SetPos(PosX + Width + 3.f, PosY + 9.f);
+    Canvas.DrawRotatedTile(default.SelectionCornerTexture, default.Rotator90Deg, 16, 16, 0, 0, 16, 16, 0, 0);
+
+    // Bottom right corner
+    Canvas.SetPos(PosX + Width + 3.f, PosY + Height + 3.f);
+    Canvas.DrawRotatedTile(default.SelectionCornerTexture, default.Rotator180Deg, 16, 16, 0, 0, 16, 16, 0, 0);
+
+    // Bottom left corner
+    Canvas.SetPos(PosX - 3.f, PosY + Height + 3.f);
+    Canvas.DrawRotatedTile(default.SelectionCornerTexture, default.Rotator270Deg, 16, 16, 0, 0, 16, 16, 0, 0);
+
+    // Dashed lines
+    Canvas.DrawColor = LineColor;
+
+    // Top line
+    Canvas.SetPos(PosX + 9.f, PosY + 9.f);
+    Canvas.DrawTile(default.SelectionLineHTexture, Width - 20.f, 3, 0, 0, Width - 20, 3);
+
+    // Bottom line
+    Canvas.SetPos(PosX + 9.f, PosY + Height);
+    Canvas.DrawTile(default.SelectionLineHTexture, Width - 20.f, 3, 0, 0, Width - 20, 3);
+
+    // Left line
+    Canvas.SetPos(PosX - 3.f, PosY + 21.f);
+    Canvas.DrawTile(default.SelectionLineVTexture, 3, Height - 32.f, 0, 0, 3, Height - 32.f);
+
+    // Right line
+    Canvas.SetPos(PosX + Width, PosY + 21.f);
+    Canvas.DrawTile(default.SelectionLineVTexture, 3, Height - 32.f, 0, 0, 3, Height - 32.f);
+}
+
+static function FriendlyHUDConfig.BlockOutline MakeOutline(
     float Top,
     optional float Right = -1.f,
     optional float Bottom = -1.f,
@@ -34,7 +79,7 @@ static simulated function FriendlyHUDConfig.BlockOutline MakeOutline(
     return OutValue;
 }
 
-static simulated function float GetResolutionScale(Canvas Canvas)
+static function float GetResolutionScale(Canvas Canvas)
 {
     local float SW, SH, SX, SY, ResScale;
     SW = Canvas.ClipX;
@@ -59,7 +104,7 @@ static simulated function float GetResolutionScale(Canvas Canvas)
     return ResScale;
 }
 
-static simulated function Color ColorFromString(string Value)
+static function Color ColorFromString(string Value)
 {
     local array<string> Params;
     local array<string> Parts;
@@ -101,7 +146,17 @@ static simulated function Color ColorFromString(string Value)
     return Result;
 }
 
-static simulated function string FloatToString(float Value, int Decimals)
+static function string FloatToString(float Value, int Decimals)
 {
     return Left(String(Value), InStr(string(Value), ".") + Decimals + 1);
+}
+
+defaultproperties
+{
+    Rotator90Deg = (Pitch=0, Yaw=16384, Roll=0);
+    Rotator180Deg = (Pitch=0, Yaw=32768, Roll=0);
+    Rotator270Deg = (Pitch=0, Yaw=49152, Roll=0);
+    SelectionLineHTexture = Texture2D'FriendlyHUDAssets.UI_Selection_Line_H';
+    SelectionLineVTexture = Texture2D'FriendlyHUDAssets.UI_Selection_Line_V';
+    SelectionCornerTexture = Texture2D'FriendlyHUDAssets.UI_Selection_Corner';
 }

@@ -33,6 +33,7 @@ var float SpeedBoostTimerArray[REP_INFO_COUNT];
 var byte CDPlayerReadyArray[REP_INFO_COUNT];
 
 // Client-only
+var int ManualPriorityArray[REP_INFO_COUNT];
 var byte IsFriendArray[REP_INFO_COUNT];
 var string PlayerNameArray[REP_INFO_COUNT];
 
@@ -50,7 +51,7 @@ var EPlayerReadyState PlayerStateArray[REP_INFO_COUNT];
 
 var FriendlyHUDMutator FHUDMutator;
 var FriendlyHUDConfig HUDConfig;
-var FriendlyHUDReplicationInfo NextRepInfo;
+var FriendlyHUDReplicationInfo NextRepInfo, PreviousRepInfo;
 
 const TIMER_RESET_VALUE = 1337.f;
 
@@ -59,7 +60,7 @@ replication
     if (bNetDirty)
         KFPHArray, KFPRIArray, CachedPlayerNameArray, NameUpdateReadyArray, HasSpawnedArray,
         HealthInfoArray, ArmorInfoArray, RegenHealthArray, MedBuffArray,
-        PlayerStateArray, NextRepInfo;
+        PlayerStateArray, NextRepInfo, PreviousRepInfo;
 }
 
 simulated event ReplicatedEvent(name VarName)
@@ -112,6 +113,7 @@ function NotifyLogin(Controller C)
         NextRepInfo.FHUDMutator = FHUDMutator;
         NextRepInfo.LocalPC = LocalPC;
         NextRepInfo.HUDConfig = HUDConfig;
+        NextRepInfo.PreviousRepInfo = Self;
     }
 
     NextRepInfo.NotifyLogin(C);
@@ -325,6 +327,7 @@ simulated function UpdateNamesClient()
 
 simulated function GetPlayerInfo(
     int Index,
+    out KFPlayerReplicationInfo KFPRI,
     out string PlayerName,
     out BarInfo ArmorInfo,
     out BarInfo HealthInfo,
@@ -334,6 +337,7 @@ simulated function GetPlayerInfo(
     out EPlayerReadyState PlayerState
 )
 {
+    KFPRI = KFPRIArray[Index];
     PlayerName = PlayerNameArray[Index];
     ArmorInfo = ArmorInfoArray[Index];
     HealthInfo = HealthInfoArray[Index];
