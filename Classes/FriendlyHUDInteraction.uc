@@ -40,6 +40,7 @@ var Color AxisXLineColor;
 var Color AxisYLineColor;
 
 var FriendlyHUDMutator FHUDMutator;
+var bool ShouldUpdatePlayerNames;
 
 struct UI_RuntimeVars
 {
@@ -71,6 +72,7 @@ var UI_RuntimeVars R;
 const ASCIICharacters = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 const FLOAT_EPSILON = 0.0001f;
 const PrestigeIconScale = 0.75f;
+const NameUpdateInterval = 1.f;
 
 function Initialized()
 {
@@ -80,6 +82,7 @@ function Initialized()
     if (KFPlayerOwner.WorldInfo.NetMode != NM_DedicatedServer)
     {
         ResetUpdateTimer();
+        `TimerHelper.SetTimer(NameUpdateInterval, true, nameof(UpdateNames), Self);
     }
 }
 
@@ -89,9 +92,32 @@ function ResetUpdateTimer()
     `TimerHelper.SetTimer(HUDConfig.UpdateInterval, true, nameof(UpdatePRIArray), Self);
 }
 
+function UpdateNames()
+{
+    local FriendlyHUDReplicationInfo RepInfo;
+    local int I;
+
+    RepInfo = FHUDMutator.RepInfo;
+    while (RepInfo != None)
+    {
+        for (I = 0; I < class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
+        {
+            if (RepInfo.KFPRIArray[I] == None) continue;
+
+            if (RepInfo.CachedPlayerNameArray[I] != RepInfo.KFPRIArray[I].PlayerName)
+            {
+                RepInfo.ShouldUpdateNameArray[I] = 1;
+                RepInfo.CachedPlayerNameArray[I] = RepInfo.KFPRIArray[I].PlayerName;
+                ShouldUpdatePlayerNames = true;
+            }
+        }
+        RepInfo = RepInfo.NextRepInfo;
+    }
+}
+
 function UpdatePRIArray()
 {
-    local FriendlyHUDReplicationInfo FHUDRepInfo;
+    local FriendlyHUDReplicationInfo RepInfo;
     local KFPawn_Human KFPH;
     local PRIEntry CurrentPRIEntry;
     local int I, ArrayIndex;
@@ -99,31 +125,31 @@ function UpdatePRIArray()
     if (HUDConfig.DisableHUD) return;
 
     SortedKFPRIArray.Length = 0;
-    FHUDRepInfo = FHUDMutator.RepInfo;
-    while (FHUDRepInfo != None)
+    RepInfo = FHUDMutator.RepInfo;
+    while (RepInfo != None)
     {
         for (I = 0; I < class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
         {
-            if (FHUDRepInfo.KFPRIArray[I] == None) continue;
+            if (RepInfo.KFPRIArray[I] == None) continue;
 
-            KFPH = FHUDRepInfo.KFPHArray[I];
+            KFPH = RepInfo.KFPHArray[I];
 
             CurrentPRIEntry.RepIndex = I;
-            CurrentPRIEntry.RepInfo = FHUDRepInfo;
-            CurrentPRIEntry.KFPRI = FHUDRepInfo.KFPRIArray[I];
+            CurrentPRIEntry.RepInfo = RepInfo;
+            CurrentPRIEntry.KFPRI = RepInfo.KFPRIArray[I];
             CurrentPRIEntry.KFPH = KFPH;
             CurrentPRIEntry.HealthRatio = KFPH != None
                 ? float(KFPH.Health) / float(KFPH.HealthMax)
                 : 0.f;
             CurrentPRIEntry.RegenHealthRatio = KFPH != None
-                ? float(FHUDRepInfo.RegenHealthArray[I]) / float(KFPH.HealthMax)
+                ? float(RepInfo.RegenHealthArray[I]) / float(KFPH.HealthMax)
                 : 0.f;
 
             SortedKFPRIArray[ArrayIndex] = CurrentPRIEntry;
 
             ArrayIndex++;
         }
-        FHUDRepInfo = FHUDRepInfo.NextRepInfo;
+        RepInfo = RepInfo.NextRepInfo;
     }
 
     switch (HUDConfig.SortStrategy)
@@ -170,7 +196,10 @@ event PostRender(Canvas Canvas)
         UpdateRuntimeVars(Canvas);
     }
 
-    CachePlayerNames(Canvas, ShouldUpdateRuntime);
+    if (ShouldUpdatePlayerNames || ShouldUpdateRuntime)
+    {
+        CachePlayerNames(Canvas, ShouldUpdateRuntime);
+    }
 
     // Only render the HUD if we're not a Zed (Versus)
     if (KFPlayerOwner.GetTeamNum() != 255)
@@ -185,48 +214,49 @@ function SetCanvasColor(Canvas Canvas, Color C)
     Canvas.DrawColor = C;
 }
 
-function CachePlayerNames(Canvas Canvas, optional bool ForceRefresh = false, optional FriendlyHUDReplicationInfo FHUDRepInfo)
+function CachePlayerNames(Canvas Canvas, bool ForceRefresh)
 {
     local float NameWidth, NameHeight, NameWidthMax;
     local string TempPlayerName, PlayerName;
     local int LetterIdx, LetterCount;
     local bool Truncated;
+    local FriendlyHUDReplicationInfo RepInfo;
     local int I;
 
-    if (FHUDRepInfo == None)
-    {
-        FHUDRepInfo = FHUDMutator.RepInfo;
-    }
-
-    if (FHUDRepInfo.ShouldUpdatePlayerNames || ForceRefresh)
+    RepInfo = FHUDMutator.RepInfo;
+    while (RepInfo != None)
     {
         for (I = 0; I < class'FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
         {
-            if (FHUDRepInfo.KFPRIArray[I] == None)
+            if (RepInfo.KFPRIArray[I] == None)
             {
-                FHUDRepInfo.PlayerNameArray[I] = "";
+                RepInfo.DisplayNameArray[I] = "";
                 continue;
             }
 
-            PlayerName = FHUDRepInfo.KFPRIArray[I].PlayerName;
-            FHUDRepInfo.PlayerNameArray[I] = PlayerName;
+            // Don't update players that don't need updating
+            if (!ForceRefresh && RepInfo.ShouldUpdateNameArray[I] == 0) continue;
+            RepInfo.ShouldUpdateNameArray[I] = 0;
+
+            PlayerName = RepInfo.KFPRIArray[I].PlayerName;
+            RepInfo.DisplayNameArray[I] = PlayerName;
 
             NameWidthMax = R.BarWidthMin - R.NameMarginX;
 
             // Subtract the friend icon from the available width for the player name
-            if (HUDConfig.FriendIconEnabled && (FHUDRepInfo.IsFriendArray[I] != 0 || FHUDMutator.ForceShowAsFriend))
+            if (HUDConfig.FriendIconEnabled && (RepInfo.IsFriendArray[I] != 0 || FHUDMutator.ForceShowAsFriend))
             {
                 NameWidthMax -= R.FriendIconSize + R.FriendIconGap;
             }
 
             Truncated = false;
             LetterCount = Len(PlayerName);
-            // This gets skipped if we're below the "safe character count" (the # of chars that's guaranteed not to exceed the length)
+            // This gets skipped if we're below the "safe character count" (the # of chars that's guaranteed not to exceed the width)
             for (LetterIdx = R.PlayerNameLetterCount; LetterIdx < LetterCount; LetterIdx++)
             {
                 TempPlayerName = Left(PlayerName, LetterIdx + 1);
                 Canvas.TextSize(TempPlayerName, NameWidth, NameHeight, R.NameScale);
-                FHUDRepInfo.PlayerNameArray[I] = TempPlayerName;
+                RepInfo.DisplayNameArray[I] = TempPlayerName;
 
                 if (NameWidth >= NameWidthMax)
                 {
@@ -238,17 +268,14 @@ function CachePlayerNames(Canvas Canvas, optional bool ForceRefresh = false, opt
             if (Truncated)
             {
                 // We replace the last 2 characters with "..."
-                FHUDRepInfo.PlayerNameArray[I] = Left(FHUDRepInfo.PlayerNameArray[I], Max(Len(FHUDRepInfo.PlayerNameArray[I]) - 2, 0)) $ "...";
+                RepInfo.DisplayNameArray[I] = Left(RepInfo.DisplayNameArray[I], Max(Len(RepInfo.DisplayNameArray[I]) - 2, 0)) $ "...";
             }
         }
 
-        FHUDRepInfo.ShouldUpdatePlayerNames = false;
+        RepInfo = RepInfo.NextRepInfo;
     }
 
-    if (FHUDRepInfo.NextRepInfo != None)
-    {
-        CachePlayerNames(Canvas, ForceRefresh, FHUDRepInfo.NextRepInfo);
-    }
+    ShouldUpdatePlayerNames = false;
 }
 
 function UpdateRuntimeVars(optional Canvas Canvas)
@@ -591,9 +618,32 @@ function UpdateBlockSizeOverrides(
     BarWidth -= BlockGap * R.Scale;
 }
 
+function bool IsPRIRenderable(FriendlyHUDReplicationInfo RepInfo, int RepIndex)
+{
+    local KFPlayerReplicationInfo KFPRI;
+
+    KFPRI = RepInfo.KFPRIArray[RepIndex];
+
+    if (KFPRI == None) return false;
+
+    // Don't render spectators
+    if (KFPRI.bOnlySpectator) return false;
+
+    // Only render players that have spawned in once already
+    if (RepInfo.HasSpawnedArray[RepIndex] == 0) return false;
+
+    // If enabled, don't render ourselves
+    if (HUDConfig.IgnoreSelf && KFPRI == KFPlayerOwner.PlayerReplicationInfo) return false;
+
+    // Don't render players that haven't had their names replicated/updated yet
+    if (RepInfo.DisplayNameArray[RepIndex] == "") return false;
+
+    return true;
+}
+
 function DrawTeamHealthBars(Canvas Canvas)
 {
-    local FriendlyHUDReplicationInfo FHUDRepInfo;
+    local FriendlyHUDReplicationInfo RepInfo;
     local PRIEntry CurrentPRIEntry;
     local KFPlayerReplicationInfo KFPRI;
     local ASDisplayInfo StatsDI, GearDI;
@@ -702,20 +752,10 @@ function DrawTeamHealthBars(Canvas Canvas)
     ItemCount = 0;
     foreach SortedKFPRIArray(CurrentPRIEntry)
     {
-        FHUDRepInfo = CurrentPRIEntry.RepInfo;
+        RepInfo = CurrentPRIEntry.RepInfo;
         KFPRI = CurrentPRIEntry.KFPRI;
 
-        // Skip empty entries
-        if (KFPRI == None) continue;
-
-        // Don't render spectators
-        if (KFPRI.bOnlySpectator) continue;
-
-        // If enabled, don't render ourselves
-        if (HUDConfig.IgnoreSelf && KFPRI == KFPlayerOwner.PlayerReplicationInfo) continue;
-
-        // Only render players that have spawned in once already
-        if (FHUDRepInfo.HasSpawnedArray[CurrentPRIEntry.RepIndex] == 0) continue;
+        if (!IsPRIRenderable(RepInfo, CurrentPRIEntry.RepIndex)) continue;
 
         // Layout: row first
         if (HUDConfig.Flow == 1)
@@ -741,9 +781,9 @@ function DrawTeamHealthBars(Canvas Canvas)
             // Left/right layouts flow up
             : (R.ScreenPosY - TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row));
 
-        ItemInfo.KFPH = FHUDRepInfo.KFPHArray[CurrentPRIEntry.RepIndex];
+        ItemInfo.KFPH = RepInfo.KFPHArray[CurrentPRIEntry.RepIndex];
         ItemInfo.KFPRI = KFPRI;
-        ItemInfo.RepInfo = FHUDRepInfo;
+        ItemInfo.RepInfo = RepInfo;
         ItemInfo.RepIndex = CurrentPRIEntry.RepIndex;
 
         if (DrawHealthBarItem(Canvas, ItemInfo, CurrentItemPosX, CurrentItemPosY))

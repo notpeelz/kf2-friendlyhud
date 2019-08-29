@@ -34,8 +34,9 @@ var byte CDPlayerReadyArray[REP_INFO_COUNT];
 
 // Client-only
 var byte IsFriendArray[REP_INFO_COUNT];
-var string PlayerNameArray[REP_INFO_COUNT];
-var bool ShouldUpdatePlayerNames;
+var string DisplayNameArray[REP_INFO_COUNT];
+var byte ShouldUpdateNameArray[REP_INFO_COUNT];
+var string CachedPlayerNameArray[REP_INFO_COUNT];
 
 // Replicated
 var KFPawn_Human KFPHArray[REP_INFO_COUNT];
@@ -55,16 +56,17 @@ const TIMER_RESET_VALUE = 1337.f;
 
 replication
 {
-    // We don't need to replicate PCArray
     if (bNetDirty)
-        KFPHArray, KFPRIArray, HasSpawnedArray, HealthInfoArray, ArmorInfoArray, RegenHealthArray, MedBuffArray, PlayerStateArray, NextRepInfo;
+        KFPHArray, KFPRIArray, HasSpawnedArray,
+        HealthInfoArray, ArmorInfoArray, RegenHealthArray, MedBuffArray,
+        PlayerStateArray, NextRepInfo;
 }
 
 simulated event ReplicatedEvent(name VarName)
 {
     if (VarName == nameof(KFPRIArray))
     {
-        UpdateFriends();
+        UpdatePlayersClient();
     }
 }
 
@@ -93,7 +95,6 @@ function NotifyLogin(Controller C)
         {
             PCArray[I] = C;
             SpeedBoostTimerArray[I] = TIMER_RESET_VALUE;
-            UpdatePlayerNameDeferred(I);
             return;
         }
     }
@@ -108,22 +109,6 @@ function NotifyLogin(Controller C)
     }
 
     NextRepInfo.NotifyLogin(C);
-}
-
-function UpdatePlayerNameDeferred(int RepIndex)
-{
-    local KFPlayerReplicationInfo KFPRI;
-
-    KFPRI = KFPRIArray[RepIndex];
-
-    // Defer our execution until player name replication is done
-    if (KFPRI == None || !KFPRI.bHasBeenWelcomed)
-    {
-        SetTimer(0.1f, false, nameof(UpdatePlayerNameDeferred));
-        return;
-    }
-
-    ShouldUpdatePlayerNames = true;
 }
 
 function NotifyLogout(Controller C)
@@ -181,19 +166,27 @@ function UpdateInfo()
         KFPHArray[I] = KFPH;
         KFPRIArray[I] = KFPRI;
 
-        // HasHadInitialSpawn() doesn't work on bots
-        HasSpawnedArray[I] = (KFAIController(PCArray[I]) != None || KFPRI.HasHadInitialSpawn()) ? 1 : 0;
+        if (KFPRI != None)
+        {
+            // HasHadInitialSpawn() doesn't work on bots
+            HasSpawnedArray[I] = (KFAIController(PCArray[I]) != None || KFPRI.HasHadInitialSpawn()) ? 1 : 0;
 
-        if (GameStateName == 'PendingMatch')
-        {
-            PlayerStateArray[I] = KFPRI.bReadyToPlay ? PRS_Ready : PRS_NotReady;
-        }
-        else if (GameStateName == 'TraderOpen' && FHUDMutator.CDLoaded)
-        {
-            PlayerStateArray[I] = CDPlayerReadyArray[I] != 0 ? PRS_Ready : PRS_NotReady;
+            if (GameStateName == 'PendingMatch')
+            {
+                PlayerStateArray[I] = KFPRI.bReadyToPlay ? PRS_Ready : PRS_NotReady;
+            }
+            else if (GameStateName == 'TraderOpen' && FHUDMutator.CDLoaded)
+            {
+                PlayerStateArray[I] = CDPlayerReadyArray[I] != 0 ? PRS_Ready : PRS_NotReady;
+            }
+            else
+            {
+                PlayerStateArray[I] = PRS_Default;
+            }
         }
         else
         {
+            HasSpawnedArray[I] = 0;
             PlayerStateArray[I] = PRS_Default;
         }
 
@@ -257,7 +250,7 @@ function UpdateSpeedBoost(int Index)
     }
 }
 
-simulated function UpdateFriends()
+simulated function UpdatePlayersClient()
 {
     local OnlineSubsystem OS;
     local LocalPlayer LP;
@@ -265,10 +258,9 @@ simulated function UpdateFriends()
 
     OS = class'GameEngine'.static.GetOnlineSubsystem();
 
-    if (LocalPC == None) return;
-
+    if (LocalPC == None) goto Reschedule;
     LP = LocalPlayer(LocalPC.Player);
-    if (LP == None) return;
+    if (LP == None) goto Reschedule;
 
     for (I = 0; I < REP_INFO_COUNT; I++)
     {
@@ -277,11 +269,17 @@ simulated function UpdateFriends()
             IsFriendArray[I] = OS.IsFriend(LP.ControllerId, KFPRIArray[I].UniqueId) ? 1 : 0;
         }
     }
+
+    return;
+
+Reschedule:
+    ClearTimer(nameof(UpdatePlayersClient));
+    SetTimer(0.1f, false, nameof(UpdatePlayersClient));
 }
 
 simulated function GetPlayerInfo(
     int Index,
-    out string PlayerName,
+    out string DisplayName,
     out BarInfo ArmorInfo,
     out BarInfo HealthInfo,
     out int RegenHealth,
@@ -290,7 +288,7 @@ simulated function GetPlayerInfo(
     out EPlayerReadyState PlayerState
 )
 {
-    PlayerName = PlayerNameArray[Index];
+    DisplayName = DisplayNameArray[Index];
     ArmorInfo = ArmorInfoArray[Index];
     HealthInfo = HealthInfoArray[Index];
     RegenHealth = RegenHealthArray[Index];
