@@ -11,9 +11,10 @@ struct PlayerItemInfo
 
 struct PRIEntry
 {
-    var int RepIndex;
     var FriendlyHUDReplicationInfo RepInfo;
+    var int RepIndex;
     var KFPawn_Human KFPH;
+    var int Priority;
     var float HealthRatio;
     var float RegenHealthRatio;
     var KFPlayerReplicationInfo KFPRI;
@@ -25,6 +26,8 @@ enum EBarType
     BT_Health,
 };
 
+var PRIEntry EmptyPRIEntry;
+
 var KFGFxHudWrapper HUD;
 var KFPlayerController KFPlayerOwner;
 var FriendlyHUDConfig HUDConfig;
@@ -33,14 +36,19 @@ var array<PRIEntry> SortedKFPRIArray;
 
 var Texture2d BarBGTexture;
 var Texture2d BuffIconTexture;
-var Texture2d PlayerNotReadyIconTexture;
-var Texture2d PlayerReadyIconTexture;
+var Texture2d PlayerNotReadyIconTexture, PlayerReadyIconTexture;
 var Texture2d FriendIconTexture;
-var Color AxisXLineColor;
-var Color AxisYLineColor;
+var Color SelfCornerColor, MoveCornerColor, SelectCornerColor, SelectLineColor;
+var Color AxisXLineColor, AxisYLineColor;
 
 var FriendlyHUDMutator FHUDMutator;
 var bool ShouldUpdatePlayerNames;
+var bool ManualModeActive, MoveModeActive;
+var bool VisibilityOverride;
+var bool ControlsFrozen;
+var int ManualModeCurrentIndex;
+var PRIEntry ManualModeCurrentPRI;
+var bool DisableDefaultBinds;
 
 struct UI_RuntimeVars
 {
@@ -55,6 +63,7 @@ struct UI_RuntimeVars
     var float PlayerIconSize, PlayerIconGap, PlayerIconOffset;
     var float BuffOffset, BuffIconSize, BuffPlayerIconMargin, BuffPlayerIconGap;
     var float FriendIconSize, FriendIconGap, FriendIconOffsetY;
+    var float LineHeight;
     var float NameMarginX, NameMarginY;
     var float ItemMarginX, ItemMarginY;
     var float ScreenPosX, ScreenPosY;
@@ -73,6 +82,433 @@ const ASCIICharacters = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTU
 const FLOAT_EPSILON = 0.0001f;
 const PrestigeIconScale = 0.75f;
 const NameUpdateInterval = 1.f;
+const RepeatActionInterval = 0.2f;
+
+exec function DebugFHUDSetArmor(int Armor, optional int MaxArmor = -1)
+{
+    local KFPawn_Human KFPH;
+
+    if (KFPlayerOwner.CheatManager == None) return;
+
+    KFPH = KFPawn_Human(KFPlayerOwner.Pawn);
+    if (KFPH == None) return;
+
+    KFPH.Armor = Armor;
+    if (MaxArmor > 0)
+    {
+        KFPH.MaxArmor = MaxArmor;
+    }
+}
+
+exec function DebugFHUDSetHealth(int Health, optional int MaxHealth = -1)
+{
+    if (KFPlayerOwner.CheatManager == None) return;
+    if (KFPlayerOwner.Pawn == None) return;
+
+    KFPlayerOwner.Pawn.Health = Health;
+    if (MaxHealth > 0)
+    {
+        KFPlayerOwner.Pawn.HealthMax = MaxHealth;
+    }
+}
+
+exec function DebugFHUDForceFriend(bool Value)
+{
+    FHUDMutator.ForceShowAsFriend = Value;
+    UpdateRuntimeVars();
+}
+
+exec function SetFHUDCustomConfig(bool Value)
+{
+    DisableDefaultBinds = Value;
+}
+
+exec function ToggleFHUDManualMode()
+{
+    SetManualMode(!ManualModeActive);
+}
+
+function SetManualMode(bool Value)
+{
+    if (HUDConfig.DisableHUD) return;
+    if (SortedKFPRIArray.Length == 0) return;
+
+    ManualModeActive = Value;
+    MoveModeActive = false;
+
+    // Sort the array right away to avoid UI inconsistencies
+    UpdatePRIArray();
+
+    ManualModeCurrentIndex = 0;
+    ManualModeCurrentPRI = SortedKFPRIArray[ManualModeCurrentIndex];
+
+    // Disable player movement
+    // Note: this keeps track of how many times it was called, so we don't have to worry
+    //       about breaking the state
+    if (!ControlsFrozen && Value)
+    {
+        KFPlayerOwner.IgnoreMoveInput(true);
+        ControlsFrozen = true;
+    }
+    else if (ControlsFrozen && !Value)
+    {
+        KFPlayerOwner.IgnoreMoveInput(false);
+        ControlsFrozen = false;
+    }
+
+    // Clear repeat action timers
+    `TimerHelper.ClearTimer(nameof(SelectMoveUpHold), self);
+    `TimerHelper.ClearTimer(nameof(SelectMoveDownHold), self);
+    `TimerHelper.ClearTimer(nameof(SelectMoveLeftHold), self);
+    `TimerHelper.ClearTimer(nameof(SelectMoveRightHold), self);
+}
+
+exec function SelectFHUDSetMoveMode(bool Value)
+{
+    if (!ManualModeActive) return;
+
+    SetMoveMode(Value);
+}
+
+exec function ToggleFHUDMoveMode()
+{
+    SetMoveMode(!MoveModeActive);
+}
+
+function SetMoveMode(bool Value)
+{
+    if (HUDConfig.DisableHUD) return;
+
+    // We can't toggle on move mode outside of manual mode
+    if (!ManualModeActive) return;
+
+    // We can't move self unless we have SelfSortStrategy set to 'unset'
+    if (Value && ManualModeCurrentPRI.KFPRI == KFPlayerOwner.PlayerReplicationInfo && HUDConfig.SelfSortStrategy != 0)
+    {
+        PrintSelfSortStrategyNotification();
+        return;
+    }
+
+    MoveModeActive = Value;
+}
+
+exec function SelectFHUDSetVisibilityOverride(bool Value)
+{
+    VisibilityOverride = Value;
+}
+
+exec function ToggleFHUDVisibilityOverride()
+{
+    VisibilityOverride = !VisibilityOverride;
+}
+
+exec function SelectFHUDMoveUp()
+{
+    if (HUDConfig.DisableHUD) return;
+    if (!ManualModeActive) return;
+
+    // Flow: Column
+    if (HUDConfig.Flow == 0)
+    {
+        if (HUDConfig.ReverseY ^^ HUDConfig.Layout != 0)
+        {
+            if (MoveModeActive) UpdateManualPosition(1, true);
+            else UpdateManualSelection(1, true);
+        }
+        else
+        {
+            if (MoveModeActive) UpdateManualPosition(1, false);
+            else UpdateManualSelection(1, false);
+        }
+    }
+    // Flow: Row
+    else
+    {
+        if (HUDConfig.ReverseY ^^ HUDConfig.Layout != 0)
+        {
+            if (MoveModeActive) UpdateManualPosition(HUDConfig.ItemsPerRow, true);
+            else UpdateManualSelection(HUDConfig.ItemsPerRow, true);
+        }
+        else
+        {
+            if (MoveModeActive) UpdateManualPosition(HUDConfig.ItemsPerRow, false);
+            else UpdateManualSelection(HUDConfig.ItemsPerRow, false);
+        }
+    }
+}
+
+exec function SelectFHUDMoveDown()
+{
+    if (HUDConfig.DisableHUD) return;
+    if (!ManualModeActive) return;
+
+    // Flow: Column
+    if (HUDConfig.Flow == 0)
+    {
+        if (HUDConfig.ReverseY ^^ HUDConfig.Layout != 0)
+        {
+            if (MoveModeActive) UpdateManualPosition(1, false);
+            else UpdateManualSelection(1, false);
+        }
+        else
+        {
+            if (MoveModeActive) UpdateManualPosition(1, true);
+            else UpdateManualSelection(1, true);
+        }
+    }
+    // Flow: Row
+    else
+    {
+        if (HUDConfig.ReverseY ^^ HUDConfig.Layout != 0)
+        {
+            if (MoveModeActive) UpdateManualPosition(HUDConfig.ItemsPerRow, false);
+            else UpdateManualSelection(HUDConfig.ItemsPerRow, false);
+        }
+        else
+        {
+            if (MoveModeActive) UpdateManualPosition(HUDConfig.ItemsPerRow, true);
+            else UpdateManualSelection(HUDConfig.ItemsPerRow, true);
+        }
+    }
+}
+
+exec function SelectFHUDMoveLeft()
+{
+    if (HUDConfig.DisableHUD) return;
+    if (!ManualModeActive) return;
+
+    // Flow: Column
+    if (HUDConfig.Flow == 0)
+    {
+        if (HUDConfig.ReverseX)
+        {
+            if (MoveModeActive) UpdateManualPosition(HUDConfig.ItemsPerColumn, true);
+            else UpdateManualSelection(HUDConfig.ItemsPerColumn, true);
+        }
+        else
+        {
+            if (MoveModeActive) UpdateManualPosition(HUDConfig.ItemsPerColumn, false);
+            else UpdateManualSelection(HUDConfig.ItemsPerColumn, false);
+        }
+    }
+    // Flow: Row
+    else
+    {
+        if (HUDConfig.ReverseX ^^ HUDConfig.Layout == 3)
+        {
+            if (MoveModeActive) UpdateManualPosition(1, true);
+            else UpdateManualSelection(1, true);
+        }
+        else
+        {
+            if (MoveModeActive) UpdateManualPosition(1, false);
+            else UpdateManualSelection(1, false);
+        }
+    }
+}
+
+exec function SelectFHUDMoveRight()
+{
+    if (HUDConfig.DisableHUD) return;
+    if (!ManualModeActive) return;
+
+    // Flow: Column
+    if (HUDConfig.Flow == 0)
+    {
+        if (HUDConfig.ReverseX)
+        {
+            if (MoveModeActive) UpdateManualPosition(HUDConfig.ItemsPerColumn, false);
+            else UpdateManualSelection(HUDConfig.ItemsPerColumn, false);
+        }
+        else
+        {
+            if (MoveModeActive) UpdateManualPosition(HUDConfig.ItemsPerColumn, true);
+            else UpdateManualSelection(HUDConfig.ItemsPerColumn, true);
+        }
+    }
+    // Flow: Row
+    else
+    {
+        if (HUDConfig.ReverseX ^^ HUDConfig.Layout == 3)
+        {
+            if (MoveModeActive) UpdateManualPosition(1, false);
+            else UpdateManualSelection(1, false);
+        }
+        else
+        {
+            if (MoveModeActive) UpdateManualPosition(1, true);
+            else UpdateManualSelection(1, true);
+        }
+    }
+}
+
+exec function SelectFHUDSetMoveUp(bool Value)
+{
+    if (HUDConfig.DisableHUD) return;
+    if (!ManualModeActive) return;
+
+    if (Value)
+    {
+        SelectMoveUpHold();
+    }
+    else
+    {
+        `TimerHelper.ClearTimer(nameof(SelectMoveUpHold), self);
+    }
+}
+
+function SelectMoveUpHold()
+{
+    SelectFHUDMoveUp();
+    `TimerHelper.SetTimer(RepeatActionInterval, false, nameof(SelectMoveUpHold), self);
+}
+
+exec function SelectFHUDSetMoveDown(bool Value)
+{
+    if (HUDConfig.DisableHUD) return;
+    if (!ManualModeActive) return;
+
+    if (Value)
+    {
+        SelectMoveDownHold();
+    }
+    else
+    {
+        `TimerHelper.ClearTimer(nameof(SelectMoveDownHold), self);
+    }
+}
+
+function SelectMoveDownHold()
+{
+    SelectFHUDMoveDown();
+    `TimerHelper.SetTimer(RepeatActionInterval, false, nameof(SelectMoveDownHold), self);
+}
+
+exec function SelectFHUDSetMoveLeft(bool Value)
+{
+    if (HUDConfig.DisableHUD) return;
+    if (!ManualModeActive) return;
+
+    if (Value)
+    {
+        SelectMoveLeftHold();
+    }
+    else
+    {
+        `TimerHelper.ClearTimer(nameof(SelectMoveLeftHold), self);
+    }
+}
+
+function SelectMoveLeftHold()
+{
+    SelectFHUDMoveLeft();
+    `TimerHelper.SetTimer(RepeatActionInterval, false, nameof(SelectMoveLeftHold), self);
+}
+
+exec function SelectFHUDSetMoveRight(bool Value)
+{
+    if (HUDConfig.DisableHUD) return;
+    if (!ManualModeActive) return;
+
+    if (Value)
+    {
+        SelectMoveRightHold();
+    }
+    else
+    {
+        `TimerHelper.ClearTimer(nameof(SelectMoveRightHold), self);
+    }
+}
+
+function SelectMoveRightHold()
+{
+    SelectFHUDMoveRight();
+    `TimerHelper.SetTimer(RepeatActionInterval, false, nameof(SelectMoveRightHold), self);
+}
+
+exec function SelectFHUDToggleVisibility()
+{
+    if (HUDConfig.DisableHUD) return;
+    if (!ManualModeActive) return;
+
+    SyncManualModeSelection();
+
+    if (ManualModeCurrentPRI.KFPRI == KFPlayerOwner.PlayerReplicationInfo)
+    {
+        HUDConfig.SetFHUDIgnoreSelf(!HUDConfig.IgnoreSelf);
+        return;
+    }
+
+    ManualModeCurrentPRI.RepInfo.ManualVisibilityArray[ManualModeCurrentPRI.RepIndex] =
+        ManualModeCurrentPRI.RepInfo.ManualVisibilityArray[ManualModeCurrentPRI.RepIndex] == 0 ? 1 : 0;
+}
+
+function UpdateManualSelection(int Delta, bool Forward)
+{
+    SyncManualModeSelection();
+
+    if (Forward && (ManualModeCurrentIndex + Delta) >= SortedKFPRIArray.Length) return;
+    if (!Forward && (ManualModeCurrentIndex - Delta) < 0) return;
+
+    ManualModeCurrentIndex += (Forward ? Delta : -Delta);
+    ManualModeCurrentPRI = SortedKFPRIArray[ManualModeCurrentIndex];
+}
+
+function UpdateManualPosition(int Delta, bool Forward)
+{
+    local int TargetIndex;
+    local int OldPriority;
+
+    SyncManualModeSelection();
+
+    if (Forward && (ManualModeCurrentIndex + Delta) >= SortedKFPRIArray.Length) return;
+    if (!Forward && (ManualModeCurrentIndex - Delta) < 0) return;
+
+    TargetIndex = ManualModeCurrentIndex + (Forward ? Delta : -Delta);
+
+    if (SortedKFPRIArray[TargetIndex].KFPRI == KFPlayerOwner.PlayerReplicationInfo && HUDConfig.SelfSortStrategy != 0)
+    {
+        PrintSelfSortStrategyNotification();
+        return;
+    }
+
+    OldPriority = ManualModeCurrentPRI.RepInfo.PriorityArray[ManualModeCurrentPRI.RepIndex];
+
+    ManualModeCurrentPRI.RepInfo.PriorityArray[ManualModeCurrentPRI.RepIndex] =
+        SortedKFPRIArray[TargetIndex].RepInfo.PriorityArray[SortedKFPRIArray[TargetIndex].RepIndex];
+
+    SortedKFPRIArray[TargetIndex].RepInfo.PriorityArray[SortedKFPRIArray[TargetIndex].RepIndex] = OldPriority;
+
+    // Sort immediately to avoid UI latency
+    UpdatePRIArray();
+}
+
+function SyncManualModeSelection()
+{
+    local int I;
+
+    // We need to update the index because it might change depending on sorting conditions
+    for(I = 0; I < SortedKFPRIArray.Length; I++)
+    {
+        if (ManualModeCurrentPRI.KFPRI == SortedKFPRIArray[I].KFPRI)
+        {
+            ManualModeCurrentIndex = I;
+            return;
+        }
+    }
+
+    `Log("[FriendlyHUD] WARNING: failed to sync the manual mode selection index, things might be broken. Please report this error if you see it.");
+}
+
+function PrintSelfSortStrategyNotification()
+{
+    if (`TimerHelper.IsTimerActive(nameof(SelfSortStrategyNotificationTimer), Self)) return;
+
+    `TimerHelper.SetTimer(6.f, false, nameof(SelfSortStrategyNotificationTimer), Self);
+    FHUDMutator.WriteToChat("[FriendlyHUD] You can't move yourself in manual mode by default.\nUse 'SetFHUDSelfSortStrategy unset' to disable this behavior.", "FF6400");
+}
+
+function SelfSortStrategyNotificationTimer() { }
 
 function Initialized()
 {
@@ -138,6 +574,7 @@ function UpdatePRIArray()
             CurrentPRIEntry.RepInfo = RepInfo;
             CurrentPRIEntry.KFPRI = RepInfo.KFPRIArray[I];
             CurrentPRIEntry.KFPH = KFPH;
+            CurrentPRIEntry.Priority = RepInfo.PriorityArray[I];
             CurrentPRIEntry.HealthRatio = KFPH != None
                 ? float(KFPH.Health) / float(KFPH.HealthMax)
                 : 0.f;
@@ -150,6 +587,13 @@ function UpdatePRIArray()
             ArrayIndex++;
         }
         RepInfo = RepInfo.NextRepInfo;
+    }
+
+    // Don't use any custom sort logic when in manual mode
+    if (ManualModeActive)
+    {
+        SortedKFPRIArray.Sort(SortKFPRI);
+        return;
     }
 
     switch (HUDConfig.SortStrategy)
@@ -173,11 +617,89 @@ function UpdatePRIArray()
     }
 }
 
+function bool HandleNativeInputKey(int ControllerId, name Key, EInputEvent EventType, optional float AmountDepressed=1.f, optional bool bGamepad)
+{
+    if (EventType != IE_Pressed && EventType != IE_Released) return false;
+
+    if (DisableDefaultBinds) return false;
+
+    switch (Key)
+    {
+        case 'K':
+            if (EventType == IE_Pressed) ToggleFHUDManualMode();
+            break;
+        case 'LeftShift':
+            SelectFHUDSetMoveMode(EventType == IE_Pressed);
+            break;
+        case 'LeftControl':
+            if (EventType == IE_Pressed) SelectFHUDToggleVisibility();
+            break;
+        case 'LeftAlt':
+            SelectFHUDSetVisibilityOverride(EventType == IE_Pressed);
+            break;
+        case 'W':
+            SelectFHUDSetMoveUp(EventType == IE_Pressed);
+            break;
+        case 'A':
+            SelectFHUDSetMoveLeft(EventType == IE_Pressed);
+            break;
+        case 'S':
+            SelectFHUDSetMoveDown(EventType == IE_Pressed);
+            break;
+        case 'D':
+            SelectFHUDSetMoveRight(EventType == IE_Pressed);
+            break;
+    }
+
+    return false;
+}
+
+event Tick(float DeltaTime)
+{
+    if (KFPlayerOwner == None || HUD == None || HUDConfig == None) return;
+
+    // Wait until the PRI array has been replicated
+    if (SortedKFPRIArray.Length == 0) return;
+
+    if (ManualModeActive)
+    {
+        if (HUDConfig.DisableHUD)
+        {
+            SetManualMode(false);
+        }
+
+        // If the current PRI isn't a valid canditate, correct the selection
+        if (!IsPRIRenderable(ManualModeCurrentPRI.RepInfo, ManualModeCurrentPRI.RepIndex))
+        {
+            ManualModeCurrentIndex = ManualModeCurrentIndex > SortedKFPRIArray.Length
+                ? SortedKFPRIArray.Length - 1
+                : Max(ManualModeCurrentIndex - 1, 0);
+            ManualModeCurrentPRI = SortedKFPRIArray[ManualModeCurrentIndex];
+        }
+
+        // Forcefully disable move mode if the player changes SelfSortingStrategy while moving himself
+        if (HUDConfig.SelfSortStrategy != 0 && ManualModeCurrentPRI.KFPRI == KFPlayerOwner.PlayerReplicationInfo)
+        {
+            SetMoveMode(false);
+        }
+
+        if (ManualModeActive)
+        {
+            // Prevent player from crouching in manual mode
+            KFPlayerOwner.bDuck = 0;
+        }
+
+    }
+}
+
 event PostRender(Canvas Canvas)
 {
     local bool ShouldUpdateRuntime;
 
     if (KFPlayerOwner == None || HUD == None || HUDConfig == None) return;
+
+    // Wait until the PRI array has been replicated
+    if (SortedKFPRIArray.Length == 0) return;
 
     // Don't render if the user disabled the custom HUD
     if (HUDConfig.DisableHUD) return;
@@ -317,6 +839,8 @@ function UpdateRuntimeVars(optional Canvas Canvas)
     R.FriendIconGap = HUDConfig.FriendIconGap * R.Scale;
     R.FriendIconOffsetY = HUDConfig.FriendIconOffsetY * R.Scale;
 
+    R.LineHeight = HUDConfig.FriendIconEnabled ? FMax(R.FriendIconSize, R.TextHeight) : R.TextHeight;
+
     R.ArmorBlockGap = HUDConfig.ArmorBlockGap * R.Scale;
     R.HealthBlockGap = HUDConfig.HealthBlockGap * R.Scale;
     R.BarGap = HUDConfig.BarGap * R.Scale;
@@ -412,10 +936,20 @@ function UpdateRuntimeVars(optional Canvas Canvas)
             // Bar gap
             + R.BarGap
             // Player name
-            + FMax(R.FriendIconSize, R.TextHeight) + R.NameMarginY,
+            + R.LineHeight + R.NameMarginY,
         // Icon (left side)
         R.PlayerIconSize + R.PlayerIconOffset
     ) + R.ItemMarginY;
+
+    // BuffLayout: Left or Right
+    if (HUDConfig.BuffLayout == 1 || HUDConfig.BuffLayout == 2)
+    {
+        R.TotalItemWidth += R.BuffPlayerIconMargin + R.BuffIconSize;
+    }
+    else if (HUDConfig.BuffLayout == 3 || HUDConfig.BuffLayout == 4)
+    {
+        R.TotalItemHeight += R.BuffPlayerIconMargin + R.BuffIconSize;
+    }
 }
 
 function UpdateBlockOffsetOverrides(
@@ -626,6 +1160,9 @@ function bool IsPRIRenderable(FriendlyHUDReplicationInfo RepInfo, int RepIndex)
 
     if (KFPRI == None) return false;
 
+    // Don't render inactive players
+    if (KFPRI.bIsInactive) return false;
+
     // Don't render spectators
     if (KFPRI.bOnlySpectator) return false;
 
@@ -633,7 +1170,13 @@ function bool IsPRIRenderable(FriendlyHUDReplicationInfo RepInfo, int RepIndex)
     if (RepInfo.HasSpawnedArray[RepIndex] == 0) return false;
 
     // If enabled, don't render ourselves
-    if (HUDConfig.IgnoreSelf && KFPRI == KFPlayerOwner.PlayerReplicationInfo) return false;
+    if (HUDConfig.IgnoreSelf && KFPRI == KFPlayerOwner.PlayerReplicationInfo && !ManualModeActive) return false;
+
+    // Don't render players that were manually hidden
+    if (!VisibilityOverride
+        && RepInfo.ManualVisibilityArray[RepIndex] == 0
+        && KFPRI != KFPlayerOwner.PlayerReplicationInfo
+        && !ManualModeActive) return false;
 
     // Don't render players that haven't had their names replicated/updated yet
     if (RepInfo.DisplayNameArray[RepIndex] == "") return false;
@@ -648,7 +1191,6 @@ function DrawTeamHealthBars(Canvas Canvas)
     local KFPlayerReplicationInfo KFPRI;
     local ASDisplayInfo StatsDI, GearDI;
     local float CurrentItemPosX, CurrentItemPosY;
-    local float TotalItemWidth, TotalItemHeight;
     local int ItemCount, Column, Row;
     local PlayerItemInfo ItemInfo;
 
@@ -664,19 +1206,6 @@ function DrawTeamHealthBars(Canvas Canvas)
     GearDI = HUD.HUDMovie.PlayerBackpackContainer.GetDisplayInfo();
 
     Canvas.Font = class'KFGameEngine'.static.GetKFCanvasFont();
-
-    TotalItemWidth = R.TotalItemWidth;
-    TotalItemHeight = R.TotalItemHeight;
-
-    // BuffLayout: Left or Right
-    if (HUDConfig.BuffLayout == 1 || HUDConfig.BuffLayout == 2)
-    {
-        TotalItemWidth += R.BuffPlayerIconMargin + R.BuffIconSize;
-    }
-    else if (HUDConfig.BuffLayout == 3 || HUDConfig.BuffLayout == 4)
-    {
-        TotalItemHeight += R.BuffPlayerIconMargin + R.BuffIconSize;
-    }
 
     // Layout: Bottom
     if (HUDConfig.Layout == 0)
@@ -719,7 +1248,7 @@ function DrawTeamHealthBars(Canvas Canvas)
     // Layout: Right
     else if (HUDConfig.Layout == 2)
     {
-        R.ScreenPosX = Canvas.ClipX + GearDI.x + HUD.HUDMovie.PlayerBackpackContainer.GetFloat("width") - TotalItemWidth;
+        R.ScreenPosX = Canvas.ClipX + GearDI.x + HUD.HUDMovie.PlayerBackpackContainer.GetFloat("width") - R.TotalItemWidth;
         R.ScreenPosY = HUD.HUDMovie.bIsSpectating
             ? (Canvas.ClipY + GearDI.y + HUD.HUDMovie.PlayerBackpackContainer.GetFloat("height") * 0.9f)
             : (Canvas.ClipY + GearDI.y);
@@ -772,14 +1301,14 @@ function DrawTeamHealthBars(Canvas Canvas)
 
         CurrentItemPosX = (HUDConfig.Layout == 3)
             // Right layout flows right-to-left
-            ? (R.ScreenPosX - TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column))
+            ? (R.ScreenPosX - R.TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column))
             // Everything else flows left-to-right
-            : (R.ScreenPosX + TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column));
+            : (R.ScreenPosX + R.TotalItemWidth * (HUDConfig.ReverseX ? (HUDConfig.ItemsPerRow - 1 - Column) : Column));
         CurrentItemPosY = (HUDConfig.Layout == 0)
             // Bottom layout flows down
-            ? (R.ScreenPosY + TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row))
+            ? (R.ScreenPosY + R.TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row))
             // Left/right layouts flow up
-            : (R.ScreenPosY - TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row));
+            : (R.ScreenPosY - R.TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row));
 
         ItemInfo.KFPH = RepInfo.KFPHArray[CurrentPRIEntry.RepIndex];
         ItemInfo.KFPRI = KFPRI;
@@ -795,22 +1324,26 @@ function DrawTeamHealthBars(Canvas Canvas)
 
 function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo, float PosX, float PosY)
 {
-    local string PlayerName;
+    local float SelectionPosX, SelectionPosY, SelectionWidth, SelectionHeight;
     local float PlayerNamePosX, PlayerNamePosY;
     local float FriendIconPosX, FriendIconPosY;
     local float PlayerIconPosX, PlayerIconPosY;
     local FontRenderInfo TextFontRenderInfo;
     local float ArmorRatio, HealthRatio, RegenRatio, TotalRegenRatio;
+    local KFPlayerReplicationInfo KFPRI;
+    local string PlayerName;
     local FriendlyHUDReplicationInfo.BarInfo ArmorInfo, HealthInfo;
+    local FriendlyHUDReplicationInfo.MedBuffInfo BuffInfo;
+    local FriendlyHUDReplicationInfo.EPlayerReadyState PlayerState;
     local float PreviousBarWidth, PreviousBarHeight;
     local int HealthToRegen;
-    local MedBuffInfo BuffInfo;
     local bool ForceShowBuffs;
     local int BuffLevel;
     local byte IsFriend;
-    local FriendlyHUDReplicationInfo.EPlayerReadyState PlayerState;
 
-    ItemInfo.RepInfo.GetPlayerInfo(ItemInfo.RepIndex, PlayerName, ArmorInfo, HealthInfo, HealthToRegen, BuffInfo, IsFriend, PlayerState);
+    TextFontRenderInfo = Canvas.CreateFontRenderInfo(true);
+
+    ItemInfo.RepInfo.GetPlayerInfo(ItemInfo.RepIndex, KFPRI, PlayerName, ArmorInfo, HealthInfo, HealthToRegen, BuffInfo, IsFriend, PlayerState);
 
     TotalRegenRatio = HealthInfo.MaxValue > 0 ? FMin(FMax(float(HealthToRegen) / float(HealthInfo.MaxValue), 0.f), 1.f) : 0.f;
     HealthToRegen = HealthToRegen > 0 ? Max(HealthToRegen - HealthInfo.Value, 0) : 0;
@@ -823,8 +1356,10 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
 
     ForceShowBuffs = HUDConfig.ForceShowBuffs && BuffLevel > 0;
 
+    // If we're in select mode, bypass all visibility checks
+    if (ManualModeActive) { }
     // Only apply render restrictions if we don't have a special state
-    if (PlayerState == PRS_Default || !FHUDMutator.CDLoaded)
+    else if (PlayerState == PRS_Default || !FHUDMutator.CDLoaded)
     {
         // Don't render if CD trader-time only mode is enabled
         if (HUDConfig.CDOnlyTraderTime) return false;
@@ -836,8 +1371,6 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
         if (HealthRatio > HUDConfig.MinHealthThreshold && !ForceShowBuffs) return false;
     }
 
-    TextFontRenderInfo = Canvas.CreateFontRenderInfo(true);
-
     R.Opacity = FMin(
             FCubicInterp(
                 HUDConfig.DO_MaxOpacity,
@@ -848,14 +1381,19 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
             ), 1.f
         ) * HUDConfig.Opacity;
 
+    SelectionPosX = PosX;
+    SelectionPosY = PosY;
+    SelectionWidth = R.TotalItemWidth - R.ItemMarginX;
+    SelectionHeight = R.TotalItemHeight - R.ItemMarginY;
+
     PlayerIconPosX = PosX;
-    PlayerIconPosY = PosY + R.PlayerIconOffset + (R.TextHeight + R.NameMarginY) / 2.f;
+    PlayerIconPosY = PosY + R.PlayerIconOffset + (R.LineHeight + R.NameMarginY) / 2.f;
 
     PlayerNamePosX = PosX + R.PlayerIconSize + R.PlayerIconGap + R.NameMarginX;
-    PlayerNamePosY = PosY;
+    PlayerNamePosY = PosY + FMax(R.LineHeight - R.TextHeight, 0);
 
     FriendIconPosX = PlayerNamePosX;
-    FriendIconPosY = PlayerNamePosY + R.TextHeight - R.FriendIconSize + R.FriendIconOffsetY;
+    FriendIconPosY = PosY + R.LineHeight - R.FriendIconSize + R.FriendIconOffsetY;
 
     // Draw drop shadow behind the player icon
     SetCanvasColor(Canvas, HUDConfig.ShadowColor);
@@ -868,6 +1406,11 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
     // Draw buffs
     DrawBuffs(Canvas, BuffLevel, PlayerIconPosX, PlayerIconPosY);
 
+    // BuffLayout: Left
+    if (HUDConfig.BuffLayout == 1)
+    {
+        SelectionPosX -= R.BuffPlayerIconMargin + R.BuffIconSize;
+    }
     // BuffLayout: Right
     if (HUDConfig.BuffLayout == 2)
     {
@@ -916,7 +1459,7 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
         0.f,
         0.f,
         PosX + R.PlayerIconSize + R.PlayerIconGap,
-        PosY + R.TextHeight + R.NameMarginY,
+        PosY + R.LineHeight + R.NameMarginY,
         PreviousBarWidth,
         PreviousBarHeight
     );
@@ -929,10 +1472,39 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
         RegenRatio,
         TotalRegenRatio,
         PosX + R.PlayerIconSize + R.PlayerIconGap,
-        PosY + PreviousBarHeight + R.BarGap + R.TextHeight + R.NameMarginY,
+        PosY + PreviousBarHeight + R.BarGap + R.LineHeight + R.NameMarginY,
         PreviousBarWidth,
         PreviousBarHeight
     );
+
+    if (ManualModeActive)
+    {
+        if (KFPRI == KFPlayerOwner.PlayerReplicationInfo
+            ? HUDConfig.IgnoreSelf
+            : ItemInfo.RepInfo.ManualVisibilityArray[ItemInfo.RepIndex] == 0
+        )
+        {
+            Canvas.DrawColor = MakeColor(255, 0, 0, 40);
+            Canvas.SetPos(SelectionPosX, SelectionPosY);
+            Canvas.DrawTile(default.BarBGTexture, SelectionWidth, SelectionHeight, 0, 0, 32, 32);
+        }
+
+        if (ManualModeCurrentPRI.KFPRI == ItemInfo.KFPRI)
+        {
+            class'FriendlyHUD.FriendlyHUDHelper'.static.DrawSelection(
+                Canvas,
+                SelectionPosX,
+                SelectionPosY,
+                SelectionWidth,
+                SelectionHeight,
+                (KFPRI == KFPlayerOwner.PlayerReplicationInfo && HUDConfig.SelfSortStrategy != 0)
+                    // Use a different color when self is selected and we can't move it
+                    ? SelfCornerColor
+                    : (MoveModeActive ? MoveCornerColor : SelectCornerColor),
+                SelectLineColor
+            );
+        }
+    }
 
     return true;
 }
@@ -1314,40 +1886,6 @@ function float GetInnerBarWidth(EBarType BarType, float BlockWidth, float P1, op
     }
 }
 
-exec function DebugFHUDSetArmor(int Armor, optional int MaxArmor = -1)
-{
-    local KFPawn_Human KFPH;
-
-    if (KFPlayerOwner.CheatManager == None) return;
-
-    KFPH = KFPawn_Human(KFPlayerOwner.Pawn);
-    if (KFPH == None) return;
-
-    KFPH.Armor = Armor;
-    if (MaxArmor > 0)
-    {
-        KFPH.MaxArmor = MaxArmor;
-    }
-}
-
-exec function DebugFHUDSetHealth(int Health, optional int MaxHealth = -1)
-{
-    if (KFPlayerOwner.CheatManager == None) return;
-    if (KFPlayerOwner.Pawn == None) return;
-
-    KFPlayerOwner.Pawn.Health = Health;
-    if (MaxHealth > 0)
-    {
-        KFPlayerOwner.Pawn.HealthMax = MaxHealth;
-    }
-}
-
-exec function DebugFHUDForceFriend(bool Value)
-{
-    FHUDMutator.ForceShowAsFriend = Value;
-    UpdateRuntimeVars();
-}
-
 delegate int SortKFPRI(PRIEntry A, PRIEntry B)
 {
     // Handle empty entries
@@ -1366,8 +1904,8 @@ delegate int SortKFPRI(PRIEntry A, PRIEntry B)
         if (HUDConfig.SelfSortStrategy == 2) return 1;
     }
 
-    if (A.KFPRI.PlayerID < B.KFPRI.PlayerID) return -1;
-    if (A.KFPRI.PlayerID > B.KFPRI.PlayerID) return 1;
+    if (A.Priority < B.Priority) return 1;
+    if (A.Priority > B.Priority) return -1;
     return 0;
 }
 
@@ -1397,8 +1935,8 @@ delegate int SortKFPRIByHealthDescending(PRIEntry A, PRIEntry B)
     }
 
     if (A.KFPRI == B.KFPRI) return 0;
-    if (A.KFPRI.PlayerID < B.KFPRI.PlayerID) return -1;
-    if (A.KFPRI.PlayerID > B.KFPRI.PlayerID) return 1;
+    if (A.Priority < B.Priority) return 1;
+    if (A.Priority > B.Priority) return -1;
     return 0;
 }
 
@@ -1428,8 +1966,8 @@ delegate int SortKFPRIByHealth(PRIEntry A, PRIEntry B)
     }
 
     if (A.KFPRI == B.KFPRI) return 0;
-    if (A.KFPRI.PlayerID < B.KFPRI.PlayerID) return -1;
-    if (A.KFPRI.PlayerID > B.KFPRI.PlayerID) return 1;
+    if (A.Priority < B.Priority) return 1;
+    if (A.Priority > B.Priority) return -1;
     return 0;
 }
 
@@ -1459,8 +1997,8 @@ delegate int SortKFPRIByRegenHealthDescending(PRIEntry A, PRIEntry B)
     }
 
     if (A.KFPRI == B.KFPRI) return 0;
-    if (A.KFPRI.PlayerID < B.KFPRI.PlayerID) return -1;
-    if (A.KFPRI.PlayerID > B.KFPRI.PlayerID) return 1;
+    if (A.Priority < B.Priority) return 1;
+    if (A.Priority > B.Priority) return -1;
     return 0;
 }
 
@@ -1490,8 +2028,8 @@ delegate int SortKFPRIByRegenHealth(PRIEntry A, PRIEntry B)
     }
 
     if (A.KFPRI == B.KFPRI) return 0;
-    if (A.KFPRI.PlayerID < B.KFPRI.PlayerID) return -1;
-    if (A.KFPRI.PlayerID > B.KFPRI.PlayerID) return 1;
+    if (A.Priority < B.Priority) return 1;
+    if (A.Priority > B.Priority) return -1;
     return 0;
 }
 
@@ -1499,9 +2037,14 @@ defaultproperties
 {
     AxisXLineColor = (R=0, G=192, B=0, A=192);
     AxisYLineColor = (R=0, G=100, B=210, A=192);
+    SelfCornerColor = (R=255, G=100, B=0, A=255);
+    MoveCornerColor = (R=255, G=0, B=0, A=255);
+    SelectCornerColor = (R=54, G=137, B=201, A=255);
+    SelectLineColor = (R=54, G=137, B=201, A=255);
     BarBGTexture = Texture2D'EngineResources.WhiteSquareTexture';
     BuffIconTexture = Texture2D'UI_VoiceComms_TEX.UI_VoiceCommand_Icon_Heal';
     PlayerNotReadyIconTexture = Texture2D'UI_VoiceComms_TEX.UI_VoiceCommand_Icon_Negative';
     PlayerReadyIconTexture = Texture2D'UI_VoiceComms_TEX.UI_VoiceCommand_Icon_Affirmative';
     FriendIconTexture = Texture2D'FriendlyHUDAssets.UI_Friend_Icon';
+    OnReceivedNativeInputKey = HandleNativeInputKey;
 }

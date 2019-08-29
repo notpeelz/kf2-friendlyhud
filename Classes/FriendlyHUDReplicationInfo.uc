@@ -25,14 +25,14 @@ enum EPlayerReadyState
 var BarInfo EMPTY_BAR_INFO;
 var MedBuffInfo EMPTY_BUFF_INFO;
 
-var KFPlayerController LocalPC;
-
 // Server-only
 var Controller PCArray[REP_INFO_COUNT];
 var float SpeedBoostTimerArray[REP_INFO_COUNT];
 var byte CDPlayerReadyArray[REP_INFO_COUNT];
 
 // Client-only
+var int PriorityArray[REP_INFO_COUNT];
+var int ManualVisibilityArray[REP_INFO_COUNT];
 var byte IsFriendArray[REP_INFO_COUNT];
 var string DisplayNameArray[REP_INFO_COUNT];
 var byte ShouldUpdateNameArray[REP_INFO_COUNT];
@@ -50,7 +50,7 @@ var EPlayerReadyState PlayerStateArray[REP_INFO_COUNT];
 
 var FriendlyHUDMutator FHUDMutator;
 var FriendlyHUDConfig HUDConfig;
-var FriendlyHUDReplicationInfo NextRepInfo;
+var FriendlyHUDReplicationInfo NextRepInfo, PreviousRepInfo;
 
 const TIMER_RESET_VALUE = 1337.f;
 
@@ -58,8 +58,8 @@ replication
 {
     if (bNetDirty)
         KFPHArray, KFPRIArray, HasSpawnedArray,
-        HealthInfoArray, ArmorInfoArray, RegenHealthArray, MedBuffArray,
-        PlayerStateArray, NextRepInfo;
+        HealthInfoArray, ArmorInfoArray, RegenHealthArray, MedBuffArray, PlayerStateArray,
+        NextRepInfo, PreviousRepInfo, HUDConfig, FHUDMutator;
 }
 
 simulated event ReplicatedEvent(name VarName)
@@ -79,6 +79,12 @@ simulated event PostBeginPlay()
     if (Role == ROLE_Authority)
     {
         SetTimer(0.1f, true, nameof(UpdateInfo));
+    }
+    else
+    {
+        // This might not necessary since replication (usually?) happens
+        // separately from actor networking
+        UpdatePlayersClient();
     }
 }
 
@@ -104,8 +110,8 @@ function NotifyLogin(Controller C)
     {
         NextRepInfo = Spawn(class'FriendlyHUD.FriendlyHUDReplicationInfo', Owner);
         NextRepInfo.FHUDMutator = FHUDMutator;
-        NextRepInfo.LocalPC = LocalPC;
         NextRepInfo.HUDConfig = HUDConfig;
+        NextRepInfo.PreviousRepInfo = Self;
     }
 
     NextRepInfo.NotifyLogin(C);
@@ -149,6 +155,7 @@ function UpdateInfo()
     local KFPlayerReplicationInfo KFPRI;
     local float DmgBoostModifier, DmgResistanceModifier;
     local int I;
+    local bool ShouldSimulateReplication;
 
     // Make sure our mutator was initialized
     if (FHUDMutator.MyKFGI != None)
@@ -164,7 +171,15 @@ function UpdateInfo()
         KFPRI = KFPlayerReplicationInfo(PCArray[I].PlayerReplicationInfo);
 
         KFPHArray[I] = KFPH;
+
+        ShouldSimulateReplication = KFPRIArray[I] == None && WorldInfo.NetMode != NM_DedicatedServer;
         KFPRIArray[I] = KFPRI;
+
+        // Replicated events don't work in singleplayer, so we need to simulate it here
+        if (ShouldSimulateReplication)
+        {
+            ReplicatedEvent(nameof(KFPRIArray));
+        }
 
         if (KFPRI != None)
         {
@@ -258,15 +273,28 @@ simulated function UpdatePlayersClient()
 
     OS = class'GameEngine'.static.GetOnlineSubsystem();
 
-    if (LocalPC == None) goto Reschedule;
-    LP = LocalPlayer(LocalPC.Player);
+    if (FHUDMutator.KFPC == None) goto Reschedule;
+    LP = LocalPlayer(FHUDMutator.KFPC.Player);
     if (LP == None) goto Reschedule;
 
     for (I = 0; I < REP_INFO_COUNT; I++)
     {
-        if (KFPRIArray[I] != LocalPC.PlayerReplicationInfo)
+        if (KFPRIArray[I] != FHUDMutator.KFPC.PlayerReplicationInfo)
         {
             IsFriendArray[I] = OS.IsFriend(LP.ControllerId, KFPRIArray[I].UniqueId) ? 1 : 0;
+        }
+
+        // Reset the manual mode settings for vacant slots (disconnected players)
+        if (KFPRIArray[I] == None)
+        {
+            PriorityArray[I] = 0;
+            ManualVisibilityArray[I] = 1;
+        }
+        else if (PriorityArray[I] == 0)
+        {
+            PriorityArray[I] = FHUDMutator.PriorityCount;
+            FHUDMutator.PriorityCount++;
+            ManualVisibilityArray[I] = 1;
         }
     }
 
@@ -279,6 +307,7 @@ Reschedule:
 
 simulated function GetPlayerInfo(
     int Index,
+    out KFPlayerReplicationInfo KFPRI,
     out string DisplayName,
     out BarInfo ArmorInfo,
     out BarInfo HealthInfo,
@@ -288,6 +317,7 @@ simulated function GetPlayerInfo(
     out EPlayerReadyState PlayerState
 )
 {
+    KFPRI = KFPRIArray[Index];
     DisplayName = DisplayNameArray[Index];
     ArmorInfo = ArmorInfoArray[Index];
     HealthInfo = HealthInfoArray[Index];

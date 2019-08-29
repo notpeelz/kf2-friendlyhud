@@ -8,6 +8,7 @@ var FriendlyHUDConfig HUDConfig;
 var FriendlyHUDReplicationInfo RepInfo;
 var bool UMLoaded, CDLoaded;
 var bool ForceShowAsFriend;
+var int PriorityCount;
 
 var FriendlyHUDCDCompatController CDCompat;
 
@@ -47,6 +48,16 @@ simulated function PostBeginPlay()
     {
         InitializeHUD();
     }
+}
+
+simulated event Destroyed()
+{
+    if (WorldInfo.NetMode != NM_DedicatedServer)
+    {
+        KFPC.ConsoleCommand("exec cfg/OnUnloadFHUD.cfg", false);
+    }
+
+    super.Destroyed();
 }
 
 // Used for HUD testing
@@ -91,8 +102,6 @@ simulated function InitializeHUD()
 
     `Log("[FriendlyHUD] Found KFPC");
 
-    InitializeClientReplication();
-
     // Initialize the HUD configuration
     HUDConfig = new (KFPC) class'FriendlyHUD.FriendlyHUDConfig';
     HUDConfig.FHUDMutator = Self;
@@ -102,18 +111,6 @@ simulated function InitializeHUD()
 
     // Give a chance for other mutators to initialize
     SetTimer(2.f, false, nameof(InitializeDeferred));
-}
-
-simulated function InitializeClientReplication()
-{
-    local FriendlyHUDReplicationInfo FHUDRepInfo;
-
-    FHUDRepInfo = RepInfo;
-    while (FHUDRepInfo != None)
-    {
-        FHUDRepInfo.LocalPC = KFPC;
-        FHUDRepInfo = FHUDRepInfo.NextRepInfo;
-    }
 }
 
 simulated function InitializeDeferred()
@@ -131,7 +128,7 @@ simulated function InitializeDeferred()
     FHUDInteraction.KFPlayerOwner = KFPC;
     FHUDInteraction.HUD = HUD;
     FHUDInteraction.HUDConfig = HUDConfig;
-    KFPC.Interactions.AddItem(FHUDInteraction);
+    KFPC.Interactions.InsertItem(0, FHUDInteraction);
     FHUDInteraction.Initialized();
     HUDConfig.FHUDInteraction = FHUDInteraction;
 
@@ -147,6 +144,9 @@ simulated function InitializeDeferred()
     {
         PrintNotification();
     }
+
+    KFPC.ConsoleCommand("exec cfg/OnLoadFHUD.cfg", false);
+
     `Log("[FriendlyHUD] Initialized");
 }
 
@@ -161,7 +161,7 @@ simulated function bool IsUMLoaded()
 
     for (Mut = WorldInfo.Game.BaseMutator; Mut != None; Mut = Mut.NextMutator)
     {
-        if (Locs(PathName(Mut.class)) == Locs("UnofficialMod.UnofficialModMut")) return true;
+        if (PathName(Mut.class) ~= "UnofficialMod.UnofficialModMut") return true;
     }
 
     return false;
@@ -290,7 +290,8 @@ simulated function PrintNotification()
 
 defaultproperties
 {
-    Role = ROLE_Authority
-    RemoteRole = ROLE_SimulatedProxy
-    bAlwaysRelevant = true
+    Role = ROLE_Authority;
+    RemoteRole = ROLE_SimulatedProxy;
+    bAlwaysRelevant = true;
+    PriorityCount = 1;
 }
