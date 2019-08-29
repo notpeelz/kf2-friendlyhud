@@ -91,7 +91,7 @@ function ResetUpdateTimer()
 
 function UpdatePRIArray()
 {
-    local FriendlyHUDReplicationInfo FHUDRepInfo;
+    local FriendlyHUDReplicationInfo RepInfo;
     local KFPawn_Human KFPH;
     local PRIEntry CurrentPRIEntry;
     local int I, ArrayIndex;
@@ -99,31 +99,31 @@ function UpdatePRIArray()
     if (HUDConfig.DisableHUD) return;
 
     SortedKFPRIArray.Length = 0;
-    FHUDRepInfo = FHUDMutator.RepInfo;
-    while (FHUDRepInfo != None)
+    RepInfo = FHUDMutator.RepInfo;
+    while (RepInfo != None)
     {
         for (I = 0; I < class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
         {
-            if (FHUDRepInfo.KFPRIArray[I] == None) continue;
+            if (RepInfo.KFPRIArray[I] == None) continue;
 
-            KFPH = FHUDRepInfo.KFPHArray[I];
+            KFPH = RepInfo.KFPHArray[I];
 
             CurrentPRIEntry.RepIndex = I;
-            CurrentPRIEntry.RepInfo = FHUDRepInfo;
-            CurrentPRIEntry.KFPRI = FHUDRepInfo.KFPRIArray[I];
+            CurrentPRIEntry.RepInfo = RepInfo;
+            CurrentPRIEntry.KFPRI = RepInfo.KFPRIArray[I];
             CurrentPRIEntry.KFPH = KFPH;
             CurrentPRIEntry.HealthRatio = KFPH != None
                 ? float(KFPH.Health) / float(KFPH.HealthMax)
                 : 0.f;
             CurrentPRIEntry.RegenHealthRatio = KFPH != None
-                ? float(FHUDRepInfo.RegenHealthArray[I]) / float(KFPH.HealthMax)
+                ? float(RepInfo.RegenHealthArray[I]) / float(KFPH.HealthMax)
                 : 0.f;
 
             SortedKFPRIArray[ArrayIndex] = CurrentPRIEntry;
 
             ArrayIndex++;
         }
-        FHUDRepInfo = FHUDRepInfo.NextRepInfo;
+        RepInfo = RepInfo.NextRepInfo;
     }
 
     switch (HUDConfig.SortStrategy)
@@ -185,36 +185,40 @@ function SetCanvasColor(Canvas Canvas, Color C)
     Canvas.DrawColor = C;
 }
 
-function CachePlayerNames(Canvas Canvas, optional bool ForceRefresh = false, optional FriendlyHUDReplicationInfo FHUDRepInfo)
+function CachePlayerNames(Canvas Canvas, optional bool ForceRefresh = false)
 {
     local float NameWidth, NameHeight, NameWidthMax;
     local string TempPlayerName, PlayerName;
     local int LetterIdx, LetterCount;
     local bool Truncated;
+    local FriendlyHUDReplicationInfo RepInfo;
     local int I;
 
-    if (FHUDRepInfo == None)
-    {
-        FHUDRepInfo = FHUDMutator.RepInfo;
-    }
+    // Abort if we shouldn't update and if refresh wasn't forced
+    if (!(FHUDMutator.ShouldUpdatePlayerNames || ForceRefresh)) return;
 
-    if (FHUDRepInfo.ShouldUpdatePlayerNames || ForceRefresh)
+    RepInfo = FHUDMutator.RepInfo;
+    while (RepInfo != None)
     {
         for (I = 0; I < class'FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
         {
-            if (FHUDRepInfo.KFPRIArray[I] == None)
+            if (RepInfo.KFPRIArray[I] == None)
             {
-                FHUDRepInfo.PlayerNameArray[I] = "";
+                RepInfo.PlayerNameArray[I] = "";
                 continue;
             }
 
-            PlayerName = FHUDRepInfo.KFPRIArray[I].PlayerName;
-            FHUDRepInfo.PlayerNameArray[I] = PlayerName;
+            // Don't update players that don't need updating
+            if (!ForceRefresh && RepInfo.NameUpdateReadyArray[I] == 0) continue;
+            RepInfo.NameUpdateReadyArray[I] = 0;
+
+            PlayerName = RepInfo.KFPRIArray[I].PlayerName;
+            RepInfo.PlayerNameArray[I] = PlayerName;
 
             NameWidthMax = R.BarWidthMin - R.NameMarginX;
 
             // Subtract the friend icon from the available width for the player name
-            if (HUDConfig.FriendIconEnabled && (FHUDRepInfo.IsFriendArray[I] != 0 || FHUDMutator.ForceShowAsFriend))
+            if (HUDConfig.FriendIconEnabled && (RepInfo.IsFriendArray[I] != 0 || FHUDMutator.ForceShowAsFriend))
             {
                 NameWidthMax -= R.FriendIconSize + R.FriendIconGap;
             }
@@ -226,7 +230,7 @@ function CachePlayerNames(Canvas Canvas, optional bool ForceRefresh = false, opt
             {
                 TempPlayerName = Left(PlayerName, LetterIdx + 1);
                 Canvas.TextSize(TempPlayerName, NameWidth, NameHeight, R.NameScale);
-                FHUDRepInfo.PlayerNameArray[I] = TempPlayerName;
+                RepInfo.PlayerNameArray[I] = TempPlayerName;
 
                 if (NameWidth >= NameWidthMax)
                 {
@@ -238,17 +242,14 @@ function CachePlayerNames(Canvas Canvas, optional bool ForceRefresh = false, opt
             if (Truncated)
             {
                 // We replace the last 2 characters with "..."
-                FHUDRepInfo.PlayerNameArray[I] = Left(FHUDRepInfo.PlayerNameArray[I], Max(Len(FHUDRepInfo.PlayerNameArray[I]) - 2, 0)) $ "...";
+                RepInfo.PlayerNameArray[I] = Left(RepInfo.PlayerNameArray[I], Max(Len(RepInfo.PlayerNameArray[I]) - 2, 0)) $ "...";
             }
         }
 
-        FHUDRepInfo.ShouldUpdatePlayerNames = false;
+        RepInfo = RepInfo.NextRepInfo;
     }
 
-    if (FHUDRepInfo.NextRepInfo != None)
-    {
-        CachePlayerNames(Canvas, ForceRefresh, FHUDRepInfo.NextRepInfo);
-    }
+    FHUDMutator.ShouldUpdatePlayerNames = false;
 }
 
 function UpdateRuntimeVars(optional Canvas Canvas)
@@ -593,7 +594,7 @@ function UpdateBlockSizeOverrides(
 
 function DrawTeamHealthBars(Canvas Canvas)
 {
-    local FriendlyHUDReplicationInfo FHUDRepInfo;
+    local FriendlyHUDReplicationInfo RepInfo;
     local PRIEntry CurrentPRIEntry;
     local KFPlayerReplicationInfo KFPRI;
     local ASDisplayInfo StatsDI, GearDI;
@@ -702,7 +703,7 @@ function DrawTeamHealthBars(Canvas Canvas)
     ItemCount = 0;
     foreach SortedKFPRIArray(CurrentPRIEntry)
     {
-        FHUDRepInfo = CurrentPRIEntry.RepInfo;
+        RepInfo = CurrentPRIEntry.RepInfo;
         KFPRI = CurrentPRIEntry.KFPRI;
 
         // Skip empty entries
@@ -715,7 +716,7 @@ function DrawTeamHealthBars(Canvas Canvas)
         if (HUDConfig.IgnoreSelf && KFPRI == KFPlayerOwner.PlayerReplicationInfo) continue;
 
         // Only render players that have spawned in once already
-        if (FHUDRepInfo.HasSpawnedArray[CurrentPRIEntry.RepIndex] == 0) continue;
+        if (RepInfo.HasSpawnedArray[CurrentPRIEntry.RepIndex] == 0) continue;
 
         // Layout: row first
         if (HUDConfig.Flow == 1)
@@ -741,9 +742,9 @@ function DrawTeamHealthBars(Canvas Canvas)
             // Left/right layouts flow up
             : (R.ScreenPosY - TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row));
 
-        ItemInfo.KFPH = FHUDRepInfo.KFPHArray[CurrentPRIEntry.RepIndex];
+        ItemInfo.KFPH = RepInfo.KFPHArray[CurrentPRIEntry.RepIndex];
         ItemInfo.KFPRI = KFPRI;
-        ItemInfo.RepInfo = FHUDRepInfo;
+        ItemInfo.RepInfo = RepInfo;
         ItemInfo.RepIndex = CurrentPRIEntry.RepIndex;
 
         if (DrawHealthBarItem(Canvas, ItemInfo, CurrentItemPosX, CurrentItemPosY))

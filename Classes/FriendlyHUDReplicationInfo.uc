@@ -35,11 +35,12 @@ var byte CDPlayerReadyArray[REP_INFO_COUNT];
 // Client-only
 var byte IsFriendArray[REP_INFO_COUNT];
 var string PlayerNameArray[REP_INFO_COUNT];
-var bool ShouldUpdatePlayerNames;
 
 // Replicated
 var KFPawn_Human KFPHArray[REP_INFO_COUNT];
 var repnotify KFPlayerReplicationInfo KFPRIArray[REP_INFO_COUNT];
+var string CachedPlayerNameArray[REP_INFO_COUNT];
+var repnotify byte NameUpdateReadyArray[REP_INFO_COUNT];
 var byte HasSpawnedArray[REP_INFO_COUNT];
 var BarInfo HealthInfoArray[REP_INFO_COUNT];
 var BarInfo ArmorInfoArray[REP_INFO_COUNT];
@@ -55,16 +56,22 @@ const TIMER_RESET_VALUE = 1337.f;
 
 replication
 {
-    // We don't need to replicate PCArray
     if (bNetDirty)
-        KFPHArray, KFPRIArray, HasSpawnedArray, HealthInfoArray, ArmorInfoArray, RegenHealthArray, MedBuffArray, PlayerStateArray, NextRepInfo;
+        KFPHArray, KFPRIArray, CachedPlayerNameArray, NameUpdateReadyArray, HasSpawnedArray,
+        HealthInfoArray, ArmorInfoArray, RegenHealthArray, MedBuffArray,
+        PlayerStateArray, NextRepInfo;
 }
 
 simulated event ReplicatedEvent(name VarName)
 {
     if (VarName == nameof(KFPRIArray))
     {
-        UpdateFriends();
+        UpdatePlayersClient();
+    }
+
+    if (VarName == nameof(NameUpdateReadyArray))
+    {
+        UpdateNamesClient();
     }
 }
 
@@ -93,7 +100,7 @@ function NotifyLogin(Controller C)
         {
             PCArray[I] = C;
             SpeedBoostTimerArray[I] = TIMER_RESET_VALUE;
-            UpdatePlayerNameDeferred(I);
+            CachedPlayerNameArray[I] = "";
             return;
         }
     }
@@ -110,22 +117,6 @@ function NotifyLogin(Controller C)
     NextRepInfo.NotifyLogin(C);
 }
 
-function UpdatePlayerNameDeferred(int RepIndex)
-{
-    local KFPlayerReplicationInfo KFPRI;
-
-    KFPRI = KFPRIArray[RepIndex];
-
-    // Defer our execution until player name replication is done
-    if (KFPRI == None || !KFPRI.bHasBeenWelcomed)
-    {
-        SetTimer(0.1f, false, nameof(UpdatePlayerNameDeferred));
-        return;
-    }
-
-    ShouldUpdatePlayerNames = true;
-}
-
 function NotifyLogout(Controller C)
 {
     local int I;
@@ -139,6 +130,7 @@ function NotifyLogout(Controller C)
             PCArray[I] = None;
             KFPHArray[I] = None;
             KFPRIArray[I] = None;
+            CachedPlayerNameArray[I] = "";
             HasSpawnedArray[I] = 0;
             HealthInfoArray[I] = EMPTY_BAR_INFO;
             ArmorInfoArray[I] = EMPTY_BAR_INFO;
@@ -163,6 +155,7 @@ function UpdateInfo()
     local KFPawn_Human KFPH;
     local KFPlayerReplicationInfo KFPRI;
     local float DmgBoostModifier, DmgResistanceModifier;
+    local bool HasPendingNameUpdates;
     local int I;
 
     // Make sure our mutator was initialized
@@ -181,20 +174,34 @@ function UpdateInfo()
         KFPHArray[I] = KFPH;
         KFPRIArray[I] = KFPRI;
 
-        // HasHadInitialSpawn() doesn't work on bots
-        HasSpawnedArray[I] = (KFAIController(PCArray[I]) != None || KFPRI.HasHadInitialSpawn()) ? 1 : 0;
+        if (KFPRI != None)
+        {
+            if (KFPRIArray[I].PlayerName != CachedPlayerNameArray[I])
+            {
+                // The value doesn't matter as long as it's not zero; used for notifying through replication
+                NameUpdateReadyArray[I]++;
+                if (NameUpdateReadyArray[I] == 0) NameUpdateReadyArray[I] = 1;
 
-        if (GameStateName == 'PendingMatch')
-        {
-            PlayerStateArray[I] = KFPRI.bReadyToPlay ? PRS_Ready : PRS_NotReady;
-        }
-        else if (GameStateName == 'TraderOpen' && FHUDMutator.CDLoaded)
-        {
-            PlayerStateArray[I] = CDPlayerReadyArray[I] != 0 ? PRS_Ready : PRS_NotReady;
-        }
-        else
-        {
-            PlayerStateArray[I] = PRS_Default;
+                CachedPlayerNameArray[I] = KFPRIArray[I].PlayerName;
+
+                HasPendingNameUpdates = true;
+            }
+
+            // HasHadInitialSpawn() doesn't work on bots
+            HasSpawnedArray[I] = (KFAIController(PCArray[I]) != None || KFPRI.HasHadInitialSpawn()) ? 1 : 0;
+
+            if (GameStateName == 'PendingMatch')
+            {
+                PlayerStateArray[I] = KFPRI.bReadyToPlay ? PRS_Ready : PRS_NotReady;
+            }
+            else if (GameStateName == 'TraderOpen' && FHUDMutator.CDLoaded)
+            {
+                PlayerStateArray[I] = CDPlayerReadyArray[I] != 0 ? PRS_Ready : PRS_NotReady;
+            }
+            else
+            {
+                PlayerStateArray[I] = PRS_Default;
+            }
         }
 
         if (KFPH != None)
@@ -229,6 +236,12 @@ function UpdateInfo()
             SpeedBoostTimerArray[I] = TIMER_RESET_VALUE;
         }
     }
+
+    if (HasPendingNameUpdates)
+    {
+        // This is only needed in single player
+        UpdateNamesClient();
+    }
 }
 
 function UpdateSpeedBoost(int Index)
@@ -257,7 +270,7 @@ function UpdateSpeedBoost(int Index)
     }
 }
 
-simulated function UpdateFriends()
+simulated function UpdatePlayersClient()
 {
     local OnlineSubsystem OS;
     local LocalPlayer LP;
@@ -265,10 +278,9 @@ simulated function UpdateFriends()
 
     OS = class'GameEngine'.static.GetOnlineSubsystem();
 
-    if (LocalPC == None) return;
-
+    if (LocalPC == None) goto Reschedule;
     LP = LocalPlayer(LocalPC.Player);
-    if (LP == None) return;
+    if (LP == None) goto Reschedule;
 
     for (I = 0; I < REP_INFO_COUNT; I++)
     {
@@ -276,6 +288,38 @@ simulated function UpdateFriends()
         {
             IsFriendArray[I] = OS.IsFriend(LP.ControllerId, KFPRIArray[I].UniqueId) ? 1 : 0;
         }
+    }
+
+Reschedule:
+    SetTimer(0.1f, false, nameof(UpdatePlayersClient));
+}
+
+simulated function UpdateNamesClient()
+{
+    local bool HasPendingUpdates;
+    local int I;
+
+    if (WorldInfo.NetMode == NM_DedicatedServer) return;
+
+    for (I = 0; I < REP_INFO_COUNT; I++)
+    {
+        if (NameUpdateReadyArray[I] != 0)
+        {
+            // Ensure that the player name is replicated correctly
+            if (CachedPlayerNameArray[I] != KFPRIArray[I].PlayerName)
+            {
+                HasPendingUpdates = true;
+                continue;
+            }
+
+            FHUDMutator.ShouldUpdatePlayerNames = true;
+        }
+    }
+
+    // Reschedule pending updates for later
+    if (HasPendingUpdates)
+    {
+        SetTimer(0.1f, false, nameof(UpdateNamesClient));
     }
 }
 

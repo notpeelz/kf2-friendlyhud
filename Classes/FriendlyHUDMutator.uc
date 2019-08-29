@@ -7,6 +7,7 @@ var FriendlyHUDInteraction FHUDInteraction;
 var FriendlyHUDConfig HUDConfig;
 var FriendlyHUDReplicationInfo RepInfo;
 var bool UMLoaded, CDLoaded;
+var bool ShouldUpdatePlayerNames;
 var bool ForceShowAsFriend;
 
 var FriendlyHUDCDCompatController CDCompat;
