@@ -784,18 +784,16 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
     ForceShowBuffs = HUDConfig.ForceShowBuffs && BuffLevel > 0;
 
     // Only apply render restrictions if we don't have a special state
-    if (PlayerState == PRS_Default)
+    if (PlayerState == PRS_Default || !FHUDMutator.CDLoaded)
     {
+        // Don't render if CD trader-time only mode is enabled
+        if (HUDConfig.CDOnlyTraderTime) return false;
+
         // If enabled, don't render dead teammates
         if (HUDConfig.IgnoreDeadTeammates && HealthRatio <= 0.f) return false;
 
         // If enabled, don't render teammates above a certain health threshold
         if (HealthRatio > HUDConfig.MinHealthThreshold && !ForceShowBuffs) return false;
-    }
-    // Don't render if we're in a special state and trader-time only is enabled
-    else if (HUDConfig.CDOnlyTraderTime && HUDConfig.CDCompatEnabled)
-    {
-        return false;
     }
 
     TextFontRenderInfo = Canvas.CreateFontRenderInfo(true);
