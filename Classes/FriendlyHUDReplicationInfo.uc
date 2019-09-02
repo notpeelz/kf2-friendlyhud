@@ -281,7 +281,7 @@ simulated function UpdatePlayersClient()
     {
         if (KFPRIArray[I] != FHUDMutator.KFPC.PlayerReplicationInfo)
         {
-            IsFriendArray[I] = OS.IsFriend(LP.ControllerId, KFPRIArray[I].UniqueId) ? 1 : 0;
+            IsFriendArray[I] = (KFPRIArray[I] != None && OS.IsFriend(LP.ControllerId, KFPRIArray[I].UniqueId)) ? 1 : 0;
         }
 
         // Reset the manual mode settings for vacant slots (disconnected players)
