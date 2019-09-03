@@ -965,6 +965,8 @@ function UpdateBlockOffsetOverrides(
     for (I = 0; I < BlockCount; I++)
     {
         OutBlockOffsetOverrides[I].BlockIndex = I;
+        OutBlockOffsetOverrides[I].X = 0;
+        OutBlockOffsetOverrides[I].Y = 0;
 
         foreach BlockOffsetOverrides(CurrentItem)
         {
