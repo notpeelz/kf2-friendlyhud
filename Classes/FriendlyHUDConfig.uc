@@ -367,7 +367,7 @@ exec function PrintFHUDHelp()
     ConsolePrint("SetFHUDOnlyForMedic <bool>: controls whether the HUD should only be visible when playing as medic");
     ConsolePrint("SetFHUDIgnoreSelf <bool>: controls the visibility of your own health bar (default is true)");
     ConsolePrint("SetFHUDIgnoreDeadTeammates <bool>: controls whether dead teammates should be hidden from the list (default is true)");
-    ConsolePrint("SetFHUDMinHealthThreshold <float>: hides players below a certain health ratio (default is 1, i.e. never hidden)");
+    ConsolePrint("SetFHUDMinHealthThreshold <float>: hides players above a certain health ratio (default is 1, i.e. never hidden)");
     ConsolePrint("SetFHUDSortStrategy <string Strategy> <bool Descending = false>: controls how players should be sorted (default is none); possible values: none, health, healthregen");
     ConsolePrint("SetFHUDOpacity <float>: controls the opacity multiplier of the HUD (default is 1)");
     ConsolePrint("SetFHUDDynamicOpacity <float Min> <float Max = 1> <float T0 = 4> <float T1 = 0>: lowers the opacity of full-health players (and increases it the lower they are)");
