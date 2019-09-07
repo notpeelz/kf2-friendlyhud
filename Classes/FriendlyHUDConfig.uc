@@ -395,6 +395,7 @@ exec function PrintFHUDHelp()
     ConsolePrint("SetFHUDShadowColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the HUD shadows (1-pixel outline below; default is 0,0,0,192)");
     ConsolePrint("SetFHUDIconColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the perk icon (default is 255,255,255,192)");
     ConsolePrint("SetFHUDNameColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the player names (default is 255,255,255,192)");
+    ConsolePrint("SetFHUDFriendIconColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the friend indicator icon (default is 255,255,255,192)");
     ConsolePrint("SetFHUDFriendNameColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of your friends' names (default is 51,222,44,255)");
     ConsolePrint("SetFHUDFriendNameColorEnabled <bool>: controls whether friends should use a different name color");
     ConsolePrint("SetFHUDArmorColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the armor bar (default is 0,100,210,192)");
@@ -415,13 +416,13 @@ exec function PrintFHUDHelp()
     ConsolePrint("ClearFHUDBlockDimensions: clears the block dimensions overrides");
     ConsolePrint("ClearFHUDBlockRatios: clears the block ratio overrides");
     ConsolePrint("ClearFHUDBlockOffsets: clears the block offset overrides");
-    ConsolePrint("SetFHUDBlockSize <float Width> <float Height>: controls the dimensions of bar blocks (default is 200 x 10)");
+    ConsolePrint("SetFHUDBlockSize <float Width> <float Height>: controls the dimensions of bar blocks (default is 200 x 8)");
     ConsolePrint("SetFHUDBlockSize <float Width> <float Height> <int BlockIndex = -1>: controls the dimensions of individual blocks (first block starts at 0)");
+    ConsolePrint("SetFHUDBlockWidth <float> <int BlockIndex = -1>: controls the width of bar blocks (default is 200)");
+    ConsolePrint("SetFHUDBlockHeight <float> <int BlockIndex = -1>: controls the height of bar blocks (default is 8)");
     ConsolePrint("SetFHUDBlockOutline <float Top> <float Right = -1> <float Bottom = -1> <float Left = -1>: controls the outline of the blocks (default is 1)");
     ConsolePrint("SetFHUDBlockCount <int>: controls the number of bar blocks (default is 1)");
     ConsolePrint("SetFHUDBlockGap <float>: controls the gap between the bar blocks (default is 2)");
-    ConsolePrint("SetFHUDBlockWidth <float> <int BlockIndex = -1>: controls the width of bar blocks");
-    ConsolePrint("SetFHUDBlockHeight <float> <int BlockIndex = -1>: controls the height of bar blocks");
     ConsolePrint("SetFHUDBlockRatio <float> <int BlockIndex>: controls the bar ratio (health ratio or armor ratio) represented by a specific block");
     ConsolePrint("SetFHUDBlockOffsetX <float> <int BlockIndex>: controls the relative horizontal offset of a specific block");
     ConsolePrint("SetFHUDBlockOffsetY <float> <int BlockIndex>: controls the relative vertical offset of a specific block");
@@ -436,7 +437,6 @@ exec function PrintFHUDHelp()
     ConsolePrint("SetFHUDIconOffset <float>: controls the vertical offset of the perk icon (default is 0)");
     ConsolePrint("SetFHUDIconGap <float>: controls the gap between the perk icon and the bars (default is 4)");
     ConsolePrint("SetFHUDFriendIconEnabled <bool>: controls whether an friend indicator icon should appear next to the player name");
-    ConsolePrint("SetFHUDFriendIconColor <byte R> <byte G> <byte B> <byte A = 192>: controls the color of the friend indicator icon (default is 255,255,255,192)");
     ConsolePrint("SetFHUDFriendIconSize <float>: controls the size of the friend indicator icon (default is 24)");
     ConsolePrint("SetFHUDFriendIconGap <float>: controls the gap between the friend indicator and the player name (default is 4)");
     ConsolePrint("SetFHUDFriendIconOffsetY <float>: controls the Y alignment offset of the friend indicator icon (default is 0)");
