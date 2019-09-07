@@ -944,11 +944,11 @@ function UpdateRuntimeVars(optional Canvas Canvas)
     // BuffLayout: Left or Right
     if (HUDConfig.BuffLayout == 1 || HUDConfig.BuffLayout == 2)
     {
-        R.TotalItemWidth += R.BuffPlayerIconMargin + R.BuffIconSize;
+        R.TotalItemWidth += FMax(R.BuffPlayerIconMargin + R.BuffIconSize, 0.f);
     }
     else if (HUDConfig.BuffLayout == 3 || HUDConfig.BuffLayout == 4)
     {
-        R.TotalItemHeight += R.BuffPlayerIconMargin + R.BuffIconSize;
+        R.TotalItemHeight += FMax(R.BuffPlayerIconMargin + R.BuffIconSize, 0.f);
     }
 }
 
@@ -1223,13 +1223,13 @@ function DrawTeamHealthBars(Canvas Canvas)
         if (HUDConfig.BuffLayout == 1)
         {
             // This ensures that we don't overlap (however unlikely) with the playerstats UI
-            R.ScreenPosX += R.BuffPlayerIconMargin + R.BuffIconSize;
+            R.ScreenPosX += FMax(R.BuffPlayerIconMargin + R.BuffIconSize, 0.f);
         }
         // BuffLayout: Top
         else if (HUDConfig.BuffLayout == 3)
         {
             // This ensures that we stay aligned with the top of the playerstats UI
-            R.ScreenPosY += R.BuffPlayerIconMargin + R.BuffIconSize;
+            R.ScreenPosY += FMax(R.BuffPlayerIconMargin + R.BuffIconSize, 0.f);
         }
     }
     // Layout: Left
@@ -1244,7 +1244,7 @@ function DrawTeamHealthBars(Canvas Canvas)
         if (HUDConfig.BuffLayout == 1)
         {
             // This ensures that we don't render off-bounds (too far left)
-            R.ScreenPosX += R.BuffPlayerIconMargin + R.BuffIconSize;
+            R.ScreenPosX += FMax(R.BuffPlayerIconMargin + R.BuffIconSize, 0.f);
         }
     }
     // Layout: Right
@@ -1259,7 +1259,7 @@ function DrawTeamHealthBars(Canvas Canvas)
         if (HUDConfig.BuffLayout == 1)
         {
             // This ensures that we don't render off-bounds (too far right)
-            R.ScreenPosX -= R.BuffPlayerIconMargin + R.BuffIconSize;
+            R.ScreenPosX -= FMax(R.BuffPlayerIconMargin + R.BuffIconSize, 0.f);
         }
     }
 
@@ -1411,16 +1411,21 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
     // BuffLayout: Left
     if (HUDConfig.BuffLayout == 1)
     {
-        SelectionPosX -= R.BuffPlayerIconMargin + R.BuffIconSize;
+        SelectionPosX -= FMax(R.BuffPlayerIconMargin + R.BuffIconSize, 0.f);
     }
     // BuffLayout: Right
-    if (HUDConfig.BuffLayout == 2)
+    else if (HUDConfig.BuffLayout == 2)
     {
         // This ensures that we don't render the buffs over the player name
-        PlayerNamePosX += R.BuffPlayerIconMargin + R.BuffIconSize;
+        PlayerNamePosX += FMax(R.BuffPlayerIconMargin + R.BuffIconSize, 0.f);
 
         // This ensures that we don't render the buffs over the bars
-        PosX += R.BuffPlayerIconMargin + R.BuffIconSize;
+        PosX += FMax(R.BuffPlayerIconMargin + R.BuffIconSize, 0.f);
+    }
+    // BuffLayout: Top
+    else if (HUDConfig.BuffLayout == 3)
+    {
+        SelectionPosY -= FMax(R.BuffPlayerIconMargin + R.BuffIconSize, 0.f);
     }
 
     if (IsFriend != 0 && HUDConfig.FriendIconEnabled)
@@ -1571,26 +1576,26 @@ function DrawBuffs(Canvas Canvas, int BuffLevel, float PosX, float PosY)
         // BuffLayout: Left
         if (HUDConfig.BuffLayout == 1)
         {
-            CurrentPosX = PosX - R.BuffPlayerIconMargin - R.BuffIconSize;
+            CurrentPosX = PosX - FMax(R.BuffPlayerIconMargin + R.BuffIconSize, 0.f);
             CurrentPosY = PosY + R.BuffOffset + (R.BuffPlayerIconGap + R.BuffIconSize) * I;
         }
         // BuffLayout: Right
         else if (HUDConfig.BuffLayout == 2)
         {
-            CurrentPosX = PosX + R.PlayerIconSize + R.BuffPlayerIconMargin;
+            CurrentPosX = PosX + FMax(R.BuffPlayerIconMargin, -R.BuffIconSize) + R.PlayerIconSize;
             CurrentPosY = PosY + R.BuffOffset + (R.BuffPlayerIconGap + R.BuffIconSize) * I;
         }
         // BuffLayout: Top
         else if (HUDConfig.BuffLayout == 3)
         {
             CurrentPosX = PosX + R.BuffOffset + (R.BuffPlayerIconGap + R.BuffIconSize) * I;
-            CurrentPosY = PosY - R.BuffPlayerIconMargin - R.BuffIconSize;
+            CurrentPosY = PosY - FMax(R.BuffPlayerIconMargin + R.BuffIconSize, 0.f);
         }
         // BuffLayout: Bottom
         else if (HUDConfig.BuffLayout == 4)
         {
             CurrentPosX = PosX + R.BuffOffset + (R.BuffPlayerIconGap + R.BuffIconSize) * I;
-            CurrentPosY = PosY + R.PlayerIconSize + R.BuffPlayerIconMargin;
+            CurrentPosY = PosY + FMax(R.BuffPlayerIconMargin, -R.BuffIconSize) + R.PlayerIconSize;
         }
 
         SetCanvasColor(Canvas, HUDConfig.ShadowColor);

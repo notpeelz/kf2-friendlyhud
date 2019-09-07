@@ -1753,7 +1753,7 @@ exec function SetFHUDBuffLayout(coerce string Value)
 
 exec function SetFHUDBuffSize(float Value)
 {
-    BuffSize = Value;
+    BuffSize = FMax(Value, 0.f);
     SaveAndUpdate();
 }
 
@@ -1765,7 +1765,7 @@ exec function SetFHUDBuffMargin(float Value)
 
 exec function SetFHUDBuffGap(float Value)
 {
-    BuffGap = Value;
+    BuffGap = FMax(Value, 0.f);
     SaveAndUpdate();
 }
 
