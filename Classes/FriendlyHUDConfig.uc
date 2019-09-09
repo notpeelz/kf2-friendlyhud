@@ -415,6 +415,7 @@ exec function PrintFHUDHelp()
     ConsolePrint("ClearFHUDBlockDimensions: clears the block dimensions overrides");
     ConsolePrint("ClearFHUDBlockRatios: clears the block ratio overrides");
     ConsolePrint("ClearFHUDBlockOffsets: clears the block offset overrides");
+    ConsolePrint("SetFHUDBlockProportions <float Width> <string Ratios>: sets up block dimensions and block ratios from a given total bar width and a list of ratios; the ratios are comma-separated, e.g.: 0.7,0.3");
     ConsolePrint("SetFHUDBlockSize <float Width> <float Height>: controls the dimensions of bar blocks (default is 200 x 8)");
     ConsolePrint("SetFHUDBlockSize <float Width> <float Height> <int BlockIndex = -1>: controls the dimensions of individual blocks (first block starts at 0)");
     ConsolePrint("SetFHUDBlockWidth <float> <int BlockIndex = -1>: controls the width of bar blocks (default is 200)");
@@ -430,7 +431,6 @@ exec function PrintFHUDHelp()
     ConsolePrint(" ");
     ConsolePrint("*NOTE*: armor bar and health bar block settings can be controlled separately; e.g. SetFHUDArmorBlockSize, SetFHUDHealthBlockSize, ...");
     ConsolePrint(" ");
-    ConsolePrint("SetFHUDBarProportions <float Width> <string Ratios>: sets up block dimensions and block ratios from a given total bar width and a list of ratios; the ratios are comma-separated, e.g.: 0.7,0.3");
     ConsolePrint("SetFHUDBarGap <float>: controls the gap between the armor and the health bar (default is -1)");
     ConsolePrint("SetFHUDIconSize <float>: controls the dimensions of the perk icon (default is 32)");
     ConsolePrint("SetFHUDIconOffset <float>: controls the vertical offset of the perk icon (default is 0)");
@@ -699,7 +699,7 @@ exec function LoadFHUDBarPreset(string Value)
             break;
         case "70-30":
             SetFHUDBlockOutline(1);
-            SetFHUDHealthBarProportions(196, "0.7,0.3");
+            SetFHUDHealthBlockProportions(196, "0.7,0.3");
             BarGap = 4.f;
             break;
         case "barcode":
@@ -867,7 +867,7 @@ exec function ClearFHUDHealthBlockOffsets()
     SaveAndUpdate();
 }
 
-exec function SetFHUDBarProportions(float Width, optional string Ratios)
+exec function SetFHUDBlockProportions(float Width, optional string Ratios)
 {
     local array<string> Params;
 
@@ -882,11 +882,11 @@ exec function SetFHUDBarProportions(float Width, optional string Ratios)
         return;
     }
 
-    SetFHUDArmorBarProportions(Width, Ratios);
-    SetFHUDHealthBarProportions(Width, Ratios);
+    SetFHUDArmorBlockProportions(Width, Ratios);
+    SetFHUDHealthBlockProportions(Width, Ratios);
 }
 
-exec function SetFHUDArmorBarProportions(float Width, optional string Ratios)
+exec function SetFHUDArmorBlockProportions(float Width, optional string Ratios)
 {
     local array<string> Params;
     local float TotalWidth, CurrentBlockWidth;
@@ -951,7 +951,7 @@ exec function SetFHUDArmorBarProportions(float Width, optional string Ratios)
     SetFHUDArmorBlockCount(BlockCount);
 }
 
-exec function SetFHUDHealthBarProportions(float Width, optional string Ratios)
+exec function SetFHUDHealthBlockProportions(float Width, optional string Ratios)
 {
     local array<string> Params;
     local float TotalWidth, CurrentBlockWidth;
