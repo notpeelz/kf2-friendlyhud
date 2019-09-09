@@ -348,6 +348,8 @@ exec function ResetFHUDColors()
     BuffColor = MakeColor(255, 255, 255, 192);
     CDReadyIconColor = MakeColor(0, 192, 0, 192);
     CDNotReadyIconColor = MakeColor(192, 0, 0, 192);
+
+    InitUMCompat();
 }
 
 exec function FHUDHelp() { PrintFHUDHelp(); }
