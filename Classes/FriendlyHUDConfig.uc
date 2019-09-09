@@ -1625,6 +1625,11 @@ exec function SetFHUDNameColor(byte R, byte G, byte B, optional byte A = 192)
 
 exec function SetFHUDFriendNameColor(byte R, byte G, byte B, optional byte A = 192)
 {
+    if (!FriendNameColorEnabled)
+    {
+        ConsolePrint("WARNING: FriendNameColorEnabled is disabled");
+    }
+
     FriendNameColor = MakeColor(R, G, B, A);
     SaveAndUpdate();
 }
@@ -1807,6 +1812,11 @@ exec function SetFHUDFriendIconEnabled(bool Value)
 
 exec function SetFHUDFriendIconColor(byte R, byte G, byte B, byte A = 192)
 {
+    if (!FriendIconEnabled)
+    {
+        ConsolePrint("WARNING: FriendIconEnabled is disabled");
+    }
+
     FriendIconColor = MakeColor(R, G, B, A);
     SaveAndUpdate();
 }
