@@ -483,6 +483,7 @@ exec function PrintFHUDHelp()
     ConsolePrint("--------------------------");
     ConsolePrint("SetFHUDDrawDebugLines <bool>: displays debug lines -- useful for debugging layout issues");
     ConsolePrint("SetFHUDDrawDebugRatios <bool>: displays ratios over blocks -- useful for debugging block distribution issues");
+    ConsolePrint("DebugFHUDSpawnBot <string BotName> <int PerkIndex> <bool IsEnemy> <bool GodMode>: spawns a bot in front of you -- cheats only");
     ConsolePrint("DebugFHUDSetArmor <int Armor> <int MaxArmor = -1>: sets the armor value for your own character -- cheats only");
     ConsolePrint("DebugFHUDSetHealth <int Health> <int MaxHealth = -1>: sets the health value for your own character -- cheats only");
     ConsolePrint("DebugFHUDForceFriend <bool>: forces all players to show up as friends");

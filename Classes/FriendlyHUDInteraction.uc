@@ -112,6 +112,54 @@ exec function DebugFHUDSetHealth(int Health, optional int MaxHealth = -1)
     }
 }
 
+exec function DebugFHUDSpawnBot(optional string BotName, optional int PerkIndex, optional bool IsEnemy, optional bool GodMode)
+{
+    local KFAIController KFBot;
+    local KFPlayerReplicationInfo KFPRI;
+    local vector CamLoc;
+    local rotator CamRot;
+    local KFPawn_Human KFPH;
+    local Vector HitLocation, HitNormal;
+
+    if (BotName == "") BotName = "Braindead Human";
+
+    if (KFPlayerOwner.CheatManager == None) return;
+    if (KFPlayerOwner.Pawn == None) return;
+
+    KFPlayerOwner.GetPlayerViewPoint(CamLoc, CamRot);
+    KFPlayerOwner.Pawn.Trace(HitLocation, HitNormal, CamLoc + Vector(CamRot) * 250000, CamLoc, TRUE, vect(0,0,0));
+
+    HitLocation.Z += 100;
+
+    KFPH = KFPlayerOwner.Spawn(class'KFPawn_Human',,, HitLocation);
+    KFPH.SetPhysics(PHYS_Falling);
+
+    KFBot = KFPlayerOwner.Spawn(class'KFAIController');
+
+    FHUDMutator.WorldInfo.Game.ChangeName(KFBot, BotName, false);
+
+    if (!IsEnemy)
+    {
+        KFGameInfo(FHUDMutator.WorldInfo.Game).SetTeam(KFBot, KFGameInfo(FHUDMutator.WorldInfo.Game).Teams[0]);
+    }
+
+    KFBot.Possess(KFPH, false);
+
+    if (GodMode)
+    {
+       KFBot.bGodMode = true;
+    }
+
+    KFPRI = KFPlayerReplicationInfo(KFBot.PlayerReplicationInfo);
+
+    KFPRI.CurrentPerkClass = class'KFPlayerController'.default.PerkList[PerkIndex].PerkClass;
+    KFPRI.NetPerkIndex = PerkIndex;
+    KFPRI.PlayerHealthPercent = FloatToByte(float(KFPH.Health) / float(KFPH.HealthMax));
+    KFPRI.PlayerHealth = KFPH.Health;
+
+    KFPH.AddDefaultInventory();
+}
+
 exec function DebugFHUDForceFriend(bool Value)
 {
     FHUDMutator.ForceShowAsFriend = Value;
