@@ -160,7 +160,7 @@ exec function DebugFHUDSpawnBot(optional string BotName, optional int PerkIndex,
     KFPH.AddDefaultInventory();
 }
 
-exec function DebugFHUDForceFriend(bool Value)
+exec function SetFHUDDebugForceFriend(bool Value)
 {
     FHUDMutator.ForceShowAsFriend = Value;
     UpdateRuntimeVars();
