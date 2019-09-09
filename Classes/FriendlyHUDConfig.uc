@@ -35,6 +35,14 @@ struct BlockOffsetOverride
     var int BlockIndex;
 };
 
+struct CubicInterpCurve
+{
+    var float P0;
+    var float P1;
+    var float T0;
+    var float T1;
+};
+
 var config int INIVersion;
 var config int LastChangeLogVersion;
 var config float UpdateInterval;
@@ -109,10 +117,7 @@ var config bool ReverseY;
 var config bool IgnoreSelf;
 var config bool IgnoreDeadTeammates;
 var config float MinHealthThreshold;
-var config float DO_MinOpacity;
-var config float DO_MaxOpacity;
-var config float DO_T0;
-var config float DO_T1;
+var config CubicInterpCurve DynamicOpacity;
 var config float Opacity;
 var config array<ColorThreshold> ColorThresholds;
 var config array<ColorThreshold> RegenColorThresholds;
@@ -162,10 +167,7 @@ function Initialized()
             UpdateInterval = 0.5f;
             SortStrategy = 0;
             SelfSortStrategy = 1;
-            DO_MinOpacity = 1.f;
-            DO_MaxOpacity = 1.f;
-            DO_T0 = 4.f;
-            DO_T1 = 0.f;
+            DynamicOpacity = class'FriendlyHUD.FriendlyHUDHelper'.static.MakeCubicInterpCurve(1.f, 1.f, 4.f, 0.f);
             Opacity = 1.f;
             IconSize = 32.f;
             IconOffset = 0.f;
@@ -259,10 +261,7 @@ function LoadDefaultFHUDConfig()
     IgnoreSelf = true;
     IgnoreDeadTeammates = true;
     MinHealthThreshold = 1.f;
-    DO_MinOpacity = 1.f;
-    DO_MaxOpacity = 1.f;
-    DO_T0 = 4.f;
-    DO_T1 = 0.f;
+    DynamicOpacity = class'FriendlyHUD.FriendlyHUDHelper'.static.MakeCubicInterpCurve(1.f, 1.f, 4.f, 0.f);
     DynamicColors = 0;
     DynamicRegenColors = 0;
     Opacity = 1.f;
@@ -370,7 +369,7 @@ exec function PrintFHUDHelp()
     ConsolePrint("SetFHUDMinHealthThreshold <float>: hides players above a certain health ratio (default is 1, i.e. never hidden)");
     ConsolePrint("SetFHUDSortStrategy <string Strategy> <bool Descending = false>: controls how players should be sorted (default is none); possible values: none, health, healthregen");
     ConsolePrint("SetFHUDOpacity <float>: controls the opacity multiplier of the HUD (default is 1)");
-    ConsolePrint("SetFHUDDynamicOpacity <float Min> <float Max = 1> <float T0 = 4> <float T1 = 0>: lowers the opacity of full-health players (and increases it the lower they are)");
+    ConsolePrint("SetFHUDDynamicOpacity <float P1> <float P0 = 1> <float T0 = 4> <float T1 = 0>: lowers the opacity of full-health players (and increases it the lower they are)");
 
     ConsolePrint(" ");
     ConsolePrint("Layout Settings");
@@ -1966,12 +1965,9 @@ exec function SetFHUDSortStrategy(string Strategy, optional bool Descending = fa
     SaveAndUpdate();
 }
 
-exec function SetFHUDDynamicOpacity(float Min, optional float Max = 1.f, optional float T0 = 4.f, float T1 = 0.f)
+exec function SetFHUDDynamicOpacity(float P1, optional float P0 = 1.f, optional float T0 = 4.f, float T1 = 0.f)
 {
-    DO_MinOpacity = Min;
-    DO_MaxOpacity = Max;
-    DO_T0 = T0;
-    DO_T1 = T1;
+    DynamicOpacity = class'FriendlyHUD.FriendlyHUDHelper'.static.MakeCubicInterpCurve(P0, P1, T0, T1);
     SaveAndUpdate();
 }
 

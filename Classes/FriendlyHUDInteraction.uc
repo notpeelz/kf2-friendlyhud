@@ -1423,10 +1423,10 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
 
     R.Opacity = FMin(
             FCubicInterp(
-                HUDConfig.DO_MaxOpacity,
-                HUDConfig.DO_T0,
-                HUDConfig.DO_MinOpacity,
-                HUDConfig.DO_T1,
+                HUDConfig.DynamicOpacity.P0,
+                HUDConfig.DynamicOpacity.T0,
+                HUDConfig.DynamicOpacity.P1,
+                HUDConfig.DynamicOpacity.T1,
                 HealthRatio
             ), 1.f
         ) * HUDConfig.Opacity;

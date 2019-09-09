@@ -79,6 +79,18 @@ static function FriendlyHUDConfig.BlockOutline MakeOutline(
     return OutValue;
 }
 
+static function FriendlyHUDConfig.CubicInterpCurve MakeCubicInterpCurve(float P0, float P1, float T0, float T1)
+{
+    local FriendlyHUDConfig.CubicInterpCurve Curve;
+
+    Curve.P0 = P0;
+    Curve.P1 = P1;
+    Curve.T0 = T0;
+    Curve.T1 = T1;
+
+    return Curve;
+}
+
 static function float GetResolutionScale(Canvas Canvas)
 {
     local float SW, SH, SX, SY, ResScale;
