@@ -121,8 +121,8 @@ var config CubicInterpCurve DynamicOpacity;
 var config float Opacity;
 var config array<ColorThreshold> ColorThresholds;
 var config array<ColorThreshold> RegenColorThresholds;
-var config int DynamicColors;
-var config int DynamicRegenColors;
+var config int DynamicColorsStrategy;
+var config int DynamicRegenColorsStrategy;
 var config bool ForceShowBuffs;
 var config bool UMCompatEnabled;
 var config bool UMColorSyncEnabled;
@@ -188,8 +188,8 @@ function Initialized()
             NameMarginX = 0.f;
             NameMarginY = 0.f;
             NameScale = 1.f;
-            DynamicColors = 0;
-            DynamicRegenColors = 0;
+            DynamicColorsStrategy = 0;
+            DynamicRegenColorsStrategy = 0;
             ForceShowBuffs = false;
             UMDisableHMTechChargeHUD = 0;
             UMColorSyncEnabled = true;
@@ -262,8 +262,8 @@ function LoadDefaultFHUDConfig()
     IgnoreDeadTeammates = true;
     MinHealthThreshold = 1.f;
     DynamicOpacity = class'FriendlyHUD.FriendlyHUDHelper'.static.MakeCubicInterpCurve(1.f, 1.f, 4.f, 0.f);
-    DynamicColors = 0;
-    DynamicRegenColors = 0;
+    DynamicColorsStrategy = 0;
+    DynamicRegenColorsStrategy = 0;
     Opacity = 1.f;
     ForceShowBuffs = false;
     UMCompatEnabled = true;
@@ -461,8 +461,8 @@ exec function PrintFHUDHelp()
     ConsolePrint("Dynamic Colors");
     ConsolePrint("--------------------------");
     ConsolePrint("ResetFHUDColorThresholds: deletes all color thresholds");
-    ConsolePrint("SetFHUDDynamicColors <string>: controls the health color transition logic (default is unset); possible values: unset, static, lerp");
-    ConsolePrint("SetFHUDDynamicRegenColors <string>: controls the health regen color transition logic (default is unset); possible values: unset, static, lerphealth, lerp");
+    ConsolePrint("SetFHUDDynamicColorsStrategy <string>: controls the health color transition logic (default is unset); possible values: unset, static, lerp");
+    ConsolePrint("SetFHUDDynamicRegenColorsStrategy <string>: controls the health regen color transition logic (default is unset); possible values: unset, static, lerphealth, lerp");
     ConsolePrint("AddFHUDColorThreshold <float> <byte R> <byte G> <byte B> <byte A = 192>: adds or sets a color threshold (i.e. a color transition point for a specific health ratio)");
     ConsolePrint("RemoveFHUDColorThreshold <float>: deletes the specified color threshold");
     ConsolePrint("SetFHUDRegenColorThreshold <float> <byte R> <byte G> <byte B> <byte A = 192>: sets the health regen color for an existing color threshold (only applies to lerpboth strategy)");
@@ -547,8 +547,8 @@ exec function LoadFHUDColorPreset(string Value)
             CDReadyIconColor = MakeColor(85, 26, 139, 192);
             break;
         case "gradient":
-            DynamicColors = 2;
-            DynamicRegenColors = 2;
+            DynamicColorsStrategy = 2;
+            DynamicRegenColorsStrategy = 2;
             AddColorThreshold(0.7, 255, 255, 0);
             SetRegenColorThreshold(0.7, 100, 100, 0);
             AddColorThreshold(0.5, 255, 0, 0);
@@ -2139,26 +2139,26 @@ exec function MoveFHUDColorThreshold(float Threshold, float NewThreshold)
     ConsolePrint("Failed to find threshold" @ Threshold);
 }
 
-exec function SetFHUDDynamicColors(coerce String Value)
+exec function SetFHUDDynamicColorsStrategy(coerce String Value)
 {
     switch (Locs(Value))
     {
         case "default":
         case "unset":
-            DynamicColors = 0;
+            DynamicColorsStrategy = 0;
             break;
         case "static":
-            DynamicColors = 1;
+            DynamicColorsStrategy = 1;
             break;
         case "lerp":
-            DynamicColors = 2;
+            DynamicColorsStrategy = 2;
             break;
         default:
             // Non-int values get parsed as 0
-            DynamicColors = Clamp(int(Value), 0, 2);
+            DynamicColorsStrategy = Clamp(int(Value), 0, 2);
 
             // Invalid value
-            if (DynamicColors == 0 && Value != "0" || int(Value) != DynamicColors)
+            if (DynamicColorsStrategy == 0 && Value != "0" || int(Value) != DynamicColorsStrategy)
             {
                 ConsolePrint("Invalid dynamic colors strategy:" @ Value);
             }
@@ -2168,28 +2168,28 @@ exec function SetFHUDDynamicColors(coerce String Value)
     SaveAndUpdate();
 }
 
-exec function SetFHUDDynamicRegenColors(coerce string Value)
+exec function SetFHUDDynamicRegenColorsStrategy(coerce string Value)
 {
     switch (Locs(Value))
     {
         case "default":
         case "unset":
-            DynamicRegenColors = 0;
+            DynamicRegenColorsStrategy = 0;
         case "static":
-            DynamicRegenColors = 1;
+            DynamicRegenColorsStrategy = 1;
             break;
         case "lerphealth":
-            DynamicRegenColors = 2;
+            DynamicRegenColorsStrategy = 2;
             break;
         case "lerp":
-            DynamicRegenColors = 3;
+            DynamicRegenColorsStrategy = 3;
             break;
         default:
             // Non-int values get parsed as 0
-            DynamicRegenColors = Clamp(int(Value), 0, 3);
+            DynamicRegenColorsStrategy = Clamp(int(Value), 0, 3);
 
             // Invalid value
-            if (DynamicRegenColors == 0 && Value != "0" || int(Value) != DynamicRegenColors)
+            if (DynamicRegenColorsStrategy == 0 && Value != "0" || int(Value) != DynamicRegenColorsStrategy)
             {
                 ConsolePrint("Invalid dynamic regen colors strategy:" @ Value);
             }
