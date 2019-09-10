@@ -331,7 +331,7 @@ exec function ResetFHUDBar()
 
 exec function ResetFHUDColors()
 {
-    ResetFHUDColorThresholds();
+    ClearFHUDColorThresholds();
     ShadowColor = MakeColor(0, 0, 0, 255);
     NameColor = MakeColor(255, 255, 255, 192);
     FriendNameColor = MakeColor(51, 222, 44, 255);
@@ -460,7 +460,7 @@ exec function PrintFHUDHelp()
     ConsolePrint(" ");
     ConsolePrint("Dynamic Colors");
     ConsolePrint("--------------------------");
-    ConsolePrint("ResetFHUDColorThresholds: deletes all color thresholds");
+    ConsolePrint("ClearFHUDColorThresholds: deletes all color thresholds");
     ConsolePrint("SetFHUDDynamicColorsStrategy <string>: controls the health color transition logic (default is unset); possible values: unset, static, lerp");
     ConsolePrint("SetFHUDDynamicRegenColorsStrategy <string>: controls the health regen color transition logic (default is unset); possible values: unset, static, lerphealth, lerp");
     ConsolePrint("AddFHUDColorThreshold <float> <byte R> <byte G> <byte B> <byte A = 192>: adds or sets a color threshold (i.e. a color transition point for a specific health ratio)");
@@ -1924,7 +1924,7 @@ exec function SetFHUDUpdateInterval(float Value)
     SaveAndUpdate();
 }
 
-exec function SetFHUDSelfSortStrategy(string Strategy)
+exec function SetFHUDSelfSortStrategy(coerce string Strategy)
 {
     switch (Locs(Strategy))
     {
@@ -1989,7 +1989,7 @@ exec function SetFHUDOpacity(float Value)
     SaveAndUpdate();
 }
 
-exec function ResetFHUDColorThresholds()
+exec function ClearFHUDColorThresholds()
 {
     ColorThresholds.Length = 0;
 
