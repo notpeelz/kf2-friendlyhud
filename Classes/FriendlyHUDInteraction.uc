@@ -852,6 +852,7 @@ function UpdateRuntimeVars(optional Canvas Canvas)
 {
     local int I;
     local string PlayerNamePlaceholder;
+    local float LineHeightOffset;
     local float PlayerNameWidth;
     local float Temp;
 
@@ -878,10 +879,6 @@ function UpdateRuntimeVars(optional Canvas Canvas)
     R.BuffIconSize = HUDConfig.BuffSize * R.Scale;
     R.BuffPlayerIconMargin = HUDConfig.BuffMargin * R.Scale;
     R.BuffPlayerIconGap = HUDConfig.BuffGap * R.Scale;
-
-    R.PlayerIconSize = HUDConfig.IconSize * R.Scale;
-    R.PlayerIconGap = HUDConfig.IconGap * R.Scale;
-    R.PlayerIconOffset = HUDConfig.IconOffset * R.Scale;
 
     R.FriendIconSize = HUDConfig.FriendIconSize * R.Scale;
     R.FriendIconGap = HUDConfig.FriendIconGap * R.Scale;
@@ -976,6 +973,12 @@ function UpdateRuntimeVars(optional Canvas Canvas)
 
         R.PlayerNameLetterCount++;
     }
+
+    LineHeightOffset = (R.LineHeight + R.NameMarginY) / 2.f;
+
+    R.PlayerIconSize = HUDConfig.IconSize * R.Scale;
+    R.PlayerIconGap = HUDConfig.IconGap * R.Scale;
+    R.PlayerIconOffset = HUDConfig.IconOffset * R.Scale + LineHeightOffset;
 
     R.TotalItemWidth = R.PlayerIconSize + R.PlayerIconGap + R.BarWidthMin + R.ItemMarginX;
     R.TotalItemHeight = FMax(
@@ -1437,7 +1440,7 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
     SelectionHeight = R.TotalItemHeight - R.ItemMarginY;
 
     PlayerIconPosX = PosX;
-    PlayerIconPosY = PosY + R.PlayerIconOffset + (R.LineHeight + R.NameMarginY) / 2.f;
+    PlayerIconPosY = PosY + R.PlayerIconOffset;
 
     PlayerNamePosX = PosX + R.PlayerIconSize + R.PlayerIconGap + R.NameMarginX;
     PlayerNamePosY = PosY + FMax(R.LineHeight - R.TextHeight, 0);
