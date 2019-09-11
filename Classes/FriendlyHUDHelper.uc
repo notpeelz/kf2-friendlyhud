@@ -91,7 +91,7 @@ static function FriendlyHUDConfig.CubicInterpCurve MakeCubicInterpCurve(float P0
     return Curve;
 }
 
-static function float GetResolutionScale(Canvas Canvas)
+static function float GetResolutionScale(Canvas Canvas, optional bool NoUpscale = true)
 {
     local float SW, SH, SX, SY, ResScale;
     SW = Canvas.ClipX;
@@ -99,7 +99,7 @@ static function float GetResolutionScale(Canvas Canvas)
     SX = SW / 1920.f;
     SY = SH / 1080.f;
 
-    if(SX > SY)
+    if (SX > SY)
     {
         ResScale = SY;
     }
@@ -108,7 +108,7 @@ static function float GetResolutionScale(Canvas Canvas)
         ResScale = SX;
     }
 
-    if (ResScale > 1.f)
+    if (NoUpscale && ResScale > 1.f)
     {
         return 1.f;
     }
