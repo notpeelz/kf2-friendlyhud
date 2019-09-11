@@ -536,7 +536,7 @@ function SyncManualModeSelection()
     local int I;
 
     // We need to update the index because it might change depending on sorting conditions
-    for(I = 0; I < SortedKFPRIArray.Length; I++)
+    for (I = 0; I < SortedKFPRIArray.Length; I++)
     {
         if (ManualModeCurrentPRI.KFPRI == SortedKFPRIArray[I].KFPRI)
         {
