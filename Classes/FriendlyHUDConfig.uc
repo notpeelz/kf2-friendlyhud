@@ -462,7 +462,7 @@ exec function PrintFHUDHelp()
     ConsolePrint("--------------------------");
     ConsolePrint("ClearFHUDColorThresholds: clears all color thresholds");
     ConsolePrint("SetFHUDDynamicColorsStrategy <string>: controls the health color transition logic (default is unset); possible values: unset, static, lerp");
-    ConsolePrint("SetFHUDDynamicRegenColorsStrategy <string>: controls the health regen color transition logic (default is unset); possible values: unset, static, lerphealth, lerp");
+    ConsolePrint("SetFHUDDynamicRegenColorsStrategy <string>: controls the health regen color transition logic (default is unset); possible values: unset, static, lerp, lerpregen");
     ConsolePrint("AddFHUDColorThreshold <float> <byte R> <byte G> <byte B> <byte A = 192>: adds or sets a color threshold (i.e. a color transition point for a specific health ratio)");
     ConsolePrint("RemoveFHUDColorThreshold <float>: deletes the specified color threshold");
     ConsolePrint("SetFHUDRegenColorThreshold <float> <byte R> <byte G> <byte B> <byte A = 192>: sets the health regen color for an existing color threshold");
@@ -2178,7 +2178,7 @@ exec function SetFHUDDynamicRegenColorsStrategy(coerce string Value)
         case "static":
             DynamicRegenColorsStrategy = 1;
             break;
-        case "lerphealth":
+        case "lerpregen":
             DynamicRegenColorsStrategy = 2;
             break;
         case "lerp":
