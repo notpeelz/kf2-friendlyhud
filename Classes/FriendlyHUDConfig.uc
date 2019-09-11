@@ -506,6 +506,7 @@ exec function PrintFHUDHelp()
     ConsolePrint("1080_block10, 1440_block10: 10 blocks of 10% HP each");
     ConsolePrint("70-30: bar separated in two blocks (70%-30%)");
     ConsolePrint("barcode: 50 blocks with no gap (resembling a barcode)");
+    ConsolePrint("stairs: bar in the shape of an upside-down staircase");
 
     ConsolePrint(" ");
     ConsolePrint("Color presets");
@@ -717,6 +718,18 @@ exec function LoadFHUDBarPreset(string Value)
             BuffOffset = 5.f;
             BuffSize = 11.f;
             BuffGap = 5.f;
+            break;
+        case "stairs":
+            HealthBlockCount = 5;
+            ArmorBlockCount = 1;
+            HealthBlockGap = 0.f;
+            HealthBlockVerticalAlignment = 0;
+            SetFHUDHealthBlockSize(30.f, 16.f, 0);
+            SetFHUDHealthBlockSize(28.f, 13.f, 1);
+            SetFHUDHealthBlockSize(26.f, 10.f, 2);
+            SetFHUDHealthBlockSize(24.f, 7.f, 3);
+            SetFHUDHealthBlockSize(22.f, 4.f, 4);
+            SetFHUDArmorBlockSize(138.f, 4.f, 0);
             break;
         default:
             ConsolePrint("Invalid bar preset:" @ Value);
