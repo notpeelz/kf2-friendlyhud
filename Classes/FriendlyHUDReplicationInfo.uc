@@ -197,12 +197,14 @@ function UpdateInfo()
             else
             {
                 PlayerStateArray[I] = PRS_Default;
+                CDPlayerReadyArray[I] = 0;
             }
         }
         else
         {
             HasSpawnedArray[I] = 0;
             PlayerStateArray[I] = PRS_Default;
+            CDPlayerReadyArray[I] = 0;
         }
 
         if (KFPH != None)
