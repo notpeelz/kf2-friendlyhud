@@ -156,6 +156,8 @@ function Initialized()
 
     if (INIVersion == 0)
     {
+        // Don't display the changelog notification for new players
+        LastChangeLogVersion = LatestVersion;
         LoadDefaultFHUDConfig();
     }
     else
