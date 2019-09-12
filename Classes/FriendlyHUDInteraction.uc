@@ -669,6 +669,17 @@ function bool HandleNativeInputKey(int ControllerId, name Key, EInputEvent Event
 {
     if (EventType != IE_Pressed && EventType != IE_Released) return false;
 
+    if (Key == 'Escape')
+    {
+        if (EventType == IE_Pressed && ManualModeActive)
+        {
+            ToggleFHUDManualMode();
+            return true;
+        }
+
+        return false;
+    }
+
     if (DisableDefaultBinds) return false;
 
     switch (Key)
