@@ -1738,9 +1738,9 @@ function DrawBar(
         {
             BufferColor = HUDConfig.DynamicRegenColorsStrategy != 2
                 // Lerp using the total regen ratio
-                ? GethealthColor(TotalBufferRatio, HUDConfig.HealthRegenColor, HUDConfig.RegenColorThresholds, HUDConfig.DynamicRegenColorsStrategy > 1)
+                ? GetHealthColor(TotalBufferRatio, HUDConfig.HealthRegenColor, HUDConfig.RegenColorThresholds, HUDConfig.DynamicRegenColorsStrategy > 1)
                 // Lerp using the current health ratio
-                : GethealthColor(BarRatio, HUDConfig.HealthRegenColor, HUDConfig.RegenColorThresholds, HUDConfig.DynamicRegenColorsStrategy > 1);
+                : GetHealthColor(BarRatio, HUDConfig.HealthRegenColor, HUDConfig.RegenColorThresholds, HUDConfig.DynamicRegenColorsStrategy > 1);
         }
     }
 

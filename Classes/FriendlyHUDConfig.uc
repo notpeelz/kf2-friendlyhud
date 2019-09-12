@@ -2005,6 +2005,7 @@ exec function SetFHUDOpacity(float Value)
 exec function ClearFHUDColorThresholds()
 {
     ColorThresholds.Length = 0;
+    RegenColorThresholds.Length = 0;
 
     SaveAndUpdate();
 }
@@ -2188,6 +2189,7 @@ exec function SetFHUDDynamicRegenColorsStrategy(coerce string Value)
         case "default":
         case "unset":
             DynamicRegenColorsStrategy = 0;
+            break;
         case "static":
             DynamicRegenColorsStrategy = 1;
             break;
