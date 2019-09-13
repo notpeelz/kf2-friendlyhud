@@ -47,7 +47,7 @@ function DrawMedicWeaponRecharge(Canvas Canvas)
 
     if (HUD.HUDMovie.bIsSpectating) return;
 
-    if (KFPlayerOwner.Pawn.InvManager == None) return;
+    if (KFPlayerOwner.Pawn == None || KFPlayerOwner.Pawn.InvManager == None) return;
 
     MedicWeaponCount = 0;
 

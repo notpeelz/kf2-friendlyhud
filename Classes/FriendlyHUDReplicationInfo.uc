@@ -275,7 +275,7 @@ simulated function UpdatePlayersClient()
 
     OS = class'GameEngine'.static.GetOnlineSubsystem();
 
-    if (FHUDMutator.KFPC == None) goto Reschedule;
+    if (FHUDMutator == None || FHUDMutator.KFPC == None) goto Reschedule;
     LP = LocalPlayer(FHUDMutator.KFPC.Player);
     if (LP == None) goto Reschedule;
 
