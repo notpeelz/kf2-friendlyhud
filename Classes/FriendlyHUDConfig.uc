@@ -494,7 +494,7 @@ exec function PrintFHUDHelp()
     ConsolePrint(" ");
     ConsolePrint("Layout presets (1080_ for 1080p, 1440_ for 1440p)");
     ConsolePrint("--------------------------");
-    ConsolePrint("default: default settings");
+    ConsolePrint("default: bottom layout, next to the player status");
     ConsolePrint("1080_l4d, 1440_l4d: Left 4 Dead-style health bars");
     ConsolePrint("1080_column2, 1440_column2: similar to default, but slightly bigger and renders in 2 columns instead of 3");
     ConsolePrint("1080_left, 1440_left: left-side layout (above chat)");
@@ -504,6 +504,7 @@ exec function PrintFHUDHelp()
     ConsolePrint(" ");
     ConsolePrint("Bar presets");
     ConsolePrint("--------------------------");
+    ConsolePrint("default: default 200-pixel bars");
     ConsolePrint("1080_block5, 1440_block5: 5 blocks of 20% HP each");
     ConsolePrint("1080_block10, 1440_block10: 10 blocks of 10% HP each");
     ConsolePrint("70-30: bar separated in two blocks (70%-30%)");
