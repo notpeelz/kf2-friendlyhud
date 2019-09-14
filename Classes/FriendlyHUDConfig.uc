@@ -146,7 +146,7 @@ var bool DrawDebugLines;
 var bool DrawDebugRatios;
 
 var int CurrentVersion;
-const LatestVersion = 2;
+var string CurrentVersionString;
 
 const DEPRECATED_ENTRY = "DEPRECATED";
 
@@ -157,7 +157,7 @@ function Initialized()
     if (INIVersion == 0)
     {
         // Don't display the changelog notification for new players
-        LastChangeLogVersion = LatestVersion;
+        LastChangeLogVersion = CurrentVersion;
         LoadDefaultFHUDConfig();
     }
     else
@@ -247,7 +247,7 @@ function Initialized()
 
 function UpdateChangeLogVersion()
 {
-    LastChangeLogVersion = LatestVersion;
+    LastChangeLogVersion = CurrentVersion;
     SaveAndUpdate();
 }
 
@@ -354,6 +354,18 @@ exec function ResetFHUDColors()
     InitUMCompat();
 }
 
+function string GetVersionInfo()
+{
+    return "Version:" @ CurrentVersionString @ "(INIVersion=" $ CurrentVersion $")";
+}
+
+exec function FHUDVersion() { PrintFHUDVersion(); }
+
+exec function PrintFHUDVersion()
+{
+    ConsolePrint(GetVersionInfo());
+}
+
 exec function FHUDHelp() { PrintFHUDHelp(); }
 
 exec function PrintFHUDHelp()
@@ -362,6 +374,7 @@ exec function PrintFHUDHelp()
     ConsolePrint("--------------------------");
 
     ConsolePrint("PrintFHUDHelp: prints this help message");
+    ConsolePrint("PrintFHUDVersion: prints version information");
     ConsolePrint("ResetFHUDConfig: resets the config to the default settings");
     ConsolePrint("LoadFHUDColorPreset <string>: loads a preset color scheme");
     ConsolePrint("LoadFHUDBarPreset <string>: loads preset bar style settings");
@@ -2331,5 +2344,6 @@ delegate int SortBlockOffsetOverrides(BlockOffsetOverride A, BlockOffsetOverride
 
 defaultproperties
 {
-    CurrentVersion = LatestVersion;
+    CurrentVersion = 2;
+    CurrentVersionString = "2.0.2";
 }
