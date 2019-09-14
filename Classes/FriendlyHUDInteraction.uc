@@ -1348,6 +1348,8 @@ function DrawTeamHealthBars(Canvas Canvas)
         RepInfo = CurrentPRIEntry.RepInfo;
         KFPRI = CurrentPRIEntry.KFPRI;
 
+        if (!ManualModeActive && HUDConfig.MaxItemCount >= 0 && ItemCount >= HUDConfig.MaxItemCount) break;
+
         if (!IsPRIRenderable(RepInfo, CurrentPRIEntry.RepIndex)) continue;
 
         // Layout: row first

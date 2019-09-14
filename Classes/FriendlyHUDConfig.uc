@@ -75,6 +75,7 @@ var config BlockOutline ArmorBlockOutline;
 var config BlockOutline HealthBlockOutline;
 var config int ItemsPerColumn;
 var config int ItemsPerRow;
+var config int MaxItemCount;
 var config float ItemMarginX;
 var config float ItemMarginY;
 var config int BuffLayout;
@@ -228,6 +229,12 @@ function Initialized()
             BuffMarginY = DEPRECATED_ENTRY;
         }
 
+        if (INIVersion < 3)
+        {
+            INIVersion = 3;
+            MaxItemCount = -1;
+        }
+
         SaveAndUpdate();
     }
 
@@ -287,6 +294,7 @@ exec function ResetFHUDLayout()
     Layout = 0;
     ItemsPerColumn = 3;
     ItemsPerRow = 5;
+    MaxItemCount = -1;
     ReverseX = false;
     ReverseY = false;
     OffsetX = 0.f;
@@ -397,6 +405,7 @@ exec function PrintFHUDHelp()
     ConsolePrint("SetFHUDLayout <string>: controls the HUD anchor point to render from (default is bottom); possible values: bottom, left, right");
     ConsolePrint("SetFHUDItemsPerColumn <int>: controls the number of health bars to render per column");
     ConsolePrint("SetFHUDItemsPerRow <int>: controls the number of health bars to render per row");
+    ConsolePrint("SetFHUDMaxItemCount <int>: controls the maximum number of items to be displayed (default is -1; disabled)");
     ConsolePrint("SetFHUDReverseX <bool>: renders health bars starting from the last column");
     ConsolePrint("SetFHUDReverseY <bool>: renders health bars starting from the last row");
     ConsolePrint("SetFHUDItemMarginX <float>: controls the horizontal margin between health bars (default is 14)");
@@ -1616,6 +1625,12 @@ exec function SetFHUDItemsPerColumn(int Value)
 exec function SetFHUDItemsPerRow(int Value)
 {
     ItemsPerRow = Max(Value, 1);
+    SaveAndUpdate();
+}
+
+exec function SetFHUDMaxItemCount(int Value)
+{
+    MaxItemCount = Max(Value, -1);
     SaveAndUpdate();
 }
 
