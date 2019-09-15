@@ -2359,6 +2359,6 @@ delegate int SortBlockOffsetOverrides(BlockOffsetOverride A, BlockOffsetOverride
 
 defaultproperties
 {
-    CurrentVersion = 3;
-    CurrentVersionString = "2.1";
+    CurrentVersion = 4;
+    CurrentVersionString = "2.2";
 }
