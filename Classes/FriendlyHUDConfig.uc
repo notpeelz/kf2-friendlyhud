@@ -46,6 +46,7 @@ struct CubicInterpCurve
 var config int INIVersion;
 var config int LastChangeLogVersion;
 var config float UpdateInterval;
+var config bool NameTruncationEnabled;
 var config int SortStrategy;
 var config int SelfSortStrategy;
 var config float Scale;
@@ -235,6 +236,12 @@ function Initialized()
             MaxItemCount = -1;
         }
 
+        if (INIVersion < 4)
+        {
+            INIVersion = 4;
+            NameTruncationEnabled = true;
+        }
+
         SaveAndUpdate();
     }
 
@@ -262,6 +269,7 @@ function LoadDefaultFHUDConfig()
 {
     INIVersion = 2;
     UpdateInterval = 0.5f;
+    NameTruncationEnabled = true;
     SortStrategy = 0;
     SelfSortStrategy = 1;
     DisableHUD = false;
@@ -498,6 +506,7 @@ exec function PrintFHUDHelp()
     ConsolePrint("SetFHUDUpdateInterval <float>: controls the interval (in seconds) between player list updates (default is 0.5)");
     ConsolePrint("SetFHUDEmptyBlockThreshold <float>: the minimum block ratio to qualify a block as empty (default is 0); used for EmptyBG colors");
     ConsolePrint("SetFHUDSelfSortStrategy <string Strategy>: controls how your player should be sorted (default is first); possible values: unset, first, last");
+    ConsolePrint("SetFHUDNameTruncationEnabled <bool>: controls if names that are too long should be shortened (default is true)");
     ConsolePrint("SetFHUDUMCompatEnabled <bool>: controls whether FHUD should override Unofficial Mod's HMTech cooldowns HUD to prevent layout conflicts (default is true)");
     ConsolePrint("SetFHUDUMColorSyncEnabled <bool>: controls whether FHUD should automatically synchronize Unofficial Mod's color scheme (default is true)");
     ConsolePrint("SetFHUDCDCompatEnabled <bool>: controls whether FHUD should display the ready status for Controlled Difficulty");
@@ -1965,6 +1974,17 @@ exec function SetFHUDUpdateInterval(float Value)
         FHUDInteraction.ResetUpdateTimer();
     }
 
+    SaveAndUpdate();
+}
+
+exec function SetFHUDNameTruncationEnabled(bool Value)
+{
+    if (Value != NameTruncationEnabled)
+    {
+        FHUDMutator.ForceUpdateNameCache();
+    }
+
+    NameTruncationEnabled = Value;
     SaveAndUpdate();
 }
 

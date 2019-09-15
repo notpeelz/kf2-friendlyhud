@@ -60,7 +60,6 @@ simulated event Destroyed()
     super.Destroyed();
 }
 
-// Used for HUD testing
 function CheckBots()
 {
     local KFPawn_Human KFPH;
@@ -166,6 +165,7 @@ simulated function bool IsUMLoaded()
 
     return false;
 }
+
 
 simulated function InitializeCompat()
 {
@@ -288,6 +288,23 @@ simulated function PrintNotification()
     if (HUDConfig.LastChangeLogVersion < HUDConfig.CurrentVersion)
     {
         WriteToChat("[FriendlyHUD] was updated, type !FHUDNews to see the changelog.", "FFFF00");
+    }
+}
+
+simulated function ForceUpdateNameCache()
+{
+    local FriendlyHUDReplicationInfo CurrentRepInfo;
+    local int I;
+
+    CurrentRepInfo = RepInfo;
+    while (CurrentRepInfo != None)
+    {
+        for (I = 0; I < class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
+        {
+            if (CurrentRepInfo.KFPRIArray[I] == None) continue;
+            CurrentRepInfo.ShouldUpdateNameArray[I] = 1;
+        }
+        CurrentRepInfo = CurrentRepInfo.NextRepInfo;
     }
 }
 

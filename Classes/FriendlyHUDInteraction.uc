@@ -822,6 +822,9 @@ function CachePlayerNames(Canvas Canvas, bool ForceRefresh)
             PlayerName = RepInfo.KFPRIArray[I].PlayerName;
             RepInfo.DisplayNameArray[I] = PlayerName;
 
+            // Skip the truncation logic if disabled
+            if (!HUDConfig.NameTruncationEnabled) continue;
+
             NameWidthMax = R.BarWidthMin - R.NameMarginX;
 
             // Subtract the friend icon from the available width for the player name
