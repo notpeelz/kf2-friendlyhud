@@ -58,7 +58,6 @@ struct UI_RuntimeVars
     var float ArmorBarHeight, HealthBarHeight;
     var float ArmorBlockGap, HealthBlockGap;
     var float BarWidthMin;
-    var int PlayerNameLetterCount;
     var float BarGap;
     var float PlayerIconSize, PlayerIconGap, PlayerIconOffset;
     var float BuffOffset, BuffIconSize, BuffPlayerIconMargin, BuffPlayerIconGap;
@@ -836,7 +835,7 @@ function CachePlayerNames(Canvas Canvas, bool ForceRefresh)
             Truncated = false;
             LetterCount = Len(PlayerName);
             // This gets skipped if we're below the "safe character count" (the # of chars that's guaranteed not to exceed the width)
-            for (LetterIdx = R.PlayerNameLetterCount; LetterIdx < LetterCount; LetterIdx++)
+            for (LetterIdx = 0; LetterIdx < LetterCount; LetterIdx++)
             {
                 TempPlayerName = Left(PlayerName, LetterIdx + 1);
                 Canvas.TextSize(TempPlayerName, NameWidth, NameHeight, R.NameScale);
@@ -864,10 +863,7 @@ function CachePlayerNames(Canvas Canvas, bool ForceRefresh)
 
 function UpdateRuntimeVars(optional Canvas Canvas)
 {
-    local int I;
-    local string PlayerNamePlaceholder;
     local float LineHeightOffset;
-    local float PlayerNameWidth;
     local float Temp;
 
     // If no canvas is passed, we schedule the update for the next render
@@ -965,28 +961,6 @@ function UpdateRuntimeVars(optional Canvas Canvas)
         FMax(R.ArmorBarWidth, R.HealthBarWidth),
         HUDConfig.BarWidthMin * R.Scale
     );
-
-    // Calculate and cache the "minimum character length to exceed the maximum player-name width"
-    R.PlayerNameLetterCount = 0;
-    PlayerNamePlaceholder = "";
-
-    // Make sure we don't exceed the screen boundaries (in case of some ridiculously high BarWidthMin value)
-    for (I = 0; I < Canvas.ClipX; I++)
-    {
-        // "W" is one of the widest letters in the KFMerged font
-        // We use it so that we don't overestimate the character count
-        PlayerNamePlaceholder $= "W";
-
-        // Calculate the width of the placeholder
-        Canvas.TextSize(PlayerNamePlaceholder, PlayerNameWidth, Temp, R.NameScale, R.NameScale);
-
-        // Abort when we exceed the max width (accounts for the friend icons)
-        // Reminder: we're looking for the *minimum char count* to exceed the max width, so we need
-        //           something that fits when the friend icon is visible
-        if (PlayerNameWidth >= (R.BarWidthMin - R.NameMarginX - R.FriendIconSize - R.FriendIconGap)) break;
-
-        R.PlayerNameLetterCount++;
-    }
 
     LineHeightOffset = (R.LineHeight + R.NameMarginY) / 2.f;
 
