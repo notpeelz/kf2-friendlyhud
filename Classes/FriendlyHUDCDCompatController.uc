@@ -1,18 +1,30 @@
 // HACK: this is the only way I found to receive data from an unknown package
-class FriendlyHUDCDCompatController extends Commandlet
+// Controlled Difficulty implementers should use the DynamicActors() iterator to get a handle of
+// this object and call Mutate("FHUDSetCDStateReady <int PlayerId> <bool ReadyState>").
+// --
+// Note: we use an unregistered Mutator object so that clients can't remotely call Mutate()
+class FriendlyHUDCDCompatController extends Mutator
     dependson(FriendlyHUDReplicationInfo);
 
 var FriendlyHUDMutator FHUDMutator;
 
-event int Main(string Value)
+function InitMutator(string Options, out string ErrorMessage)
+{
+    `Log("[FriendlyHUD] FriendlyHUDCDCompatController can't be loaded as a mutator; destroying.");
+    Destroy();
+}
+
+function Mutate(string Value, PlayerController Sender)
 {
     local array<string> Params;
     local string CommandName;
 
     Params = SplitString(Value, " ", true);
-    if (Params.Length <= 0) return 0;
+    if (Params.Length > 0)
+    {
+        CommandName = Locs(Params[0]);
+    }
 
-    CommandName = Params[0];
     switch (CommandName)
     {
         case "FHUDSetCDStateReady":
@@ -21,9 +33,8 @@ event int Main(string Value)
             break;
         default:
             `Log("[FriendlyHUD] Unrecognized CDCompat command:" @ Value);
+            break;
     }
-
-    return 0;
 }
 
 function FHUDSetCDStateReady(array<string> Params)
@@ -31,26 +42,30 @@ function FHUDSetCDStateReady(array<string> Params)
     local int PlayerId;
     local bool ReadyState;
     local KFPlayerReplicationInfo KFPRI;
-    local FriendlyHUDReplicationInfo FHUDRepInfo;
+    local FriendlyHUDReplicationInfo CurrentRepInfo;
     local int I;
 
-    if (Params.Length != 3) return;
+    if (Params.Length != 3)
+    {
+        `Log("[FriendlyHUD] Invalid FHUDSetCDStateReady parameter count:" @ (Params.Length - 1));
+        return;
+    }
 
     PlayerId = int(Params[1]);
     ReadyState = bool(Params[2]);
 
-    FHUDRepInfo = FHUDMutator.RepInfo;
-    while (FHUDRepInfo != None)
+    CurrentRepInfo = FHUDMutator.RepInfo;
+    while (CurrentRepInfo != None)
     {
         for (I = 0; I < class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
         {
-            KFPRI = FHUDRepInfo.KFPRIArray[I];
+            KFPRI = CurrentRepInfo.KFPRIArray[I];
             if (KFPRI != None && KFPRI.PlayerID == PlayerId)
             {
-                FHUDRepInfo.CDPlayerReadyArray[I] = (ReadyState ? 1 : 0);
+                CurrentRepInfo.CDPlayerReadyArray[I] = (ReadyState ? 1 : 0);
                 break;
             }
         }
-        FHUDRepInfo = FHUDRepInfo.NextRepInfo;
+        CurrentRepInfo = CurrentRepInfo.NextRepInfo;
     }
 }

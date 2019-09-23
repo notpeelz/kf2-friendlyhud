@@ -39,7 +39,7 @@ simulated function PostBeginPlay()
         RepInfo.FHUDMutator = Self;
         RepInfo.HUDConfig = HUDConfig;
 
-        CDCompat = new class'FriendlyHUD.FriendlyHUDCDCompatController';
+        CDCompat = Spawn(class'FriendlyHUD.FriendlyHUDCDCompatController', Self);
         CDCompat.FHUDMutator = Self;
 
         SetTimer(2.f, true, nameof(CheckBots));
