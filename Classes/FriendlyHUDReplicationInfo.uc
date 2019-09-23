@@ -82,8 +82,6 @@ simulated event PostBeginPlay()
     }
     else
     {
-        // This might not necessary since replication (usually?) happens
-        // separately from actor networking
         UpdatePlayersClient();
     }
 }

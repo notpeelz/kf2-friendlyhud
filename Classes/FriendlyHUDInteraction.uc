@@ -545,7 +545,7 @@ function SyncManualModeSelection()
         }
     }
 
-    `Log("[FriendlyHUD] WARNING: failed to sync the manual mode selection index, things might be broken. Please report this error if you see it.");
+    `Warn("[FriendlyHUD] Warning: failed to sync the manual mode selection index, things might be broken. Please report this error if you see it.");
 }
 
 function PrintSelfSortStrategyNotification()
@@ -1922,7 +1922,7 @@ function DrawPlayerIcon(Canvas Canvas, const out PlayerItemInfo ItemInfo, float 
 
 function Texture2D GetPlayerIcon(KFPlayerReplicationInfo KFPRI, EVoiceCommsType VoiceReq, out byte IsPlayerIcon)
 {
-    if (VoiceReq == VCT_NONE && KFPRI.CurrentPerkClass != none)
+    if (VoiceReq == VCT_NONE && KFPRI.CurrentPerkClass != None)
     {
         IsPlayerIcon = 1;
         return KFPRI.CurrentPerkClass.default.PerkIcon;

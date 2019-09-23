@@ -1,5 +1,4 @@
-class FriendlyHUDMutator extends KFMutator
-    hidecategories(Navigation,Movement,Collision);
+class FriendlyHUDMutator extends KFMutator;
 
 var KFPlayerController KFPC;
 var KFGFxHudWrapper HUD;
@@ -16,7 +15,7 @@ var GFxClikWidget ChatInputField, PartyChatInputField;
 
 const HelpURL = "https://steamcommunity.com/sharedfiles/filedetails/?id=1827646464";
 const WhatsNewURL = "https://steamcommunity.com/sharedfiles/filedetails/?id=1827646464#3177485";
-const GFXListenerPriority = 80000;
+const GFxListenerPriority = 80000;
 
 replication
 {
@@ -27,6 +26,8 @@ replication
 simulated function PostBeginPlay()
 {
     super.PostBeginPlay();
+
+    if (bDeleteMe) return;
 
     `Log("[FriendlyHUD] Loaded mutator");
 
@@ -240,7 +241,7 @@ simulated function OnChatKeyDown(GFxClikWidget InputField, GFxClikWidget.EventDa
         }
 
         // Clear the field before letting the default event handler process it
-        // NOTE: this prevents the command from showing up in chat
+        // This prevents the command from showing up in chat
         InputField.SetText("");
     }
 }
@@ -248,7 +249,7 @@ simulated function OnChatKeyDown(GFxClikWidget InputField, GFxClikWidget.EventDa
 simulated function InitializeChatHook()
 {
     // Retry until the HUD is fully initialized
-	if (KFPC.MyGFxHUD == None
+    if (KFPC.MyGFxHUD == None
         || KFPC.MyGFxManager == None
         || KFPC.MyGFxManager.PartyWidget == None
         || KFPC.MYGFxManager.PartyWidget.PartyChatWidget == None
@@ -256,19 +257,19 @@ simulated function InitializeChatHook()
         || HUD.HUDMovie.KFGXHUDManager == None
         || HUD.HUDMovie.KFGXHUDManager.GetObject("ChatBoxWidget") == None
     )
-	{
+    {
         `Log("[FriendlyHUD] Failed initializing chat hook; retrying.");
-		SetTimer(1.f, false, nameof(InitializeChatHook));
-		return;
-	}
+        SetTimer(1.f, false, nameof(InitializeChatHook));
+        return;
+    }
 
     // Force the chat to show up in solo
     KFPC.MyGFxManager.PartyWidget.PartyChatWidget.SetVisible(true);
 
     ChatInputField = GFxClikWidget(HUD.HUDMovie.KFGXHUDManager.GetObject("ChatBoxWidget").GetObject("ChatInputField", class'GFxClikWidget'));
     PartyChatInputField = GFxClikWidget(KFPC.MyGFxManager.PartyWidget.PartyChatWidget.GetObject("ChatInputField", class'GFxClikWidget'));
-    ChatInputField.AddEventListener('CLIK_keyDown', OnChatInputKeyDown, false, GFXListenerPriority, false);
-    PartyChatInputField.AddEventListener('CLIK_keyDown', OnPartyChatInputKeyDown, false, GFXListenerPriority, false);
+    ChatInputField.AddEventListener('CLIK_keyDown', OnChatInputKeyDown, false, GFxListenerPriority, false);
+    PartyChatInputField.AddEventListener('CLIK_keyDown', OnPartyChatInputKeyDown, false, GFxListenerPriority, false);
 
     `Log("[FriendlyHUD] Initialized chat hook");
 }
@@ -279,7 +280,11 @@ simulated function WriteToChat(string Message, string HexColor)
     {
         KFPC.MyGFxManager.PartyWidget.PartyChatWidget.AddChatMessage(Message, HexColor);
     }
-    HUD.HUDMovie.HudChatBox.AddChatMessage(Message, HexColor);
+
+    if (HUD != None && HUD.HUDMovie != None && HUD.HUDMovie.HudChatBox != None)
+    {
+        HUD.HUDMovie.HudChatBox.AddChatMessage(Message, HexColor);
+    }
 }
 
 simulated function PrintNotification()
