@@ -14,7 +14,7 @@ var FriendlyHUDCDCompatController CDCompat;
 var GFxClikWidget ChatInputField, PartyChatInputField;
 
 const HelpURL = "https://steamcommunity.com/sharedfiles/filedetails/?id=1827646464";
-const WhatsNewURL = "https://steamcommunity.com/sharedfiles/filedetails/?id=1827646464#3177485";
+const WhatsNewURL = "https://steamcommunity.com/sharedfiles/filedetails/?id=1871444075";
 const GFxListenerPriority = 80000;
 
 replication
