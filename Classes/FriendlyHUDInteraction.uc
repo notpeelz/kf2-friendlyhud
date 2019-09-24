@@ -1245,12 +1245,12 @@ function bool IsPRIRenderable(FriendlyHUDReplicationInfo RepInfo, int RepIndex)
 function DrawTeamHealthBars(Canvas Canvas)
 {
     local FriendlyHUDReplicationInfo RepInfo;
-    local PRIEntry CurrentPRIEntry;
     local KFPlayerReplicationInfo KFPRI;
     local ASDisplayInfo StatsDI, GearDI;
     local float CurrentItemPosX, CurrentItemPosY;
     local int ItemCount, Column, Row;
     local PlayerItemInfo ItemInfo;
+    local int I;
 
     if (HUD.HUDMovie == None || HUD.HUDMovie.PlayerStatusContainer == None || HUD.HUDMovie.PlayerBackpackContainer == None)
     {
@@ -1337,14 +1337,15 @@ function DrawTeamHealthBars(Canvas Canvas)
     if (SortedKFPRIArray.Length == 0) return;
 
     ItemCount = 0;
-    foreach SortedKFPRIArray(CurrentPRIEntry)
+
+    for (I = 0; I < SortedKFPRIArray.Length; I++)
     {
-        RepInfo = CurrentPRIEntry.RepInfo;
-        KFPRI = CurrentPRIEntry.KFPRI;
+        RepInfo = SortedKFPRIArray[I].RepInfo;
+        KFPRI = SortedKFPRIArray[I].KFPRI;
 
         if (!ManualModeActive && HUDConfig.MaxItemCount >= 0 && ItemCount >= HUDConfig.MaxItemCount) break;
 
-        if (!IsPRIRenderable(RepInfo, CurrentPRIEntry.RepIndex)) continue;
+        if (!IsPRIRenderable(RepInfo, SortedKFPRIArray[I].RepIndex)) continue;
 
         // Layout: row first
         if (HUDConfig.Flow == 1)
@@ -1370,10 +1371,10 @@ function DrawTeamHealthBars(Canvas Canvas)
             // Left/right layouts flow up
             : (R.ScreenPosY - R.TotalItemHeight * (HUDConfig.ReverseY ? (HudConfig.ItemsPerColumn - 1 - Row) : Row));
 
-        ItemInfo.KFPH = RepInfo.KFPHArray[CurrentPRIEntry.RepIndex];
+        ItemInfo.KFPH = RepInfo.KFPHArray[SortedKFPRIArray[I].RepIndex];
         ItemInfo.KFPRI = KFPRI;
         ItemInfo.RepInfo = RepInfo;
-        ItemInfo.RepIndex = CurrentPRIEntry.RepIndex;
+        ItemInfo.RepIndex = SortedKFPRIArray[I].RepIndex;
 
         if (DrawHealthBarItem(Canvas, ItemInfo, CurrentItemPosX, CurrentItemPosY))
         {
