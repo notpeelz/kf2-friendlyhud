@@ -850,8 +850,25 @@ function CachePlayerNames(Canvas Canvas, bool ForceRefresh)
 
             if (Truncated)
             {
-                // We replace the last 2 characters with "..."
-                RepInfo.DisplayNameArray[I] = Left(RepInfo.DisplayNameArray[I], Max(Len(RepInfo.DisplayNameArray[I]) - 2, 0)) $ "...";
+                // We try to remove as few characters as possible to make "..." fit
+                for (LetterIdx = 1; LetterIdx <= 3; LetterIdx++)
+                {
+                    TempPlayerName = Left(RepInfo.DisplayNameArray[I], Max(Len(RepInfo.DisplayNameArray[I]) - LetterIdx, 0)) $ "...";
+                    Canvas.TextSize(TempPlayerName, NameWidth, NameHeight, R.NameScale);
+
+                    if (NameWidth < NameWidthMax)
+                    {
+                        RepInfo.DisplayNameArray[I] = TempPlayerName;
+                        Truncated = false;
+                        break;
+                    }
+                }
+
+                // If we weren't able to ellipsize the name, we replace it
+                if (Truncated)
+                {
+                    RepInfo.DisplayNameArray[I] = "...";
+                }
             }
         }
 
