@@ -1,15 +1,20 @@
 class FriendlyHUDMutator extends KFMutator;
 
+// Server-only
+var FriendlyHUDCDCompatController CDCompat;
+
+// Replicated
+var FriendlyHUDReplicationInfo RepInfo;
+var bool UMLoaded, CDReadyEnabled;
+
+// Client-only
 var KFPlayerController KFPC;
 var KFGFxHudWrapper HUD;
 var FriendlyHUDInteraction FHUDInteraction;
 var FriendlyHUDConfig HUDConfig;
-var FriendlyHUDReplicationInfo RepInfo;
-var bool UMLoaded, CDReadyEnabled;
+
 var bool ForceShowAsFriend;
 var int PriorityCount;
-
-var FriendlyHUDCDCompatController CDCompat;
 
 var GFxClikWidget ChatInputField, PartyChatInputField;
 
@@ -59,33 +64,6 @@ simulated event Destroyed()
     }
 
     super.Destroyed();
-}
-
-function CheckBots()
-{
-    local KFPawn_Human KFPH;
-
-    foreach WorldInfo.AllPawns(class'KFGame.KFPawn_Human', KFPH)
-    {
-        if (KFAIController(KFPH.Controller) != None && !RepInfo.IsPlayerRegistered(KFPH.Controller))
-        {
-            RepInfo.NotifyLogin(KFPH.Controller);
-        }
-    }
-}
-
-function NotifyLogin(Controller NewPlayer)
-{
-    RepInfo.NotifyLogin(NewPlayer);
-
-    super.NotifyLogin(NewPlayer);
-}
-
-function NotifyLogout(Controller Exiting)
-{
-    RepInfo.NotifyLogout(Exiting);
-
-    super.NotifyLogout(Exiting);
 }
 
 simulated function InitializeHUD()
@@ -311,6 +289,33 @@ simulated function ForceUpdateNameCache()
         }
         CurrentRepInfo = CurrentRepInfo.NextRepInfo;
     }
+}
+
+function CheckBots()
+{
+    local KFPawn_Human KFPH;
+
+    foreach WorldInfo.AllPawns(class'KFGame.KFPawn_Human', KFPH)
+    {
+        if (KFAIController(KFPH.Controller) != None && !RepInfo.IsPlayerRegistered(KFPH.Controller))
+        {
+            RepInfo.NotifyLogin(KFPH.Controller);
+        }
+    }
+}
+
+function NotifyLogin(Controller NewPlayer)
+{
+    RepInfo.NotifyLogin(NewPlayer);
+
+    super.NotifyLogin(NewPlayer);
+}
+
+function NotifyLogout(Controller Exiting)
+{
+    RepInfo.NotifyLogout(Exiting);
+
+    super.NotifyLogout(Exiting);
 }
 
 defaultproperties

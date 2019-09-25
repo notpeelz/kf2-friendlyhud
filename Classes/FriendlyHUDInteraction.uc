@@ -26,23 +26,23 @@ enum EBarType
     BT_Health,
 };
 
-var PRIEntry EmptyPRIEntry;
-
 var KFGFxHudWrapper HUD;
 var KFPlayerController KFPlayerOwner;
 var FriendlyHUDConfig HUDConfig;
+var FriendlyHUDMutator FHUDMutator;
 
+// Player list
 var array<PRIEntry> SortedKFPRIArray;
 
-var Texture2d BarBGTexture;
-var Texture2d BuffIconTexture;
-var Texture2d PlayerNotReadyIconTexture, PlayerReadyIconTexture;
-var Texture2d FriendIconTexture;
-var Color SelfCornerColor, MoveCornerColor, SelectCornerColor, SelectLineColor;
-var Color AxisXLineColor, AxisYLineColor;
+// Static properties
+var const Texture2d BarBGTexture;
+var const Texture2d BuffIconTexture;
+var const Texture2d PlayerNotReadyIconTexture, PlayerReadyIconTexture;
+var const Texture2d FriendIconTexture;
+var const Color SelfCornerColor, MoveCornerColor, SelectCornerColor, SelectLineColor;
+var const Color AxisXLineColor, AxisYLineColor;
 
-var FriendlyHUDMutator FHUDMutator;
-var bool ShouldUpdatePlayerNames;
+// Manual mode
 var bool ManualModeActive, MoveModeActive;
 var bool VisibilityOverride;
 var bool ControlsFrozen;
@@ -73,6 +73,8 @@ struct UI_RuntimeVars
     var FriendlyHUDConfig.BlockOutline ArmorBlockOutline, HealthBlockOutline;
 };
 
+// Data caching
+var bool ShouldUpdatePlayerNames;
 var bool RuntimeInitialized;
 var float CachedScreenWidth, CachedScreenHeight;
 var UI_RuntimeVars R;
@@ -83,80 +85,46 @@ const PrestigeIconScale = 0.75f;
 const NameUpdateInterval = 1.f;
 const RepeatActionInterval = 0.2f;
 
+function FriendlyHUDReplicationLink GetRepLink()
+{
+    local FriendlyHUDReplicationLink RepLink;
+
+    foreach KFPlayerOwner.WorldInfo.DynamicActors(class'FriendlyHUD.FriendlyHUDReplicationLink', RepLink)
+    {
+        return RepLink;
+    }
+
+    return None;
+}
+
 exec function DebugFHUDSetArmor(int Armor, optional int MaxArmor = -1)
 {
-    local KFPawn_Human KFPH;
+    local FriendlyHUDReplicationLink RepLink;
 
-    if (KFPlayerOwner.CheatManager == None) return;
+    RepLink = GetRepLink();
+    if (RepLink == None) return;
 
-    KFPH = KFPawn_Human(KFPlayerOwner.Pawn);
-    if (KFPH == None) return;
-
-    KFPH.Armor = Armor;
-    if (MaxArmor > 0)
-    {
-        KFPH.MaxArmor = MaxArmor;
-    }
+    RepLink.ServerDebugFHUDSetArmor(Armor, MaxArmor);
 }
 
 exec function DebugFHUDSetHealth(int Health, optional int MaxHealth = -1)
 {
-    if (KFPlayerOwner.CheatManager == None) return;
-    if (KFPlayerOwner.Pawn == None) return;
+    local FriendlyHUDReplicationLink RepLink;
 
-    KFPlayerOwner.Pawn.Health = Health;
-    if (MaxHealth > 0)
-    {
-        KFPlayerOwner.Pawn.HealthMax = MaxHealth;
-    }
+    RepLink = GetRepLink();
+    if (RepLink == None) return;
+
+    RepLink.ServerDebugFHUDSetHealth(Health, MaxHealth);
 }
 
 exec function DebugFHUDSpawnBot(optional string BotName, optional int PerkIndex, optional bool IsEnemy, optional bool GodMode)
 {
-    local KFAIController KFBot;
-    local KFPlayerReplicationInfo KFPRI;
-    local vector CamLoc;
-    local rotator CamRot;
-    local KFPawn_Human KFPH;
-    local Vector HitLocation, HitNormal;
+    local FriendlyHUDReplicationLink RepLink;
 
-    if (BotName == "") BotName = "Braindead Human";
+    RepLink = GetRepLink();
+    if (RepLink == None) return;
 
-    if (KFPlayerOwner.CheatManager == None) return;
-    if (KFPlayerOwner.Pawn == None) return;
-
-    KFPlayerOwner.GetPlayerViewPoint(CamLoc, CamRot);
-    KFPlayerOwner.Pawn.Trace(HitLocation, HitNormal, CamLoc + Vector(CamRot) * 250000, CamLoc, TRUE, vect(0,0,0));
-
-    HitLocation.Z += 100;
-
-    KFPH = KFPlayerOwner.Spawn(class'KFPawn_Human',,, HitLocation);
-    KFPH.SetPhysics(PHYS_Falling);
-
-    KFBot = KFPlayerOwner.Spawn(class'KFAIController');
-
-    FHUDMutator.WorldInfo.Game.ChangeName(KFBot, BotName, false);
-
-    if (!IsEnemy)
-    {
-        KFGameInfo(FHUDMutator.WorldInfo.Game).SetTeam(KFBot, KFGameInfo(FHUDMutator.WorldInfo.Game).Teams[0]);
-    }
-
-    KFBot.Possess(KFPH, false);
-
-    if (GodMode)
-    {
-       KFBot.bGodMode = true;
-    }
-
-    KFPRI = KFPlayerReplicationInfo(KFBot.PlayerReplicationInfo);
-
-    KFPRI.CurrentPerkClass = class'KFPlayerController'.default.PerkList[PerkIndex].PerkClass;
-    KFPRI.NetPerkIndex = PerkIndex;
-    KFPRI.PlayerHealthPercent = FloatToByte(float(KFPH.Health) / float(KFPH.HealthMax));
-    KFPRI.PlayerHealth = KFPH.Health;
-
-    KFPH.AddDefaultInventory();
+    RepLink.ServerDebugFHUDSpawnBot(BotName, PerkIndex, IsEnemy, GodMode);
 }
 
 exec function SetFHUDDebugForceFriend(bool Value)
@@ -1324,8 +1292,8 @@ function DrawTeamHealthBars(Canvas Canvas)
 
     if (HUDConfig.DrawDebugLines)
     {
-        Canvas.Draw2DLine(R.ScreenPosX, 0.f, R.ScreenPosX, Canvas.ClipY, AxisYLineColor);
-        Canvas.Draw2DLine(0.f, R.ScreenPosY, Canvas.ClipX, R.ScreenPosY, AxisXLineColor);
+        Canvas.Draw2DLine(R.ScreenPosX, 0.f, R.ScreenPosX, Canvas.ClipY, default.AxisYLineColor);
+        Canvas.Draw2DLine(0.f, R.ScreenPosY, Canvas.ClipX, R.ScreenPosY, default.AxisXLineColor);
         Canvas.Draw2DLine(
             0.f, R.ScreenPosY + HUD.HUDMovie.PlayerStatusContainer.GetFloat("height"),
             Canvas.ClipX, R.ScreenPosY + HUD.HUDMovie.PlayerStatusContainer.GetFloat("height"),
@@ -1565,9 +1533,9 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
                 SelectionHeight,
                 (KFPRI == KFPlayerOwner.PlayerReplicationInfo && HUDConfig.SelfSortStrategy != 0)
                     // Use a different color when self is selected and we can't move it
-                    ? SelfCornerColor
-                    : (MoveModeActive ? MoveCornerColor : SelectCornerColor),
-                SelectLineColor
+                    ? default.SelfCornerColor
+                    : (MoveModeActive ? default.MoveCornerColor : default.SelectCornerColor),
+                default.SelectLineColor
             );
         }
     }
@@ -1883,11 +1851,11 @@ function DrawPlayerIcon(Canvas Canvas, const out PlayerItemInfo ItemInfo, float 
         {
             case PRS_Ready:
                 SetCanvasColor(Canvas, HUDConfig.CDReadyIconColor);
-                Canvas.DrawTile(PlayerReadyIconTexture, R.PlayerIconSize, R.PlayerIconSize, 0, 0, 256, 256);
+                Canvas.DrawTile(default.PlayerReadyIconTexture, R.PlayerIconSize, R.PlayerIconSize, 0, 0, 256, 256);
                 return;
             case PRS_NotReady:
                 SetCanvasColor(Canvas, HUDConfig.CDNotReadyIconColor);
-                Canvas.DrawTile(PlayerNotReadyIconTexture, R.PlayerIconSize, R.PlayerIconSize, 0, 0, 256, 256);
+                Canvas.DrawTile(default.PlayerNotReadyIconTexture, R.PlayerIconSize, R.PlayerIconSize, 0, 0, 256, 256);
                 return;
             case PRS_Default:
             default:

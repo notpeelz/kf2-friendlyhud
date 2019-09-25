@@ -38,6 +38,9 @@ var string DisplayNameArray[REP_INFO_COUNT];
 var byte ShouldUpdateNameArray[REP_INFO_COUNT];
 var string CachedPlayerNameArray[REP_INFO_COUNT];
 
+// Replication link
+var FriendlyHUDReplicationLink RepLinkArray[REP_INFO_COUNT];
+
 // Replicated
 var KFPawn_Human KFPHArray[REP_INFO_COUNT];
 var repnotify KFPlayerReplicationInfo KFPRIArray[REP_INFO_COUNT];
@@ -98,6 +101,13 @@ function NotifyLogin(Controller C)
         if (PCArray[I] == None)
         {
             PCArray[I] = C;
+
+            if (KFPlayerController(C) != None)
+            {
+                RepLinkArray[I] = Spawn(class'FriendlyHUD.FriendlyHUDReplicationLink', C);
+                RepLinkArray[I].KFPC = KFPlayerController(C);
+            }
+
             SpeedBoostTimerArray[I] = TIMER_RESET_VALUE;
             return;
         }
@@ -126,6 +136,7 @@ function NotifyLogout(Controller C)
         if (PCArray[I] == C)
         {
             PCArray[I] = None;
+            RepLinkArray[I] = None;
             KFPHArray[I] = None;
             KFPRIArray[I] = None;
             HasSpawnedArray[I] = 0;
