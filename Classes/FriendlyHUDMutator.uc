@@ -5,7 +5,7 @@ var KFGFxHudWrapper HUD;
 var FriendlyHUDInteraction FHUDInteraction;
 var FriendlyHUDConfig HUDConfig;
 var FriendlyHUDReplicationInfo RepInfo;
-var bool UMLoaded, CDLoaded;
+var bool UMLoaded, CDReadyEnabled;
 var bool ForceShowAsFriend;
 var int PriorityCount;
 
@@ -20,7 +20,7 @@ const GFxListenerPriority = 80000;
 replication
 {
     if (bNetDirty)
-        RepInfo, UMLoaded, CDLoaded;
+        RepInfo, UMLoaded, CDReadyEnabled;
 }
 
 simulated function PostBeginPlay()

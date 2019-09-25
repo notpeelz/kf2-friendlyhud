@@ -27,14 +27,28 @@ function Mutate(string Value, PlayerController Sender)
 
     switch (CommandName)
     {
+        case "FHUDSetCDReadyEnabled":
+            FHUDSetCDReadyEnabled(Params);
+            break;
         case "FHUDSetCDStateReady":
-            FHUDMutator.CDLoaded = true;
+            FHUDMutator.CDReadyEnabled = true;
             FHUDSetCDStateReady(Params);
             break;
         default:
             `Log("[FriendlyHUD] Unrecognized CDCompat command:" @ Value);
             break;
     }
+}
+
+function FHUDSetCDReadyEnabled(array<string> Params)
+{
+    if (Params.Length != 2)
+    {
+        `Log("[FriendlyHUD] Invalid FHUDSetCDReadyEnabled parameter count:" @ (Params.Length - 1));
+        return;
+    }
+
+    FHUDMutator.CDReadyEnabled = bool(Params[1]);
 }
 
 function FHUDSetCDStateReady(array<string> Params)

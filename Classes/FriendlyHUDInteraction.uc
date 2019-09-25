@@ -1420,7 +1420,7 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
     // If we're in select mode, bypass all visibility checks
     if (ManualModeActive) { }
     // Only apply render restrictions if we don't have a special state
-    else if (PlayerState == PRS_Default || !FHUDMutator.CDLoaded)
+    else if (PlayerState == PRS_Default || !FHUDMutator.CDReadyEnabled)
     {
         // Don't render if CD trader-time only mode is enabled
         if (HUDConfig.CDOnlyTraderTime) return false;
