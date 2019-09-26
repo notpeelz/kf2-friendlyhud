@@ -45,14 +45,48 @@ struct CubicInterpCurve
 
 var config int INIVersion;
 var config int LastChangeLogVersion;
+
+/* General settings */
+var config bool DisableHUD;
+var config bool OnlyForMedic;
+var config bool IgnoreSelf;
+var config bool IgnoreDeadTeammates;
+var config float MinHealthThreshold;
+var config int SortStrategy;
+var config float Opacity;
+var config CubicInterpCurve DynamicOpacity;
+
+/* Color settings */
+var config Color ShadowColor;
+var config Color NameColor;
+var config Color FriendNameColor;
+var config bool FriendNameColorEnabled;
+var config Color IconColor;
+var config Color FriendIconColor;
+var config Color ArmorBGColor;
+var config Color ArmorEmptyBGColor;
+var config Color ArmorColor;
+var config Color HealthBGColor;
+var config Color HealthEmptyBGColor;
+var config Color HealthColor;
+var config Color HealthRegenColor;
+var config Color BuffColor;
+var config Color CDReadyIconColor;
+var config Color CDNotReadyIconColor;
+
+/* Dynamic color settings */
+var config array<ColorThreshold> ColorThresholds;
+var config array<ColorThreshold> RegenColorThresholds;
+var config int DynamicColorsStrategy;
+var config int DynamicRegenColorsStrategy;
+
+/* Miscellaneous settings */
 var config float UpdateInterval;
 var config bool NameTruncationEnabled;
-var config int SortStrategy;
+var config float EmptyBlockThreshold;
 var config int SelfSortStrategy;
-var config float Scale;
-var config int Flow;
-var config int Layout;
-var config float BarWidthMin;
+
+/* Bar settings */
 var config float BarGap;
 var config float ArmorBlockWidth;
 var config float HealthBlockWidth;
@@ -74,78 +108,63 @@ var config int ArmorBlockVerticalAlignment;
 var config int HealthBlockVerticalAlignment;
 var config BlockOutline ArmorBlockOutline;
 var config BlockOutline HealthBlockOutline;
-var config int ItemsPerColumn;
-var config int ItemsPerRow;
-var config int MaxItemCount;
-var config float ItemMarginX;
-var config float ItemMarginY;
+var config float IconSize;
+var config float IconOffset;
+var config float IconGap;
+var config float NameMarginX;
+var config float NameMarginY;
+var config float NameScale;
+var config bool FriendIconEnabled;
+var config float FriendIconSize;
+var config float FriendIconGap;
+var config float FriendIconOffsetY;
+var config float BarWidthMin;
+
+/* Buff settings */
 var config int BuffLayout;
 var config float BuffSize;
 var config float BuffMargin;
 var config float BuffGap;
 var config float BuffOffset;
 var config int BuffCountMax;
-var config float IconSize;
-var config float IconOffset;
-var config float IconGap;
-var config bool FriendIconEnabled;
-var config float FriendIconSize;
-var config float FriendIconGap;
-var config float FriendIconOffsetY;
-var config float NameMarginX;
-var config float NameMarginY;
-var config float NameScale;
-var config float OffsetX;
-var config float OffsetY;
-var config Color ShadowColor;
-var config Color NameColor;
-var config Color FriendNameColor;
-var config bool FriendNameColorEnabled;
-var config Color IconColor;
-var config Color FriendIconColor;
-var config Color ArmorBGColor;
-var config Color ArmorEmptyBGColor;
-var config Color ArmorColor;
-var config Color HealthBGColor;
-var config Color HealthEmptyBGColor;
-var config Color HealthColor;
-var config Color HealthRegenColor;
-var config Color BuffColor;
-var config float EmptyBlockThreshold;
-var config bool DisableHUD;
-var config bool OnlyForMedic;
+var config bool ForceShowBuffs;
+
+/* Layout settings */
+var config float Scale;
+var config int Layout;
+var config int Flow;
+var config int ItemsPerColumn;
+var config int ItemsPerRow;
+var config int MaxItemCount;
 var config bool ReverseX;
 var config bool ReverseY;
-var config bool IgnoreSelf;
-var config bool IgnoreDeadTeammates;
-var config float MinHealthThreshold;
-var config CubicInterpCurve DynamicOpacity;
-var config float Opacity;
-var config array<ColorThreshold> ColorThresholds;
-var config array<ColorThreshold> RegenColorThresholds;
-var config int DynamicColorsStrategy;
-var config int DynamicRegenColorsStrategy;
-var config bool ForceShowBuffs;
+var config float ItemMarginX;
+var config float ItemMarginY;
+var config float OffsetX;
+var config float OffsetY;
+
+/* Unofficial Mod compatibility */
 var config bool UMCompatEnabled;
 var config bool UMColorSyncEnabled;
 var config int UMDisableHMTechChargeHUD;
+
+/* Controlled Difficulty compatibility */
 var config bool CDOnlyTraderTime;
 var config bool CDCompatEnabled;
-var config Color CDReadyIconColor;
-var config Color CDNotReadyIconColor;
 
-// Removed/renamed/deprecated settings
+/* Removed/renamed/deprecated settings */
 var config string TextColor;
 var config string BGColor;
 var config string BuffMarginX;
 var config string BuffMarginY;
 
+/* Debug settings */
+var bool DrawDebugLines;
+var bool DrawDebugRatios;
+
 var KFPlayerController KFPlayerOwner;
 var FriendlyHUDMutator FHUDMutator;
 var FriendlyHUDInteraction FHUDInteraction;
-
-var bool DrawDebugLines;
-var bool DrawDebugRatios;
 
 var int CurrentVersion;
 var string CurrentVersionString;
