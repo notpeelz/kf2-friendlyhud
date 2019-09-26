@@ -568,6 +568,7 @@ exec function PrintFHUDHelp()
     ConsolePrint("classic: classic colors (light blue health, saturated blue armor)");
     ConsolePrint("red: beta-style colors (red health, saturated blue armor)");
     ConsolePrint("purple: well, it's purple...");
+    ConsolePrint("blood: red colors (red health, dark red armor)");
     ConsolePrint("redregen: default colors with red regen color");
     ConsolePrint("gradient: default but colors change based on the health ratio (red-yellow-green)");
 }
@@ -599,6 +600,11 @@ exec function LoadFHUDColorPreset(string Value)
             HealthColor = MakeColor(85, 26, 139, 192);
             HealthRegenColor = MakeColor(204, 186, 220, 192);
             CDReadyIconColor = MakeColor(85, 26, 139, 192);
+            break;
+        case "blood":
+            ArmorColor = MakeColor(128, 0, 0, 192);
+            HealthColor = MakeColor(220, 20, 60, 192);
+            HealthRegenColor = MakeColor(204, 186, 220, 192);
             break;
         case "gradient":
             DynamicColorsStrategy = 2;
