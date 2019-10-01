@@ -28,7 +28,7 @@ replication
         RepInfo, UMLoaded, CDReadyEnabled;
 }
 
-simulated function PostBeginPlay()
+simulated event PostBeginPlay()
 {
     super.PostBeginPlay();
 
@@ -144,7 +144,6 @@ simulated function bool IsUMLoaded()
 
     return false;
 }
-
 
 simulated function InitializeCompat()
 {

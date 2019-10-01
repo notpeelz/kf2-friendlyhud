@@ -172,10 +172,10 @@ function SetManualMode(bool Value)
     }
 
     // Clear repeat action timers
-    `TimerHelper.ClearTimer(nameof(SelectMoveUpHold), self);
-    `TimerHelper.ClearTimer(nameof(SelectMoveDownHold), self);
-    `TimerHelper.ClearTimer(nameof(SelectMoveLeftHold), self);
-    `TimerHelper.ClearTimer(nameof(SelectMoveRightHold), self);
+    `TimerHelper.ClearTimer(nameof(SelectMoveUpHold), Self);
+    `TimerHelper.ClearTimer(nameof(SelectMoveDownHold), Self);
+    `TimerHelper.ClearTimer(nameof(SelectMoveLeftHold), Self);
+    `TimerHelper.ClearTimer(nameof(SelectMoveRightHold), Self);
 }
 
 exec function SelectFHUDSetMoveMode(bool Value)
@@ -368,14 +368,14 @@ exec function SelectFHUDSetMoveUp(bool Value)
     }
     else
     {
-        `TimerHelper.ClearTimer(nameof(SelectMoveUpHold), self);
+        `TimerHelper.ClearTimer(nameof(SelectMoveUpHold), Self);
     }
 }
 
 function SelectMoveUpHold()
 {
     SelectFHUDMoveUp();
-    `TimerHelper.SetTimer(RepeatActionInterval, false, nameof(SelectMoveUpHold), self);
+    `TimerHelper.SetTimer(RepeatActionInterval, false, nameof(SelectMoveUpHold), Self);
 }
 
 exec function SelectFHUDSetMoveDown(bool Value)
@@ -389,14 +389,14 @@ exec function SelectFHUDSetMoveDown(bool Value)
     }
     else
     {
-        `TimerHelper.ClearTimer(nameof(SelectMoveDownHold), self);
+        `TimerHelper.ClearTimer(nameof(SelectMoveDownHold), Self);
     }
 }
 
 function SelectMoveDownHold()
 {
     SelectFHUDMoveDown();
-    `TimerHelper.SetTimer(RepeatActionInterval, false, nameof(SelectMoveDownHold), self);
+    `TimerHelper.SetTimer(RepeatActionInterval, false, nameof(SelectMoveDownHold), Self);
 }
 
 exec function SelectFHUDSetMoveLeft(bool Value)
@@ -410,14 +410,14 @@ exec function SelectFHUDSetMoveLeft(bool Value)
     }
     else
     {
-        `TimerHelper.ClearTimer(nameof(SelectMoveLeftHold), self);
+        `TimerHelper.ClearTimer(nameof(SelectMoveLeftHold), Self);
     }
 }
 
 function SelectMoveLeftHold()
 {
     SelectFHUDMoveLeft();
-    `TimerHelper.SetTimer(RepeatActionInterval, false, nameof(SelectMoveLeftHold), self);
+    `TimerHelper.SetTimer(RepeatActionInterval, false, nameof(SelectMoveLeftHold), Self);
 }
 
 exec function SelectFHUDSetMoveRight(bool Value)
@@ -431,14 +431,14 @@ exec function SelectFHUDSetMoveRight(bool Value)
     }
     else
     {
-        `TimerHelper.ClearTimer(nameof(SelectMoveRightHold), self);
+        `TimerHelper.ClearTimer(nameof(SelectMoveRightHold), Self);
     }
 }
 
 function SelectMoveRightHold()
 {
     SelectFHUDMoveRight();
-    `TimerHelper.SetTimer(RepeatActionInterval, false, nameof(SelectMoveRightHold), self);
+    `TimerHelper.SetTimer(RepeatActionInterval, false, nameof(SelectMoveRightHold), Self);
 }
 
 exec function SelectFHUDToggleVisibility()
