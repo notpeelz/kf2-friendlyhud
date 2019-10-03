@@ -16,7 +16,16 @@ var FriendlyHUDConfig HUDConfig;
 var bool ForceShowAsFriend;
 var int PriorityCount;
 
-var GFxClikWidget ChatInputField, PartyChatInputField;
+struct ClikKeyModifiers
+{
+    var bool Ctrl;
+    var bool Alt;
+    var bool Shift;
+};
+
+var GFxClikWidget HUDChatInputField, PartyChatInputField;
+var const ClikKeyModifiers UnsetKeyModifiers;
+var ClikKeyModifiers KeyModifiers;
 
 const HelpURL = "https://steamcommunity.com/sharedfiles/filedetails/?id=1827646464";
 const WhatsNewURL = "https://steamcommunity.com/sharedfiles/filedetails/?id=1871444075";
@@ -164,9 +173,9 @@ simulated function InitializeCompat()
     UMInteraction.Initialized();
 }
 
-simulated delegate OnChatInputKeyDown(GFxClikWidget.EventData Data)
+simulated delegate OnHUDChatInputKeyDown(GFxClikWidget.EventData Data)
 {
-    OnChatKeyDown(ChatInputField, Data);
+    OnChatKeyDown(HUDChatInputField, Data);
 }
 
 simulated delegate OnPartyChatInputKeyDown(GFxClikWidget.EventData Data)
@@ -174,27 +183,70 @@ simulated delegate OnPartyChatInputKeyDown(GFxClikWidget.EventData Data)
     OnChatKeyDown(PartyChatInputField, Data);
 }
 
+simulated delegate OnChatFocusIn(GFxClikWidget.EventData Data)
+{
+    KeyModifiers = UnsetKeyModifiers;
+}
+
+simulated delegate OnChatFocusOut(GFxClikWidget.EventData Data)
+{
+    KeyModifiers = UnsetKeyModifiers;
+}
+
 simulated function OnChatKeyDown(GFxClikWidget InputField, GFxClikWidget.EventData Data)
 {
+    local GFXObject BBB;
+    local GFXObject InputDetails;
     local int KeyCode;
+    local string EventType;
+    local string KeyEvent;
+    local int SelectionStart, SelectionEnd;
     local string Text;
     local OnlineSubsystem OS;
+    `if(`isdefined(debug))
+    local array<GFxMoviePlayer.ASValue> Params;
+    `endif
 
     OS = class'GameEngine'.static.GetOnlineSubsystem();
 
-    //local array<GFxMoviePlayer.ASValue> Params;
-    //`Log("[FriendlyHUD] OnKeyDown:" @ Data._this.Invoke("toString", Params).s);
+    InputDetails = Data._this.GetObject("details");
+    KeyCode = InputDetails.GetInt("code");
+    EventType = InputDetails.GetString("type");
+    KeyEvent = InputDetails.GetString("value");
 
-    KeyCode = Data._this.GetInt("keyCode");
+    if (EventType != "key") return;
 
     `if(`isdefined(debug))
-    `Log("[FriendlyHUD] OnKeyDown:" @ KeyCode);
+    `Log("[FriendlyHUD] OnKeyDown:" @ Data._this.Invoke("toString", Params).s);
     `endif
 
-    // Enter
-    if (KeyCode == 13)
+    Text = InputField.GetText();
+
+    if (KeyCode == 17) KeyModifiers.Ctrl = KeyEvent != "keyUp";
+    else if (KeyCode == 18) KeyModifiers.Alt = KeyEvent != "keyUp";
+    else if (KeyCode == 16) KeyModifiers.Shift = KeyEvent != "keyUp";
+
+    if (KeyEvent != "keyDown") return;
+
+    if (KeyModifiers.Ctrl && KeyCode == 65) // CTRL-A
     {
-        Text = InputField.GetText();
+        BBB = HUD.HUDMovie.GetVariableObject("root.ChatBoxWidget.ChatInputField.[\"_sizingField\"]");
+        BBB = HUD.HUDMovie.GetVariableObject("root.ChatBoxWidget.ChatInputField._sizingField");
+        BBB = InputField.GetObject("_sizingField");
+        //SelectionStart = InputField.GetObject("_sizingField").GetInt("selectionBeginIndex");
+        //SelectionEnd = InputField.GetObject("_sizingField").GetInt("selectionEndIndex");
+        `Log("CTRL-A" @ SelectionStart @ SelectionEnd);
+    }
+    else if (KeyModifiers.Ctrl && KeyCode == 67) // CTRL-C
+    {
+        `Log("CTRL-C");
+    }
+    else if (KeyModifiers.Ctrl && KeyCode == 86) // CTRL-V
+    {
+        `Log("CTRL-V");
+    }
+    else if (KeyCode == 13) // Enter
+    {
         switch (Locs(Text))
         {
             case "!fhudhelp":
@@ -227,13 +279,12 @@ simulated function OnChatKeyDown(GFxClikWidget InputField, GFxClikWidget.EventDa
 simulated function InitializeChatHook()
 {
     // Retry until the HUD is fully initialized
-    if (KFPC.MyGFxHUD == None
+    if (HUD == None
         || KFPC.MyGFxManager == None
         || KFPC.MyGFxManager.PartyWidget == None
         || KFPC.MYGFxManager.PartyWidget.PartyChatWidget == None
         || HUD.HUDMovie == None
-        || HUD.HUDMovie.KFGXHUDManager == None
-        || HUD.HUDMovie.KFGXHUDManager.GetObject("ChatBoxWidget") == None
+        || HUD.HUDMovie.HudChatBox == None
     )
     {
         `Log("[FriendlyHUD] Failed initializing chat hook; retrying.");
@@ -244,10 +295,16 @@ simulated function InitializeChatHook()
     // Force the chat to show up in solo
     KFPC.MyGFxManager.PartyWidget.PartyChatWidget.SetVisible(true);
 
-    ChatInputField = GFxClikWidget(HUD.HUDMovie.KFGXHUDManager.GetObject("ChatBoxWidget").GetObject("ChatInputField", class'GFxClikWidget'));
+    HUDChatInputField = GFxClikWidget(HUD.HUDMovie.HudChatBox.GetObject("ChatInputField", class'GFxClikWidget'));
     PartyChatInputField = GFxClikWidget(KFPC.MyGFxManager.PartyWidget.PartyChatWidget.GetObject("ChatInputField", class'GFxClikWidget'));
-    ChatInputField.AddEventListener('CLIK_keyDown', OnChatInputKeyDown, false, GFxListenerPriority, false);
-    PartyChatInputField.AddEventListener('CLIK_keyDown', OnPartyChatInputKeyDown, false, GFxListenerPriority, false);
+
+    // Add hooks
+    HUDChatInputField.AddEventListener('CLIK_input', OnHUDChatInputKeyDown, false, GFxListenerPriority, false);
+    PartyChatInputField.AddEventListener('CLIK_input', OnPartyChatInputKeyDown, false, GFxListenerPriority, false);
+    HUDChatInputField.AddEventListener('CLIK_focusIn', OnChatFocusIn, false, GFxListenerPriority, false);
+    PartyChatInputField.AddEventListener('CLIK_focusIn', OnChatFocusIn, false, GFxListenerPriority, false);
+    HUDChatInputField.AddEventListener('CLIK_focusOut', OnChatFocusOut, false, GFxListenerPriority, false);
+    PartyChatInputField.AddEventListener('CLIK_focusOut', OnChatFocusOut, false, GFxListenerPriority, false);
 
     `Log("[FriendlyHUD] Initialized chat hook");
 }
