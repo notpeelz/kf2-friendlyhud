@@ -166,6 +166,7 @@ var KFPlayerController KFPlayerOwner;
 var FriendlyHUDMutator FHUDMutator;
 var FriendlyHUDInteraction FHUDInteraction;
 
+var int CurrentINIVersion;
 var int CurrentVersion;
 var string CurrentVersionString;
 
@@ -391,7 +392,7 @@ exec function ResetFHUDColors()
 
 function string GetVersionInfo()
 {
-    return "Version:" @ CurrentVersionString @ "(INIVersion=" $ CurrentVersion $")";
+    return "Version:" @ CurrentVersionString @ "(INIVersion=" $ CurrentINIVersion $")";
 }
 
 exec function FHUDVersion() { PrintFHUDVersion(); }
@@ -2404,6 +2405,7 @@ delegate int SortBlockOffsetOverrides(BlockOffsetOverride A, BlockOffsetOverride
 
 defaultproperties
 {
-    CurrentVersion = 4;
-    CurrentVersionString = "2.2";
+    CurrentINIVersion = 4;
+    CurrentVersion = 5;
+    CurrentVersionString = "2.2.1";
 }
