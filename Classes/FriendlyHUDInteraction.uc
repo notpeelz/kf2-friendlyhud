@@ -140,6 +140,12 @@ exec function SetFHUDCustomConfig(bool Value)
 
 exec function ToggleFHUDManualMode()
 {
+    // Don't let spectators toggle manual mode
+    if (KFPlayerOwner.PlayerReplicationInfo.Team == None) return;
+
+    // Don't let zeds toggle manual mode
+    if (KFPlayerOwner.PlayerReplicationInfo.Team.Class == class'KFTeamInfo_Zeds') return;
+
     SetManualMode(!ManualModeActive);
 }
 
@@ -583,6 +589,8 @@ function UpdatePRIArray()
         {
             if (RepInfo.KFPRIArray[I] == None) continue;
 
+            if (RepInfo.KFPRIArray[I].Team.Class != class'KFTeamInfo_Human') continue;
+
             KFPH = RepInfo.KFPHArray[I];
 
             CurrentPRIEntry.RepIndex = I;
@@ -714,7 +722,6 @@ event Tick(float DeltaTime)
             // Prevent player from crouching in manual mode
             KFPlayerOwner.bDuck = 0;
         }
-
     }
 }
 
@@ -736,6 +743,9 @@ event PostRender(Canvas Canvas)
     // Don't render when HUD is hidden
     if (!HUD.bShowHUD) return;
 
+    // Don't render if we're a zed (in Versus)
+    if (KFPlayerOwner.PlayerReplicationInfo.Team != None && KFPlayerOwner.PlayerReplicationInfo.Team.Class == class'KFTeamInfo_Zeds') return;
+
     ShouldUpdateRuntime = !RuntimeInitialized;
 
     // Cache runtime vars and refresh them whenever the resolution changes
@@ -749,11 +759,7 @@ event PostRender(Canvas Canvas)
         CachePlayerNames(Canvas, ShouldUpdateRuntime);
     }
 
-    // Only render the HUD if we're not a Zed (Versus)
-    if (KFPlayerOwner.GetTeamNum() != 255)
-    {
-        DrawTeamHealthBars(Canvas);
-    }
+    DrawTeamHealthBars(Canvas);
 }
 
 function SetCanvasColor(Canvas Canvas, Color C)
@@ -1191,6 +1197,10 @@ function bool IsPRIRenderable(FriendlyHUDReplicationInfo RepInfo, int RepIndex)
 
     // Don't render spectators
     if (KFPRI.bOnlySpectator) return false;
+    if (KFPRI.Team == None) return false;
+
+    // Don't render non-human players (shouldn't happen since UpdatePRIARray filters out non-players)
+    if (KFPRI.Team.Class != class'KFTeamInfo_Human') return false;
 
     // Only render players that have spawned in once already
     if (RepInfo.HasSpawnedArray[RepIndex] == 0) return false;
