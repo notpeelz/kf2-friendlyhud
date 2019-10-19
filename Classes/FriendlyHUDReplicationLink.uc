@@ -70,6 +70,7 @@ reliable server function ServerDebugFHUDSpawnBot(string BotName, int PerkIndex, 
 
     KFPRI = KFPlayerReplicationInfo(KFBot.PlayerReplicationInfo);
 
+    PerkIndex = Clamp(PerkIndex, 0, class'KFPlayerController'.default.PerkList.Length);
     KFPRI.CurrentPerkClass = class'KFPlayerController'.default.PerkList[PerkIndex].PerkClass;
     KFPRI.NetPerkIndex = PerkIndex;
     KFPRI.PlayerHealthPercent = FloatToByte(float(KFPH.Health) / float(KFPH.HealthMax));
