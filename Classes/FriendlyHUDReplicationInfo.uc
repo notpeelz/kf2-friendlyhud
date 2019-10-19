@@ -22,8 +22,8 @@ enum EPlayerReadyState
     PRS_Ready,
 };
 
-var BarInfo EMPTY_BAR_INFO;
-var MedBuffInfo EMPTY_BUFF_INFO;
+var const BarInfo EMPTY_BAR_INFO;
+var const MedBuffInfo EMPTY_BUFF_INFO;
 
 // Server-only
 var Controller PCArray[REP_INFO_COUNT];
@@ -31,6 +31,7 @@ var float SpeedBoostTimerArray[REP_INFO_COUNT];
 var byte CDPlayerReadyArray[REP_INFO_COUNT];
 
 // Client-only
+var KFPawn_Human CachedKFPHArray[REP_INFO_COUNT];
 var int PriorityArray[REP_INFO_COUNT];
 var int ManualVisibilityArray[REP_INFO_COUNT];
 var byte IsFriendArray[REP_INFO_COUNT];
@@ -42,7 +43,7 @@ var string CachedPlayerNameArray[REP_INFO_COUNT];
 var FriendlyHUDReplicationLink RepLinkArray[REP_INFO_COUNT];
 
 // Replicated
-var KFPawn_Human KFPHArray[REP_INFO_COUNT];
+var repnotify KFPawn_Human KFPHArray[REP_INFO_COUNT];
 var repnotify KFPlayerReplicationInfo KFPRIArray[REP_INFO_COUNT];
 var byte HasSpawnedArray[REP_INFO_COUNT];
 var BarInfo HealthInfoArray[REP_INFO_COUNT];
@@ -70,6 +71,13 @@ simulated event ReplicatedEvent(name VarName)
     if (VarName == nameof(KFPRIArray))
     {
         UpdatePlayersClient();
+        return;
+    }
+
+    if (VarName == nameof(KFPHArray))
+    {
+        UpdatePawnsClient();
+        return;
     }
 }
 
@@ -163,7 +171,7 @@ function UpdateInfo()
     local KFPawn_Human KFPH;
     local KFPlayerReplicationInfo KFPRI;
     local int I;
-    local bool ShouldSimulateReplication;
+    local bool HasChanged, ShouldSimulateReplication;
 
     // Make sure our mutator was initialized
     if (FHUDMutator.MyKFGI != None)
@@ -178,12 +186,25 @@ function UpdateInfo()
         KFPH = KFPawn_Human(PCArray[I].Pawn);
         KFPRI = KFPlayerReplicationInfo(PCArray[I].PlayerReplicationInfo);
 
+        HasChanged = KFPH != KFPHArray[I];
+        ShouldSimulateReplication = HasChanged && WorldInfo.NetMode != NM_DedicatedServer;
         KFPHArray[I] = KFPH;
 
-        ShouldSimulateReplication = KFPRIArray[I] == None && WorldInfo.NetMode != NM_DedicatedServer;
+        if (HasChanged && KFPH != None)
+        {
+            // This is required so that player glows don't vanish
+            KFPH.bAlwaysRelevant = true;
+        }
+
+        if (ShouldSimulateReplication)
+        {
+            ReplicatedEvent(nameof(KFPHArray));
+        }
+
+        HasChanged = KFPRIArray[I] == None;
+        ShouldSimulateReplication = HasChanged && WorldInfo.NetMode != NM_DedicatedServer;
         KFPRIArray[I] = KFPRI;
 
-        // Replicated events don't work in singleplayer, so we need to simulate it here
         if (ShouldSimulateReplication)
         {
             ReplicatedEvent(nameof(KFPRIArray));
@@ -318,6 +339,50 @@ simulated function UpdatePlayersClient()
 Reschedule:
     ClearTimer(nameof(UpdatePlayersClient));
     SetTimer(0.1f, false, nameof(UpdatePlayersClient));
+}
+
+simulated function UpdatePawnsClient()
+{
+    local MaterialInstanceConstant GlowMIC;
+    local GlowComponent Glow;
+    local SkeletalMeshComponent SMC;
+    local GlowComponent C;
+    local array<GlowComponent> GlowComponents;
+    local int I;
+
+    GlowMIC = MaterialInstanceConstant'ZED_Stalker_MAT.ZED_Stalker_Visible_MAT';
+    //GlowMIC = MaterialInstanceConstant'FriendlyHUDAssets.Glow_MAT';
+    //GlowMIC.SetParent(MaterialInterface'Chr_Mat_Lib.CHR_Basic_PM');
+
+    // TODO: honor the scale from the parent mesh?
+    for (I = 0; I < REP_INFO_COUNT; I++)
+    {
+        if (CachedKFPHArray[I] == KFPHArray[I]) continue;
+        CachedKFPHArray[I] = KFPHArray[I];
+
+        if (KFPHArray[I] != None)
+        {
+            foreach KFPHArray[I].ComponentList(class'SkeletalMeshComponent', SMC)
+            {
+                if (SMC == None) continue;
+
+                Glow = new (KFPHArray[I]) class'FriendlyHUD.GlowComponent';
+                //Glow.SetAnimTreeTemplate(SMC.AnimTreeTemplate);
+                Glow.SetLODParent(KFPHArray[I].Mesh);
+                Glow.SetParentAnimComponent(KFPHArray[I].Mesh);
+                Glow.SetSkeletalMesh(SMC.SkeletalMesh);
+                Glow.SetMaterial(0, GlowMIC);
+                Glow.SetMaterial(1, GlowMIC);
+                Glow.SetCullDistance(0);
+                GlowComponents.AddItem(Glow);
+            }
+
+            foreach GlowComponents(C)
+            {
+                KFPHArray[I].AttachComponent(C);
+            }
+        }
+    }
 }
 
 simulated function GetPlayerInfo(
