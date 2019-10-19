@@ -30,9 +30,9 @@ reliable server function ServerDebugFHUDSetHealth(int Health, int MaxHealth)
     }
 }
 
-reliable server function ServerDebugFHUDSpawnBot(string BotName, int PerkIndex, bool IsEnemy, bool GodMode)
+reliable server function ServerDebugFHUDSpawnBot(string BotName, int PerkIndex, bool GodMode, bool IgnoredByZeds)
 {
-    local KFAIController KFBot;
+    local KFAIController KFBot, KFAIC;
     local KFPlayerReplicationInfo KFPRI;
     local vector CamLoc;
     local rotator CamRot;
@@ -56,16 +56,22 @@ reliable server function ServerDebugFHUDSpawnBot(string BotName, int PerkIndex, 
 
     WorldInfo.Game.ChangeName(KFBot, BotName, false);
 
-    if (!IsEnemy)
-    {
-        KFGameInfo(WorldInfo.Game).SetTeam(KFBot, KFGameInfo(WorldInfo.Game).Teams[0]);
-    }
+    KFGameInfo(WorldInfo.Game).SetTeam(KFBot, KFGameInfo(WorldInfo.Game).Teams[0]);
 
     KFBot.Possess(KFPH, false);
 
-    if (GodMode)
+    KFBot.bGodMode = GodMode;
+
+    if (IgnoredByZeds)
     {
-       KFBot.bGodMode = true;
+        KFPawn(KFBot.Pawn).bAIZedsIgnoreMe = true;
+        foreach WorldInfo.AllActors(class'KFAIController', KFAIC)
+        {
+            if (KFAIC != None && KFAIC.Enemy == KFBot.Pawn)
+            {
+                KFAIC.Enemy = None;
+            }
+        }
     }
 
     KFPRI = KFPlayerReplicationInfo(KFBot.PlayerReplicationInfo);

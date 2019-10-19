@@ -117,14 +117,14 @@ exec function DebugFHUDSetHealth(int Health, optional int MaxHealth = -1)
     RepLink.ServerDebugFHUDSetHealth(Health, MaxHealth);
 }
 
-exec function DebugFHUDSpawnBot(optional string BotName, optional int PerkIndex, optional bool IsEnemy, optional bool GodMode)
+exec function DebugFHUDSpawnBot(optional string BotName, optional int PerkIndex, optional bool GodMode, optional bool IgnoredByZeds = true)
 {
     local FriendlyHUDReplicationLink RepLink;
 
     RepLink = GetRepLink();
     if (RepLink == None) return;
 
-    RepLink.ServerDebugFHUDSpawnBot(BotName, PerkIndex, IsEnemy, GodMode);
+    RepLink.ServerDebugFHUDSpawnBot(BotName, PerkIndex, GodMode, IgnoredByZeds);
 }
 
 exec function SetFHUDDebugForceFriend(bool Value)
