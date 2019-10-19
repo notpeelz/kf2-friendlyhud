@@ -162,7 +162,6 @@ function UpdateInfo()
     local name GameStateName;
     local KFPawn_Human KFPH;
     local KFPlayerReplicationInfo KFPRI;
-    local float DmgBoostModifier, DmgResistanceModifier;
     local int I;
     local bool ShouldSimulateReplication;
 
@@ -226,13 +225,7 @@ function UpdateInfo()
             ArmorInfoArray[I].Value = KFPH.Armor;
             ArmorInfoArray[I].MaxValue = KFPH.MaxArmor;
 
-            // Update med buffs
-            DmgBoostModifier = (KFPH.GetHealingDamageBoostModifier() - 1) * 100;
-            DmgResistanceModifier = (1 - KFPH.GetHealingShieldModifier()) * 100;
-
-            MedBuffArray[I].DamageBoost = Round(DmgBoostModifier / class'KFPerk_FieldMedic'.static.GetHealingDamageBoost());
-            MedBuffArray[I].DamageResistance = Round(DmgResistanceModifier / class'KFPerk_FieldMedic'.static.GetHealingShield());
-            UpdateSpeedBoost(I);
+            UpdateBuffs(I);
 
             if (KFPH.Health > 0)
             {
@@ -250,12 +243,23 @@ function UpdateInfo()
     }
 }
 
-function UpdateSpeedBoost(int Index)
+function UpdateBuffs(int Index)
 {
     local KFPawn_Human KFPH;
+    local float DmgBoostModifier, DmgResistanceModifier;
     local float TimerCount;
 
     KFPH = KFPHArray[Index];
+
+    // Update damage boost
+    DmgBoostModifier = (KFPH.GetHealingDamageBoostModifier() - 1) * 100;
+    MedBuffArray[Index].DamageBoost = Round(DmgBoostModifier / class'KFPerk_FieldMedic'.static.GetHealingDamageBoost());
+
+    // Update damage resistance
+    DmgResistanceModifier = (1 - KFPH.GetHealingShieldModifier()) * 100;
+    MedBuffArray[Index].DamageResistance = Round(DmgResistanceModifier / class'KFPerk_FieldMedic'.static.GetHealingShield());
+
+    // Update speed boost
 
     // If the timer is no longer active, reset the counter
     if (KFPH == None || !KFPH.IsTimerActive(nameof(KFPH.ResetHealingSpeedBoost)))
