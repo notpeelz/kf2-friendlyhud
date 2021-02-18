@@ -340,7 +340,11 @@ simulated function WriteToChat(string Message, string HexColor)
 
 simulated function PrintNotification()
 {
-    WriteToChat("[FriendlyHUD] type !FHUDHelp to open the command list.", "B986E9");
+    if (HUDConfig.ShowHelpNotification)
+    {
+        WriteToChat("[FriendlyHUD] type !FHUDHelp to open the command list.", "B986E9");
+    }
+
     if (HUDConfig.LastChangeLogVersion < HUDConfig.CurrentVersion)
     {
         WriteToChat("[FriendlyHUD] was updated; type !FHUDNews to see the changelog.", "FFFF00");

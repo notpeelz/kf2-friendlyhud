@@ -47,6 +47,7 @@ var config int INIVersion;
 var config int LastChangeLogVersion;
 
 /* General settings */
+var config bool ShowHelpNotification;
 var config bool DisableHUD;
 var config bool OnlyForMedic;
 var config bool IgnoreSelf;
@@ -262,6 +263,12 @@ function Initialized()
             NameTruncationEnabled = true;
         }
 
+        if (INIVersion < 5)
+        {
+            INIVersion = 5;
+            ShowHelpNotification = true;
+        }
+
         SaveAndUpdate();
     }
 
@@ -287,7 +294,8 @@ function UpdateChangeLogVersion()
 
 function LoadDefaultFHUDConfig()
 {
-    INIVersion = 2;
+    INIVersion = 5;
+    ShowHelpNotification = true;
     UpdateInterval = 0.5f;
     NameTruncationEnabled = true;
     SortStrategy = 0;
@@ -412,6 +420,7 @@ exec function PrintFHUDHelp()
     ConsolePrint("PrintFHUDHelp: prints this help message");
     ConsolePrint("PrintFHUDVersion: prints version information");
     ConsolePrint("ResetFHUDConfig: resets the config to the default settings");
+    ConsolePrint("SetFHUDHelpNotification <bool>: controls whether to display the !FHUDHelp notification in chat");
     ConsolePrint("LoadFHUDColorPreset <string>: loads a preset color scheme");
     ConsolePrint("LoadFHUDBarPreset <string>: loads preset bar style settings");
     ConsolePrint("LoadFHUDPreset <string>: loads predefined HUD layout/position settings");
@@ -2340,6 +2349,11 @@ exec function ResetFHUDConfig()
     LoadDefaultFHUDConfig();
 }
 
+exec function SetFHUDShowHelpNotification(bool Value)
+{
+    ShowHelpNotification = Value;
+}
+
 function ConsolePrint(coerce string Text)
 {
     LocalPlayer(KFPlayerOwner.Player).ViewportClient.ViewportConsole.OutputText(Text);
@@ -2405,7 +2419,7 @@ delegate int SortBlockOffsetOverrides(BlockOffsetOverride A, BlockOffsetOverride
 
 defaultproperties
 {
-    CurrentINIVersion = 4;
+    CurrentINIVersion = 5;
     CurrentVersion = 6;
     CurrentVersionString = "2.2.2";
 }
