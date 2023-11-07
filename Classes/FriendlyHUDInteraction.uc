@@ -588,7 +588,7 @@ function UpdatePRIArray()
         for (I = 0; I < class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
         {
             if (RepInfo.KFPRIArray[I] == None) continue;
-
+            if (RepInfo.KFPRIArray[I].Team == None) continue;
             if (RepInfo.KFPRIArray[I].Team.Class != class'KFTeamInfo_Human') continue;
 
             KFPH = RepInfo.KFPHArray[I];
