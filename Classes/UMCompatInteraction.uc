@@ -1,5 +1,5 @@
 class UMCompatInteraction extends Interaction
-    dependson(FriendlyHUDMutator, FriendlyHUDConfig);
+    dependson(FriendlyHUD, FriendlyHUDConfig);
 
 var KFGFxHudWrapper HUD;
 var KFPlayerController KFPlayerOwner;
@@ -160,7 +160,7 @@ function DrawMedicWeaponRecharge(Canvas Canvas)
 
     MedicWeaponCount = 0;
 
-    ResScale = class'FriendlyHUD.FriendlyHUDHelper'.static.GetResolutionScale(Canvas, false);
+    ResScale = class'FriendlyHUDHelper'.static.GetResolutionScale(Canvas, false);
     IconHeight = default.MedicWeaponHeight * ResScale;
     IconWidth = IconHeight / 2.f;
 

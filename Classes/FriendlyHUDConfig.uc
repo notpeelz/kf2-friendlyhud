@@ -164,7 +164,7 @@ var bool DrawDebugLines;
 var bool DrawDebugRatios;
 
 var KFPlayerController KFPlayerOwner;
-var FriendlyHUDMutator FHUDMutator;
+var FriendlyHUD FHUD;
 var FriendlyHUDInteraction FHUDInteraction;
 
 var int CurrentINIVersion;
@@ -192,7 +192,7 @@ function Initialized()
             UpdateInterval = 0.5f;
             SortStrategy = 0;
             SelfSortStrategy = 1;
-            DynamicOpacity = class'FriendlyHUD.FriendlyHUDHelper'.static.MakeCubicInterpCurve(1.f, 1.f, 4.f, 0.f);
+            DynamicOpacity = class'FriendlyHUDHelper'.static.MakeCubicInterpCurve(1.f, 1.f, 4.f, 0.f);
             Opacity = 1.f;
             IconSize = 32.f;
             IconOffset = 0.f;
@@ -230,7 +230,7 @@ function Initialized()
             FriendIconOffsetY = 0.f;
             FriendIconEnabled = true;
 
-            OldBGColor = class'FriendlyHUD.FriendlyHUDHelper'.static.ColorFromString(BGColor);
+            OldBGColor = class'FriendlyHUDHelper'.static.ColorFromString(BGColor);
             ArmorBGColor = OldBGColor;
             HealthBGColor = OldBGColor;
             BGColor = DEPRECATED_ENTRY;
@@ -239,7 +239,7 @@ function Initialized()
             HealthEmptyBGColor = OldBGColor;
 
             // Rename NameColor to TextColor
-            NameColor = class'FriendlyHUD.FriendlyHUDHelper'.static.ColorFromString(TextColor);
+            NameColor = class'FriendlyHUDHelper'.static.ColorFromString(TextColor);
             TextColor = DEPRECATED_ENTRY;
 
             // Rename BuffMarginX to BuffMargin
@@ -306,7 +306,7 @@ function LoadDefaultFHUDConfig()
     IgnoreSelf = true;
     IgnoreDeadTeammates = true;
     MinHealthThreshold = 1.f;
-    DynamicOpacity = class'FriendlyHUD.FriendlyHUDHelper'.static.MakeCubicInterpCurve(1.f, 1.f, 4.f, 0.f);
+    DynamicOpacity = class'FriendlyHUDHelper'.static.MakeCubicInterpCurve(1.f, 1.f, 4.f, 0.f);
     DynamicColorsStrategy = 0;
     DynamicRegenColorsStrategy = 0;
     Opacity = 1.f;
@@ -1008,7 +1008,7 @@ exec function SetFHUDArmorBlockProportions(float Width, optional string Ratios)
             if (TotalWidth <= 0.f) continue;
 
             // If the ratio would end up in an invisible block, ignore it
-            if (Ratio < class'FriendlyHUD.FriendlyHUDInteraction'.const.FLOAT_EPSILON) continue;
+            if (Ratio < class'FriendlyHUDInteraction'.const.FLOAT_EPSILON) continue;
 
             CurrentBlockWidth = Width * Ratio;
             TotalWidth -= CurrentBlockWidth;
@@ -1073,7 +1073,7 @@ exec function SetFHUDHealthBlockProportions(float Width, optional string Ratios)
             if (TotalWidth <= 0.f) continue;
 
             // If the ratio would end up in an invisible block, ignore it
-            if (Ratio < class'FriendlyHUD.FriendlyHUDInteraction'.const.FLOAT_EPSILON) continue;
+            if (Ratio < class'FriendlyHUDInteraction'.const.FLOAT_EPSILON) continue;
 
             CurrentBlockWidth = Width * Ratio;
             TotalWidth -= CurrentBlockWidth;
@@ -1650,13 +1650,13 @@ exec function SetFHUDBlockOutline(float Top, optional float Right = -1.f, option
 
 exec function SetFHUDArmorBlockOutline(float Top, optional float Right = -1.f, optional float Bottom = -1.f, optional float Left = -1.f)
 {
-    ArmorBlockOutline = class'FriendlyHUD.FriendlyHUDHelper'.static.MakeOutline(Top, Right, Bottom, Left);
+    ArmorBlockOutline = class'FriendlyHUDHelper'.static.MakeOutline(Top, Right, Bottom, Left);
     SaveAndUpdate();
 }
 
 exec function SetFHUDHealthBlockOutline(float Top, optional float Right = -1.f, optional float Bottom = -1.f, optional float Left = -1.f)
 {
-    HealthBlockOutline = class'FriendlyHUD.FriendlyHUDHelper'.static.MakeOutline(Top, Right, Bottom, Left);
+    HealthBlockOutline = class'FriendlyHUDHelper'.static.MakeOutline(Top, Right, Bottom, Left);
     SaveAndUpdate();
 }
 
@@ -2016,7 +2016,7 @@ exec function SetFHUDNameTruncationEnabled(bool Value)
 {
     if (Value != NameTruncationEnabled)
     {
-        FHUDMutator.ForceUpdateNameCache();
+        FHUD.ForceUpdateNameCache();
     }
 
     NameTruncationEnabled = Value;
@@ -2078,7 +2078,7 @@ exec function SetFHUDSortStrategy(string Strategy, optional bool Descending = fa
 
 exec function SetFHUDDynamicOpacity(float P1, optional float P0 = 1.f, optional float T0 = 4.f, float T1 = 0.f)
 {
-    DynamicOpacity = class'FriendlyHUD.FriendlyHUDHelper'.static.MakeCubicInterpCurve(P0, P1, T0, T1);
+    DynamicOpacity = class'FriendlyHUDHelper'.static.MakeCubicInterpCurve(P0, P1, T0, T1);
     SaveAndUpdate();
 }
 
@@ -2361,7 +2361,7 @@ function ConsolePrint(coerce string Text)
 
 function InitUMCompat()
 {
-    if (FHUDMutator.IsUMLoaded())
+    if (FHUD.IsUMLoaded())
     {
         // Forcefully disable UM's dart cooldowns
         if (UMCompatEnabled)
