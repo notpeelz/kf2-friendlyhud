@@ -51,7 +51,7 @@ var int RegenHealthArray[REP_INFO_COUNT];
 var MedBuffInfo MedBuffArray[REP_INFO_COUNT];
 var EPlayerReadyState PlayerStateArray[REP_INFO_COUNT];
 
-var FriendlyHUDMutator FHUDMutator;
+var FriendlyHUD FHUD;
 var FriendlyHUDConfig HUDConfig;
 var FriendlyHUDReplicationInfo NextRepInfo, PreviousRepInfo;
 
@@ -62,7 +62,7 @@ replication
     if (bNetDirty)
         KFPHArray, KFPRIArray, HasSpawnedArray,
         HealthInfoArray, ArmorInfoArray, RegenHealthArray, MedBuffArray, PlayerStateArray,
-        NextRepInfo, PreviousRepInfo, HUDConfig, FHUDMutator;
+        NextRepInfo, PreviousRepInfo, HUDConfig, FHUD;
 }
 
 simulated event ReplicatedEvent(name VarName)
@@ -104,7 +104,7 @@ function NotifyLogin(Controller C)
 
             if (KFPlayerController(C) != None)
             {
-                RepLinkArray[I] = Spawn(class'FriendlyHUD.FriendlyHUDReplicationLink', C);
+                RepLinkArray[I] = Spawn(class'FriendlyHUDReplicationLink', C);
                 RepLinkArray[I].KFPC = KFPlayerController(C);
             }
 
@@ -116,8 +116,8 @@ function NotifyLogin(Controller C)
     // No empty spot, pass to NextRepInfo
     if (NextRepInfo == None)
     {
-        NextRepInfo = Spawn(class'FriendlyHUD.FriendlyHUDReplicationInfo', Owner);
-        NextRepInfo.FHUDMutator = FHUDMutator;
+        NextRepInfo = Spawn(class'FriendlyHUDReplicationInfo', Owner);
+        NextRepInfo.FHUD = FHUD;
         NextRepInfo.HUDConfig = HUDConfig;
         NextRepInfo.PreviousRepInfo = Self;
     }
@@ -162,13 +162,14 @@ function UpdateInfo()
     local name GameStateName;
     local KFPawn_Human KFPH;
     local KFPlayerReplicationInfo KFPRI;
+    local KFGameInfo KFGI;
     local int I;
     local bool ShouldSimulateReplication;
 
-    // Make sure our mutator was initialized
-    if (FHUDMutator.MyKFGI != None)
+    KFGI = KFGameInfo(WorldInfo.Game);
+    if (KFGI != None)
     {
-        GameStateName = FHUDMutator.MYKFGI.GetStateName();
+        GameStateName = KFGI.GetStateName();
     }
 
     for (I = 0; I < REP_INFO_COUNT; I++)
@@ -198,7 +199,7 @@ function UpdateInfo()
             {
                 PlayerStateArray[I] = KFPRI.bReadyToPlay ? PRS_Ready : PRS_NotReady;
             }
-            else if (GameStateName == 'TraderOpen' && FHUDMutator.CDReadyEnabled)
+            else if (GameStateName == 'TraderOpen' && FHUD.CDReadyEnabled)
             {
                 PlayerStateArray[I] = CDPlayerReadyArray[I] != 0 ? PRS_Ready : PRS_NotReady;
             }
@@ -288,13 +289,13 @@ simulated function UpdatePlayersClient()
 
     OS = class'GameEngine'.static.GetOnlineSubsystem();
 
-    if (FHUDMutator == None || FHUDMutator.KFPC == None) goto Reschedule;
-    LP = LocalPlayer(FHUDMutator.KFPC.Player);
+    if (FHUD == None || FHUD.KFPC == None) goto Reschedule;
+    LP = LocalPlayer(FHUD.KFPC.Player);
     if (LP == None) goto Reschedule;
 
     for (I = 0; I < REP_INFO_COUNT; I++)
     {
-        if (KFPRIArray[I] != FHUDMutator.KFPC.PlayerReplicationInfo)
+        if (KFPRIArray[I] != FHUD.KFPC.PlayerReplicationInfo)
         {
             IsFriendArray[I] = (KFPRIArray[I] != None && OS.IsFriend(LP.ControllerId, KFPRIArray[I].UniqueId)) ? 1 : 0;
         }
@@ -307,8 +308,8 @@ simulated function UpdatePlayersClient()
         }
         else if (PriorityArray[I] == 0)
         {
-            PriorityArray[I] = FHUDMutator.PriorityCount;
-            FHUDMutator.PriorityCount++;
+            PriorityArray[I] = FHUD.PriorityCount;
+            FHUD.PriorityCount++;
             ManualVisibilityArray[I] = 1;
         }
     }
@@ -338,7 +339,7 @@ simulated function GetPlayerInfo(
     HealthInfo = HealthInfoArray[Index];
     RegenHealth = RegenHealthArray[Index];
     BuffInfo = MedBuffArray[Index];
-    IsFriend = FHUDMutator.ForceShowAsFriend ? 1 : IsFriendArray[Index];
+    IsFriend = FHUD.ForceShowAsFriend ? 1 : IsFriendArray[Index];
     PlayerState = PlayerStateArray[Index];
 }
 
