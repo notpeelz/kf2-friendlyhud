@@ -420,7 +420,7 @@ exec function PrintFHUDHelp()
     ConsolePrint("PrintFHUDHelp: prints this help message");
     ConsolePrint("PrintFHUDVersion: prints version information");
     ConsolePrint("ResetFHUDConfig: resets the config to the default settings");
-    ConsolePrint("SetFHUDHelpNotification <bool>: controls whether to display the !FHUDHelp notification in chat");
+    ConsolePrint("SetFHUDShowHelpNotification <bool>: controls whether to display the !FHUDHelp notification in chat");
     ConsolePrint("LoadFHUDColorPreset <string>: loads a preset color scheme");
     ConsolePrint("LoadFHUDBarPreset <string>: loads preset bar style settings");
     ConsolePrint("LoadFHUDPreset <string>: loads predefined HUD layout/position settings");
