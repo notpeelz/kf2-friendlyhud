@@ -47,6 +47,7 @@ var config int INIVersion;
 var config int LastChangeLogVersion;
 
 /* General settings */
+var config bool ShowHelpNotification;
 var config bool DisableHUD;
 var config bool OnlyForMedic;
 var config bool IgnoreSelf;
@@ -163,7 +164,7 @@ var bool DrawDebugLines;
 var bool DrawDebugRatios;
 
 var KFPlayerController KFPlayerOwner;
-var FriendlyHUDMutator FHUDMutator;
+var FriendlyHUD FHUD;
 var FriendlyHUDInteraction FHUDInteraction;
 
 var int CurrentINIVersion;
@@ -191,7 +192,7 @@ function Initialized()
             UpdateInterval = 0.5f;
             SortStrategy = 0;
             SelfSortStrategy = 1;
-            DynamicOpacity = class'FriendlyHUD.FriendlyHUDHelper'.static.MakeCubicInterpCurve(1.f, 1.f, 4.f, 0.f);
+            DynamicOpacity = class'FriendlyHUDHelper'.static.MakeCubicInterpCurve(1.f, 1.f, 4.f, 0.f);
             Opacity = 1.f;
             IconSize = 32.f;
             IconOffset = 0.f;
@@ -229,7 +230,7 @@ function Initialized()
             FriendIconOffsetY = 0.f;
             FriendIconEnabled = true;
 
-            OldBGColor = class'FriendlyHUD.FriendlyHUDHelper'.static.ColorFromString(BGColor);
+            OldBGColor = class'FriendlyHUDHelper'.static.ColorFromString(BGColor);
             ArmorBGColor = OldBGColor;
             HealthBGColor = OldBGColor;
             BGColor = DEPRECATED_ENTRY;
@@ -238,7 +239,7 @@ function Initialized()
             HealthEmptyBGColor = OldBGColor;
 
             // Rename NameColor to TextColor
-            NameColor = class'FriendlyHUD.FriendlyHUDHelper'.static.ColorFromString(TextColor);
+            NameColor = class'FriendlyHUDHelper'.static.ColorFromString(TextColor);
             TextColor = DEPRECATED_ENTRY;
 
             // Rename BuffMarginX to BuffMargin
@@ -260,6 +261,12 @@ function Initialized()
         {
             INIVersion = 4;
             NameTruncationEnabled = true;
+        }
+
+        if (INIVersion < 5)
+        {
+            INIVersion = 5;
+            ShowHelpNotification = true;
         }
 
         SaveAndUpdate();
@@ -287,7 +294,8 @@ function UpdateChangeLogVersion()
 
 function LoadDefaultFHUDConfig()
 {
-    INIVersion = 2;
+    INIVersion = 5;
+    ShowHelpNotification = true;
     UpdateInterval = 0.5f;
     NameTruncationEnabled = true;
     SortStrategy = 0;
@@ -298,7 +306,7 @@ function LoadDefaultFHUDConfig()
     IgnoreSelf = true;
     IgnoreDeadTeammates = true;
     MinHealthThreshold = 1.f;
-    DynamicOpacity = class'FriendlyHUD.FriendlyHUDHelper'.static.MakeCubicInterpCurve(1.f, 1.f, 4.f, 0.f);
+    DynamicOpacity = class'FriendlyHUDHelper'.static.MakeCubicInterpCurve(1.f, 1.f, 4.f, 0.f);
     DynamicColorsStrategy = 0;
     DynamicRegenColorsStrategy = 0;
     Opacity = 1.f;
@@ -412,6 +420,7 @@ exec function PrintFHUDHelp()
     ConsolePrint("PrintFHUDHelp: prints this help message");
     ConsolePrint("PrintFHUDVersion: prints version information");
     ConsolePrint("ResetFHUDConfig: resets the config to the default settings");
+    ConsolePrint("SetFHUDHelpNotification <bool>: controls whether to display the !FHUDHelp notification in chat");
     ConsolePrint("LoadFHUDColorPreset <string>: loads a preset color scheme");
     ConsolePrint("LoadFHUDBarPreset <string>: loads preset bar style settings");
     ConsolePrint("LoadFHUDPreset <string>: loads predefined HUD layout/position settings");
@@ -538,7 +547,7 @@ exec function PrintFHUDHelp()
     ConsolePrint("SetFHUDDrawDebugLines <bool>: displays debug lines -- useful for debugging layout issues");
     ConsolePrint("SetFHUDDrawDebugRatios <bool>: displays ratios over blocks -- useful for debugging block distribution issues");
     ConsolePrint("SetFHUDDebugForceFriend <bool>: forces all players to show up as friends");
-    ConsolePrint("DebugFHUDSpawnBot <string BotName> <int PerkIndex> <bool IsEnemy> <bool GodMode>: spawns a bot in front of you -- cheats only");
+    ConsolePrint("DebugFHUDSpawnBot <string BotName> <int PerkIndex> <bool GodMode = false> <bool IgnoredByZeds = true>: spawns a bot in front of you -- cheats only");
     ConsolePrint("DebugFHUDSetArmor <int Armor> <int MaxArmor = -1>: sets the armor value for your own character -- cheats only");
     ConsolePrint("DebugFHUDSetHealth <int Health> <int MaxHealth = -1>: sets the health value for your own character -- cheats only");
 
@@ -999,7 +1008,7 @@ exec function SetFHUDArmorBlockProportions(float Width, optional string Ratios)
             if (TotalWidth <= 0.f) continue;
 
             // If the ratio would end up in an invisible block, ignore it
-            if (Ratio < class'FriendlyHUD.FriendlyHUDInteraction'.const.FLOAT_EPSILON) continue;
+            if (Ratio < class'FriendlyHUDInteraction'.const.FLOAT_EPSILON) continue;
 
             CurrentBlockWidth = Width * Ratio;
             TotalWidth -= CurrentBlockWidth;
@@ -1064,7 +1073,7 @@ exec function SetFHUDHealthBlockProportions(float Width, optional string Ratios)
             if (TotalWidth <= 0.f) continue;
 
             // If the ratio would end up in an invisible block, ignore it
-            if (Ratio < class'FriendlyHUD.FriendlyHUDInteraction'.const.FLOAT_EPSILON) continue;
+            if (Ratio < class'FriendlyHUDInteraction'.const.FLOAT_EPSILON) continue;
 
             CurrentBlockWidth = Width * Ratio;
             TotalWidth -= CurrentBlockWidth;
@@ -1641,13 +1650,13 @@ exec function SetFHUDBlockOutline(float Top, optional float Right = -1.f, option
 
 exec function SetFHUDArmorBlockOutline(float Top, optional float Right = -1.f, optional float Bottom = -1.f, optional float Left = -1.f)
 {
-    ArmorBlockOutline = class'FriendlyHUD.FriendlyHUDHelper'.static.MakeOutline(Top, Right, Bottom, Left);
+    ArmorBlockOutline = class'FriendlyHUDHelper'.static.MakeOutline(Top, Right, Bottom, Left);
     SaveAndUpdate();
 }
 
 exec function SetFHUDHealthBlockOutline(float Top, optional float Right = -1.f, optional float Bottom = -1.f, optional float Left = -1.f)
 {
-    HealthBlockOutline = class'FriendlyHUD.FriendlyHUDHelper'.static.MakeOutline(Top, Right, Bottom, Left);
+    HealthBlockOutline = class'FriendlyHUDHelper'.static.MakeOutline(Top, Right, Bottom, Left);
     SaveAndUpdate();
 }
 
@@ -2007,7 +2016,7 @@ exec function SetFHUDNameTruncationEnabled(bool Value)
 {
     if (Value != NameTruncationEnabled)
     {
-        FHUDMutator.ForceUpdateNameCache();
+        FHUD.ForceUpdateNameCache();
     }
 
     NameTruncationEnabled = Value;
@@ -2069,7 +2078,7 @@ exec function SetFHUDSortStrategy(string Strategy, optional bool Descending = fa
 
 exec function SetFHUDDynamicOpacity(float P1, optional float P0 = 1.f, optional float T0 = 4.f, float T1 = 0.f)
 {
-    DynamicOpacity = class'FriendlyHUD.FriendlyHUDHelper'.static.MakeCubicInterpCurve(P0, P1, T0, T1);
+    DynamicOpacity = class'FriendlyHUDHelper'.static.MakeCubicInterpCurve(P0, P1, T0, T1);
     SaveAndUpdate();
 }
 
@@ -2340,6 +2349,11 @@ exec function ResetFHUDConfig()
     LoadDefaultFHUDConfig();
 }
 
+exec function SetFHUDShowHelpNotification(bool Value)
+{
+    ShowHelpNotification = Value;
+}
+
 function ConsolePrint(coerce string Text)
 {
     LocalPlayer(KFPlayerOwner.Player).ViewportClient.ViewportConsole.OutputText(Text);
@@ -2347,7 +2361,7 @@ function ConsolePrint(coerce string Text)
 
 function InitUMCompat()
 {
-    if (FHUDMutator.IsUMLoaded())
+    if (FHUD.IsUMLoaded())
     {
         // Forcefully disable UM's dart cooldowns
         if (UMCompatEnabled)
@@ -2405,7 +2419,7 @@ delegate int SortBlockOffsetOverrides(BlockOffsetOverride A, BlockOffsetOverride
 
 defaultproperties
 {
-    CurrentINIVersion = 4;
-    CurrentVersion = 6;
-    CurrentVersionString = "2.2.2";
+    CurrentINIVersion = 5;
+    CurrentVersion = 7;
+    CurrentVersionString = "2.2.3";
 }

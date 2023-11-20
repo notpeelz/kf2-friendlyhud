@@ -6,7 +6,7 @@
 class FriendlyHUDCDCompatController extends Mutator
     dependson(FriendlyHUDReplicationInfo);
 
-var FriendlyHUDMutator FHUDMutator;
+var FriendlyHUD FHUD;
 
 function InitMutator(string Options, out string ErrorMessage)
 {
@@ -31,7 +31,7 @@ function Mutate(string Value, PlayerController Sender)
             FHUDSetCDReadyEnabled(Params);
             break;
         case "FHUDSetCDStateReady":
-            FHUDMutator.CDReadyEnabled = true;
+            FHUD.CDReadyEnabled = true;
             FHUDSetCDStateReady(Params);
             break;
         default:
@@ -48,7 +48,7 @@ function FHUDSetCDReadyEnabled(array<string> Params)
         return;
     }
 
-    FHUDMutator.CDReadyEnabled = bool(Params[1]);
+    FHUD.CDReadyEnabled = bool(Params[1]);
 }
 
 function FHUDSetCDStateReady(array<string> Params)
@@ -68,10 +68,10 @@ function FHUDSetCDStateReady(array<string> Params)
     PlayerId = int(Params[1]);
     ReadyState = bool(Params[2]);
 
-    CurrentRepInfo = FHUDMutator.RepInfo;
+    CurrentRepInfo = FHUD.RepInfo;
     while (CurrentRepInfo != None)
     {
-        for (I = 0; I < class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
+        for (I = 0; I < class'FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
         {
             KFPRI = CurrentRepInfo.KFPRIArray[I];
             if (KFPRI != None && KFPRI.PlayerID == PlayerId)

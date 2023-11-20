@@ -1,5 +1,5 @@
 class FriendlyHUDInteraction extends Interaction
-    dependson(FriendlyHUDMutator, FriendlyHUDConfig, FriendlyHUDReplicationInfo);
+    dependson(FriendlyHUD, FriendlyHUDConfig, FriendlyHUDReplicationInfo);
 
 struct PlayerItemInfo
 {
@@ -29,7 +29,7 @@ enum EBarType
 var KFGFxHudWrapper HUD;
 var KFPlayerController KFPlayerOwner;
 var FriendlyHUDConfig HUDConfig;
-var FriendlyHUDMutator FHUDMutator;
+var FriendlyHUD FHUD;
 
 // Player list
 var array<PRIEntry> SortedKFPRIArray;
@@ -89,7 +89,7 @@ function FriendlyHUDReplicationLink GetRepLink()
 {
     local FriendlyHUDReplicationLink RepLink;
 
-    foreach KFPlayerOwner.WorldInfo.DynamicActors(class'FriendlyHUD.FriendlyHUDReplicationLink', RepLink)
+    foreach KFPlayerOwner.WorldInfo.DynamicActors(class'FriendlyHUDReplicationLink', RepLink)
     {
         return RepLink;
     }
@@ -117,19 +117,19 @@ exec function DebugFHUDSetHealth(int Health, optional int MaxHealth = -1)
     RepLink.ServerDebugFHUDSetHealth(Health, MaxHealth);
 }
 
-exec function DebugFHUDSpawnBot(optional string BotName, optional int PerkIndex, optional bool IsEnemy, optional bool GodMode)
+exec function DebugFHUDSpawnBot(optional string BotName, optional int PerkIndex, optional bool GodMode, optional bool IgnoredByZeds = true)
 {
     local FriendlyHUDReplicationLink RepLink;
 
     RepLink = GetRepLink();
     if (RepLink == None) return;
 
-    RepLink.ServerDebugFHUDSpawnBot(BotName, PerkIndex, IsEnemy, GodMode);
+    RepLink.ServerDebugFHUDSpawnBot(BotName, PerkIndex, GodMode, IgnoredByZeds);
 }
 
 exec function SetFHUDDebugForceFriend(bool Value)
 {
-    FHUDMutator.ForceShowAsFriend = Value;
+    FHUD.ForceShowAsFriend = Value;
     UpdateRuntimeVars();
 }
 
@@ -526,7 +526,7 @@ function PrintSelfSortStrategyNotification()
     if (`TimerHelper.IsTimerActive(nameof(SelfSortStrategyNotificationTimer), Self)) return;
 
     `TimerHelper.SetTimer(6.f, false, nameof(SelfSortStrategyNotificationTimer), Self);
-    FHUDMutator.WriteToChat("[FriendlyHUD] You can't move yourself in manual mode by default.\nUse 'SetFHUDSelfSortStrategy unset' to disable this behavior.", "FF6400");
+    FHUD.WriteToChat("[FriendlyHUD] You can't move yourself in manual mode by default.\nUse 'SetFHUDSelfSortStrategy unset' to disable this behavior.", "FF6400");
 }
 
 function SelfSortStrategyNotificationTimer() { }
@@ -554,10 +554,10 @@ function UpdateNames()
     local FriendlyHUDReplicationInfo RepInfo;
     local int I;
 
-    RepInfo = FHUDMutator.RepInfo;
+    RepInfo = FHUD.RepInfo;
     while (RepInfo != None)
     {
-        for (I = 0; I < class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
+        for (I = 0; I < class'FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
         {
             if (RepInfo.KFPRIArray[I] == None) continue;
 
@@ -582,13 +582,13 @@ function UpdatePRIArray()
     if (HUDConfig.DisableHUD) return;
 
     SortedKFPRIArray.Length = 0;
-    RepInfo = FHUDMutator.RepInfo;
+    RepInfo = FHUD.RepInfo;
     while (RepInfo != None)
     {
-        for (I = 0; I < class'FriendlyHUD.FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
+        for (I = 0; I < class'FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
         {
             if (RepInfo.KFPRIArray[I] == None) continue;
-
+            if (RepInfo.KFPRIArray[I].Team == None) continue;
             if (RepInfo.KFPRIArray[I].Team.Class != class'KFTeamInfo_Human') continue;
 
             KFPH = RepInfo.KFPHArray[I];
@@ -777,7 +777,7 @@ function CachePlayerNames(Canvas Canvas, bool ForceRefresh)
     local FriendlyHUDReplicationInfo RepInfo;
     local int I;
 
-    RepInfo = FHUDMutator.RepInfo;
+    RepInfo = FHUD.RepInfo;
     while (RepInfo != None)
     {
         for (I = 0; I < class'FriendlyHUDReplicationInfo'.const.REP_INFO_COUNT; I++)
@@ -801,7 +801,7 @@ function CachePlayerNames(Canvas Canvas, bool ForceRefresh)
             NameWidthMax = R.BarWidthMin - R.NameMarginX;
 
             // Subtract the friend icon from the available width for the player name
-            if (HUDConfig.FriendIconEnabled && (RepInfo.IsFriendArray[I] != 0 || FHUDMutator.ForceShowAsFriend))
+            if (HUDConfig.FriendIconEnabled && (RepInfo.IsFriendArray[I] != 0 || FHUD.ForceShowAsFriend))
             {
                 NameWidthMax -= R.FriendIconSize + R.FriendIconGap;
             }
@@ -870,7 +870,7 @@ function UpdateRuntimeVars(optional Canvas Canvas)
     CachedScreenHeight = Canvas.SizeY;
 
     Canvas.Font = class'KFGameEngine'.static.GetKFCanvasFont();
-    R.ResScale = class'FriendlyHUD.FriendlyHUDHelper'.static.GetResolutionScale(Canvas);
+    R.ResScale = class'FriendlyHUDHelper'.static.GetResolutionScale(Canvas);
     R.Scale = R.ResScale * HUDConfig.Scale;
 
     R.NameScale = class'KFGameEngine'.static.GetKFFontScale() * HUDConfig.NameScale * R.Scale;
@@ -1398,7 +1398,7 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
     // If we're in select mode, bypass all visibility checks
     if (ManualModeActive) { }
     // Only apply render restrictions if we don't have a special state
-    else if (PlayerState == PRS_Default || !FHUDMutator.CDReadyEnabled)
+    else if (PlayerState == PRS_Default || !FHUD.CDReadyEnabled)
     {
         // Don't render if CD trader-time only mode is enabled
         if (HUDConfig.CDOnlyTraderTime) return false;
@@ -1488,7 +1488,7 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
     // Draw player name
     SetCanvasColor(
         Canvas,
-        ((IsFriend != 0 || FHUDMutator.ForceShowAsFriend) && HUDConfig.FriendNameColorEnabled)
+        ((IsFriend != 0 || FHUD.ForceShowAsFriend) && HUDConfig.FriendNameColorEnabled)
             ? HUDConfig.FriendNameColor
             : HUDConfig.NameColor
     );
@@ -1535,7 +1535,7 @@ function bool DrawHealthBarItem(Canvas Canvas, const out PlayerItemInfo ItemInfo
 
         if (ManualModeCurrentPRI.KFPRI == ItemInfo.KFPRI)
         {
-            class'FriendlyHUD.FriendlyHUDHelper'.static.DrawSelection(
+            class'FriendlyHUDHelper'.static.DrawSelection(
                 Canvas,
                 SelectionPosX,
                 SelectionPosY,
@@ -1832,7 +1832,7 @@ function DrawBar(
 
         if (HUDConfig.DrawDebugRatios)
         {
-            DebugRatioText = class'FriendlyHUD.FriendlyHUDHelper'.static.FloatToString(P1 * BlockRatio, 2) $ "/" $ class'FriendlyHUD.FriendlyHUDHelper'.static.FloatToString(BlockRatio, 2);
+            DebugRatioText = class'FriendlyHUDHelper'.static.FloatToString(P1 * BlockRatio, 2) $ "/" $ class'FriendlyHUDHelper'.static.FloatToString(BlockRatio, 2);
             SetCanvasColor(Canvas, MakeColor(202, 44, 146, 255));
             Canvas.TextSize(DebugRatioText, DebugRatioWidth, DebugRatioHeight, 0.6f, 0.6f);
             Canvas.SetPos(BlockOffsetX + CurrentBlockPosX, BlockOffsetY + CurrentBlockPosY + CurrentBlockHeight - DebugRatioHeight);
