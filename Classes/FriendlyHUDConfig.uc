@@ -2420,6 +2420,6 @@ delegate int SortBlockOffsetOverrides(BlockOffsetOverride A, BlockOffsetOverride
 defaultproperties
 {
     CurrentINIVersion = 5;
-    CurrentVersion = 6;
-    CurrentVersionString = "2.2.2";
+    CurrentVersion = 7;
+    CurrentVersionString = "2.2.3";
 }
